@@ -8,17 +8,19 @@ import aiofiles
 import aiohttp
 import nonebot
 from PIL import Image, ImageOps
-from nonebot import require
+from nonebot import require, on_command
 from nonebot.adapters import Bot
-from nonebot.adapters.cqhttp import MessageSegment
+from nonebot.adapters.cqhttp import MessageSegment, GroupMessageEvent
 from selenium import webdriver
 
 from public_module.mb2pkg_database import Group
-from public_module.mb2pkg_public_plugin import get_time
 from public_module.mb2pkg_mokalogger import Log
+from public_module.mb2pkg_public_plugin import get_time
 from .config import Config
 
 scheduler = require('nonebot_plugin_apscheduler').scheduler
+
+match_enable_notice = on_command('关闭国服公告', aliases={'关闭日服公告', '开启国服公告', '开启日服公告'}, priority=5)
 
 log = Log(__name__).getlog()
 
@@ -28,6 +30,22 @@ firefox_binary_location = nonebot.get_driver().config.firefox_binary_location
 JPBUG = os.path.join(Config().bandori_server_info, 'jp/bug')
 JPNOTICE = os.path.join(Config().bandori_server_info, 'jp/notice')
 CNNOTICE = os.path.join(Config().bandori_server_info, 'cn/notice')
+
+
+@match_enable_notice.handle()
+async def enable_notice_handle(bot: Bot, event: GroupMessageEvent):
+    if isinstance(event, GroupMessageEvent):
+        group_id = event.group_id
+        mygroup = Group(group_id)
+
+        news_xx = 'news_jp' if '日服' in event.raw_message else 'news_cn'
+        enable = '1' if '开启' in event.raw_message else '0'
+        mygroup.__setattr__(news_xx, enable)
+
+        msg = f'已{event.raw_message}，群组<{group_id}>的设置{news_xx}已设为{enable}'
+        log.info(msg)
+
+        await bot.send(event, msg)
 
 
 @scheduler.scheduled_job('cron', minute='1, 11, 21, 31, 41, 51')
