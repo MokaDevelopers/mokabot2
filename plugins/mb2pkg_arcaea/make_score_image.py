@@ -211,12 +211,12 @@ async def moe_draw_last(data):
             'side': 0,
             'remote_dl': False
         }  # 未定位到歌曲，建立一个特殊的songtitle
-        log.warn('{}歌曲未找到'.format(last_score['song_id']))
+        log.warn(f'{last_score["song_id"]}歌曲未找到')
     side = 'hikari' if _songtitle['side'] == 0 else 'tairitsu'
 
     # 制图
 
-    bg = Picture(2388, 1668, os.path.join(ARCLASTDIR, 'res_moe', 'bg_' + side + '.jpg'))
+    bg = Picture(2388, 1668, os.path.join(ARCLASTDIR, 'res_moe', f'bg_{side}.jpg'))
 
     # 以WH为宽高创建纯白底图
     im = Image.new('RGBA', (bg.L, bg.T), '#FFFFFFFF')
@@ -226,20 +226,20 @@ async def moe_draw_last(data):
     im.alpha_composite(bg_img)
 
     # 画成绩评价背景
-    bg_result = Picture(1298, 1281, os.path.join(ARCLASTDIR, 'res_moe', 'bg_result_' + side + '.png'))
+    bg_result = Picture(1298, 1281, os.path.join(ARCLASTDIR, 'res_moe', f'bg_result_{side}.png'))
     bg_result_img = Image.open(bg_result.path).convert('RGBA')
     im.alpha_composite(bg_result_img, (bg_result.L, bg_result.T))
 
     # 画搭档
     # is_char_uncapped与is_char_uncapped_override异或的结果表示使用觉醒前还是觉醒后的立绘
     str_uncapped = 'u' if userinfo['is_char_uncapped'] ^ userinfo['is_char_uncapped_override'] else ''
-    partner = Picture(0, 250, os.path.join(ARCLASTDIR, 'char', str(userinfo['character']) + str_uncapped + '.png'))
+    partner = Picture(0, 250, os.path.join(ARCLASTDIR, 'char', f'{userinfo["character"]}{str_uncapped}.png'))
     try:
         partner_img = Image.open(partner.path).convert('RGBA').resize((1888, 1888))
         im.alpha_composite(partner_img, (partner.L, partner.T), (400, 0, 1888, 1888))
     except FileNotFoundError:
         # 搭档未找到直接跳过，因为没有替代品
-        log.warn('搭档{}未找到'.format(userinfo['character']))
+        log.warn(f'搭档{userinfo["character"]}未找到')
 
     # 画rating的背景
     bg_rating = Picture(0, 0, os.path.join(ARCLASTDIR, 'res_moe', 'bg_rating.png'))
@@ -278,7 +278,7 @@ async def moe_draw_last(data):
 
     # 画歌曲
     str_dl = 'dl_' if _songtitle['remote_dl'] else ''
-    song_cover = Picture(1354, 43, os.path.join(ARCLASTDIR, 'songs', str_dl + last_score['song_id'] + '.jpg'))
+    song_cover = Picture(1354, 43, os.path.join(ARCLASTDIR, 'songs', f'{str_dl}{last_score["song_id"]}.jpg'))
     try:
         song_cover_img = Image.open(song_cover.path).convert('RGBA').resize((990, 990))
     except FileNotFoundError:
@@ -305,7 +305,7 @@ async def moe_draw_last(data):
 
     # 写PURE，FAR，LOST数值
     spacing_count = 75
-    count_pure = Text(1755, 1424, 55, '{}({})'.format(last_score['perfect_count'], last_score['shiny_perfect_count']), font_NotoSansCJKscRegular)
+    count_pure = Text(1755, 1424, 55, f'{last_score["perfect_count"]}({last_score["shiny_perfect_count"]})', font_NotoSansCJKscRegular)
     im = add_text2(im, count_pure, add_shadow=True, stroke_offset=1)
     count_far = Text(1755, 1424+spacing_count, 55, last_score['near_count'], font_NotoSansCJKscRegular)
     im = add_text2(im, count_far, add_shadow=True, stroke_offset=1)
@@ -354,7 +354,7 @@ async def moe_draw_last(data):
     im = add_text2(im, info, add_shadow=True, shadow_offset=(2, 1), stroke_offset=1)
 
     im = im.convert('RGB')
-    make_path = os.path.join(temp_absdir, str(userinfo['user_id']) + '_moe.jpg')  # TODO 应为user_code，临时改为user_id
+    make_path = os.path.join(temp_absdir, f'{userinfo["user_id"]}_moe.jpg')  # TODO 应为user_code，临时改为user_id
     im.save(make_path)
 
     return make_path
@@ -379,12 +379,12 @@ async def guin_draw_last(data):
             'side': 0,
             'remote_dl': False
         }  # 未定位到歌曲，建立一个特殊的songtitle
-        log.warn('{}歌曲未找到'.format(last_score['song_id']))
+        log.warn(f'{last_score["song_id"]}歌曲未找到')
     user_rank_score = rank_score(last_score['score']).lower()  # 成绩评价（EX..AA....用于决定背景图）
 
     # 制图
 
-    bg = Picture(1967, 1220, os.path.join(ARCLASTDIR, 'res_guin', 'bg_' + user_rank_score + '.png'))
+    bg = Picture(1967, 1220, os.path.join(ARCLASTDIR, 'res_guin', f'bg_{user_rank_score}.png'))
 
     # 以WH为宽高创建纯白底图
     im = Image.new('RGBA', (bg.L, bg.T), '#FFFFFFFF')
@@ -395,12 +395,12 @@ async def guin_draw_last(data):
 
     # 画歌曲
     str_dl = 'dl_' if _songtitle['remote_dl'] else ''
-    song_cover = Picture(1000, 43, os.path.join(ARCLASTDIR, 'songs', str_dl + last_score['song_id'] + '.jpg'))
+    song_cover = Picture(1000, 43, os.path.join(ARCLASTDIR, 'songs', f'{str_dl}{last_score["song_id"]}.jpg'))
     try:
         song_cover_img = Image.open(song_cover.path).convert('RGBA').resize((853, 853))
     except FileNotFoundError:
         song_cover_img = Image.open(default_song_cover_path).convert('RGBA').resize((853, 853))
-        log.warn('{}歌曲未找到，使用默认样式'.format(last_score['song_id']))
+        log.warn(f'{last_score["song_id"]}歌曲未找到，使用默认样式')
     im.alpha_composite(song_cover_img, (song_cover.L, song_cover.T))
 
     # 画歌曲角标（polygon方法生成三角形）（根据BYD、FTR、PRS、PST）
@@ -447,12 +447,12 @@ async def guin_draw_last(data):
     # 画搭档头像
     # is_char_uncapped与is_char_uncapped_override异或的结果表示使用觉醒前还是觉醒后的立绘
     str_uncapped = 'u' if userinfo['is_char_uncapped'] ^ userinfo['is_char_uncapped_override'] else ''
-    partner_icon = Picture(30, 15, os.path.join(ARCLASTDIR, 'char', '{}{}_icon.png'.format(userinfo['character'], str_uncapped)))
+    partner_icon = Picture(30, 15, os.path.join(ARCLASTDIR, 'char', f'{userinfo["character"]}{str_uncapped}_icon.png'))
     try:
         partner_icon_img = Image.open(partner_icon.path).convert('RGBA').resize((161, 160))
     except FileNotFoundError:
         partner_icon_img = Image.open(default_partner_icon_path).convert('RGBA').resize((161, 160))
-        log.warn('搭档{}未找到'.format(userinfo['character']))
+        log.warn(f'搭档{userinfo["character"]}未找到')
     im.alpha_composite(partner_icon_img, (partner_icon.L, partner_icon.T))
 
     # 写用户名、游玩日期、游玩时间、UID、PTT
@@ -496,7 +496,7 @@ async def guin_draw_last(data):
     im = add_text2(im, rating, add_shadow=True, stroke_offset=1)
 
     im = im.convert('RGB')
-    make_path = os.path.join(temp_absdir, str(userinfo['user_id']) + '_guin.jpg')  # TODO 应为user_code，临时改为user_id
+    make_path = os.path.join(temp_absdir, f'{userinfo["user_id"]}_guin.jpg')  # TODO 应为user_code，临时改为user_id
     im.save(make_path)
 
     return make_path
@@ -532,7 +532,7 @@ async def bandori_draw_last(data):
             'side': 0,
             'remote_dl': False
         }  # 未定位到歌曲，建立一个特殊的songtitle
-        log.warn('{}歌曲未找到'.format(last_score['song_id']))
+        log.warn(f'{last_score["song_id"]}歌曲未找到')
     side = 'hikari' if _songtitle['side'] == 0 else 'tairitsu'
 
     # 若查询环节查询best失败，score会是一个空列表，则该flag为false，表明无需绘制NEW RECORD和highscore
@@ -540,7 +540,7 @@ async def bandori_draw_last(data):
     try:
         best_score = data['scores'][0]
     except IndexError:
-        log.warn('查询环节查询best失败，score返回空列表，用户查询的歌曲是：{}'.format(last_score['song_id']))
+        log.warn(f'查询环节查询best失败，score返回空列表，用户查询的歌曲是：{last_score["song_id"]}')
         best_score = last_score
         best_inquire_success = False
 
@@ -549,7 +549,7 @@ async def bandori_draw_last(data):
 
     # 制图
 
-    bg = Picture(2388, 1668, os.path.join(ARCLASTDIR, 'res_bandori', 'rhythmBG_' + side + '.png'))
+    bg = Picture(2388, 1668, os.path.join(ARCLASTDIR, 'res_bandori', f'rhythmBG_{side}.png'))
 
     # 以WH为宽高创建纯白底图
     im = Image.new('RGBA', (bg.L, bg.T), '#FFFFFFFF')
@@ -560,13 +560,13 @@ async def bandori_draw_last(data):
 
     # 画搭档
     str_uncapped = 'u' if userinfo['is_char_uncapped'] ^ userinfo['is_char_uncapped_override'] else ''
-    partner = Picture(0, 200, os.path.join(ARCLASTDIR, 'char', str(userinfo['character']) + str_uncapped + '.png'))
+    partner = Picture(0, 200, os.path.join(ARCLASTDIR, 'char', f'{userinfo["character"]}{str_uncapped}.png'))
     try:
         partner_img = Image.open(partner.path).convert('RGBA').resize((1888, 1888))
         im.alpha_composite(partner_img, (partner.L, partner.T), (200, 0, 1888, 1888))
     except FileNotFoundError:
         # 搭档未找到直接跳过，因为没有替代品
-        log.warn('搭档{}未找到'.format(userinfo['character']))
+        log.warn(f'搭档{userinfo["character"]}未找到')
 
     # 画白色基础背景
     bg_white = Picture(0, 0, os.path.join(ARCLASTDIR, 'res_bandori', 'bg.png'))
@@ -574,7 +574,7 @@ async def bandori_draw_last(data):
     im.alpha_composite(bg_white_img, (bg_white.L, bg_white.T))
 
     # 画总评价(EX、AA...)
-    user_rank_score = Picture(1951, 246, os.path.join(ARCLASTDIR, 'res_bandori', rank_score(last_score['score']) + '.png'))
+    user_rank_score = Picture(1951, 246, os.path.join(ARCLASTDIR, 'res_bandori', f'{rank_score(last_score["score"])}.png'))
     user_rank_score_img = Image.open(user_rank_score.path).convert('RGBA').resize((180, 180))
     im.alpha_composite(user_rank_score_img, (user_rank_score.L, user_rank_score.T))
 
@@ -655,7 +655,7 @@ async def bandori_draw_last(data):
     im = add_text2(im, text_score, color_dark)
 
     # 写用户名、ptt和游玩时间
-    user_text = '{}<{}>'.format(userinfo['name'], format_ptt(userinfo['rating']))
+    user_text = f'{userinfo["name"]}<{format_ptt(userinfo["rating"])}>'
     user = Text(1430, 1175, 46, user_text, font_AOTFShinGoProMedium2, anchor='ls')
     im = add_text2(im, user, color_dark)
     play_datetime = Text(1654, 1249, 46, get_time("%Y/%m/%d    %H:%M:%S", last_score['time_played'] / 1000), font_AOTFShinGoProMedium2, anchor='ms')
@@ -678,7 +678,7 @@ async def bandori_draw_last(data):
             im.alpha_composite(new_record_img, (1652, 488))
 
     im = im.convert('RGB')
-    make_path = os.path.join(temp_absdir, str(userinfo['user_id']) + '_bandori.jpg')  # TODO 应为user_code，临时改为user_id
+    make_path = os.path.join(temp_absdir, f'{userinfo["user_id"]}_bandori.jpg')  # TODO 应为user_code，临时改为user_id
     im.save(make_path)
 
     return make_path
@@ -726,7 +726,7 @@ async def draw_b30(arcaea_data, force=False):
     else:
         # 计算玩家b30和r10的ptt
         ptt = userinfo['rating'] / 100
-        log.debug('该用户成绩总数量：%d' % len(scores))
+        log.debug(f'该用户成绩总数量：{len(scores)}')
         t10_max = 4 * (ptt + 0.0099) - 3 * b30
         t10_min = 4 * (ptt - 0.0001) - 3 * b30
         t10 = (t10_max + t10_min) / 2
@@ -764,20 +764,20 @@ async def draw_b30(arcaea_data, force=False):
     score_pos = 0
     for i, s in enumerate(scores):
         if songtitle[s['song_id']]['en'] + difficulty[s['difficulty']] == lastsong:
-            log.debug('在score中发现了最近一次成绩！score%d:%f' % (i + 1, s['score']))
+            log.debug(f'在score中发现了最近一次成绩！score{i + 1}:{s["score"]}')
             score_pos = i + 1
             break
     # 成绩在best内
     if userinfo['recent_score'][0]['score'] == scores[score_pos - 1]['score']:
         if score_pos <= 30:
-            recent = ['', '', '上次游玩：(恭喜你，最近一次的成绩位于best%d)' % score_pos, ''] + recent
+            recent = ['', '', f'上次游玩：(恭喜你，最近一次的成绩位于best{score_pos})', ''] + recent
         else:
-            recent = ['', '', '上次游玩：(最近一次的成绩位于best%d)' % score_pos, ''] + recent
+            recent = ['', '', f'上次游玩：(最近一次的成绩位于best{score_pos})', ''] + recent
     # 成绩不在best内，但best中有相同难度和歌名的谱面
     elif score_pos != 0:
         to_highscore = scores[score_pos - 1]['score'] - userinfo['recent_score'][0]['score']
         to_far = int(to_highscore / int(spf) + 0.5)
-        recent = ['', '', '上次游玩：（差最高分%d分，约%d个far）' % (to_highscore, to_far), ''] + recent
+        recent = ['', '', f'上次游玩：（差最高分{to_highscore}分，约{to_far}个far）', ''] + recent
     # 成绩不在best内，best中也没有相同难度和歌名的谱面
     else:
         recent = ['', '', '上次游玩：（该谱面的定数在定数搜索范围之外，故无法在best列表中定位）', ''] + recent
@@ -807,7 +807,7 @@ async def draw_b30(arcaea_data, force=False):
 
     result = head + recent + ['', 'Best 30：（天花板：%.5f  地板：%.5f）' % (floor, ceiling), ''] + best30
 
-    savepath = os.path.join(temp_absdir, userid + '_b30.jpg')
+    savepath = os.path.join(temp_absdir, f'{userid}_b30.jpg')
     await draw_image(result, savepath)
 
     return savepath
