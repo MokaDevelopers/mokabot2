@@ -18,7 +18,7 @@ driver = nonebot.get_driver()
 app = driver.server_app
 
 
-@app.get("/api/bandori/songs/all_charts.xlsx")
+@app.get('/api/bandori/songs/all_charts.xlsx')
 async def bandori_chart_excel(response: Response):
     result = FileResponse(path=await make_chart_excel())
 
