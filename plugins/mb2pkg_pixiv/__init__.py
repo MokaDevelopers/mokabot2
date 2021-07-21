@@ -4,4 +4,9 @@ __version__ = '2.0.0'
 
 __all__ = ['main']
 
+from nonebot import export
+
 from . import *
+from .main import pixiv_mokabot_api
+
+export().pixiv_mokabot_api = pixiv_mokabot_api

@@ -3,8 +3,6 @@ import os
 import nonebot
 from nonebot.adapters.cqhttp import Bot as CQHTTPBot
 
-# TODO moka api  明天       马上做
-
 # bot初始化
 nonebot.init()
 
@@ -23,6 +21,7 @@ config.temp_absdir = os.path.abspath('temp')  # r'D:\Python\mokabot2\temp'
 # bot加载插件
 nonebot.load_plugins('plugins_admin')
 nonebot.load_plugins('plugins')
+nonebot.load_plugin('mb2pkg_api')
 
 if __name__ == '__main__':
     nonebot.run()
