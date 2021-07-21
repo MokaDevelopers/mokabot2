@@ -8,9 +8,10 @@ import aiofiles
 import aiohttp
 import nonebot
 from PIL import Image, ImageOps
+from nonebot import permission as su
 from nonebot import require, on_command
 from nonebot.adapters import Bot
-from nonebot.adapters.cqhttp import MessageSegment, GroupMessageEvent
+from nonebot.adapters.cqhttp import MessageSegment, GroupMessageEvent, permission
 from selenium import webdriver
 
 from public_module.mb2pkg_database import Group
@@ -20,7 +21,10 @@ from .config import Config
 
 scheduler = require('nonebot_plugin_apscheduler').scheduler
 
-match_enable_notice = on_command('关闭国服公告', aliases={'关闭日服公告', '开启国服公告', '开启日服公告'}, priority=5)
+match_enable_notice = on_command('关闭国服公告',
+                                 aliases={'关闭日服公告', '开启国服公告', '开启日服公告'},
+                                 priority=5,
+                                 permission=su.SUPERUSER | permission.GROUP_ADMIN | permission.GROUP_OWNER,)
 
 log = Log(__name__).getlog()
 
