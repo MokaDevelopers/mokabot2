@@ -20,7 +20,7 @@ ARC_RESULT_LIST = ['bandori', 'guin', 'moe']
 async def arc_bind_handle(bot: Bot, event: MessageEvent):
     userid = str(event.get_message()).strip()
 
-    try:  # TODO 绑定的时候为用户提示一次好友名，以免填写错
+    try:
         arc_bind_userid(event.user_id, userid)
         msg = f'关联完成！已将QQ<{event.user_id}>关联至Arc好友码<{userid}>'
     except InvalidUserIdError as e:
