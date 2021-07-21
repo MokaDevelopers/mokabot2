@@ -389,8 +389,8 @@ async def arc_probe_force(friend_id: Union[str, int],
                     await asyncio.sleep(0.1)
                     tasks.append(task)
 
-            for task in tasks:
-                task.cancel()
+            # for task in tasks:
+            #     task.cancel()
 
         # scores生成结束
 
