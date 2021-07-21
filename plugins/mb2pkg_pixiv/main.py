@@ -3,12 +3,12 @@ import base64
 import os
 
 import nonebot
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from nonebot import require
 from pixivpy_async import AppPixivAPI
-
-from .config import Config
+from pixivpy_async.error import AuthCredentialsError
 
 from public_module.mb2pkg_mokalogger import Log
+from .config import Config
 
 log = Log(__name__).getlog()
 
@@ -19,20 +19,27 @@ relogin_time = Config().relogin_time
 
 Pixiv = AppPixivAPI()
 
-scheduler = AsyncIOScheduler()
+scheduler = require("nonebot_plugin_apscheduler").scheduler
 
 
-@scheduler.scheduled_job('interval', minutes=relogin_time)
 async def _init_pixiv():
     global Pixiv
     if Pixiv.refresh_token is None:
-        login_json = await Pixiv.login(PIXIV_ACT, PIXIV_PWD)
-        log.info('Pixiv初始化成功')
-        log.debug(str(login_json))
+        try:
+            login_json = await Pixiv.login(PIXIV_ACT, PIXIV_PWD)
+            log.info('Pixiv初始化成功')
+            log.debug(str(login_json))
+        except AuthCredentialsError as e:
+            log.error(f'Pixiv初始化失败，原因：{e}。\nPixiv重新登陆计划任务已停止')
+            scheduler.remove_job('login_pixiv_job')
     else:
-        login_json = await Pixiv.login(refresh_token=Pixiv.refresh_token)
-        log.info('Pixiv重新登陆成功')
-        log.debug(str(login_json))
+        try:
+            login_json = await Pixiv.login(refresh_token=Pixiv.refresh_token)
+            log.info('Pixiv重新登陆成功')
+            log.debug(str(login_json))
+        except AuthCredentialsError as e:
+            log.error(f'Pixiv重新登陆失败，原因：{e}。\nPixiv重新登陆计划任务已停止')
+            scheduler.remove_job('login_pixiv_job')
 
 
 async def pixiv_mokabot_api(api_method, **kwargs):
@@ -70,6 +77,6 @@ async def pixiv_mokabot_api(api_method, **kwargs):
     return result
 
 
+login_pixiv_job = scheduler.add_job(_init_pixiv, 'interval', minutes=relogin_time, id='login_pixiv_job')
 loop = asyncio.get_event_loop()
 loop.run_until_complete(_init_pixiv())
-scheduler.start()
