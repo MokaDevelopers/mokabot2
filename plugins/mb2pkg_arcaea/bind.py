@@ -1,14 +1,19 @@
+from typing import Any
+
 import nonebot
 from nonebot import on_command
 from nonebot.adapters import Bot
 from nonebot.adapters.cqhttp import MessageEvent
+from nonebot.permission import SUPERUSER
 
 from public_module.mb2pkg_database import QQ
 from public_module.mb2pkg_mokalogger import Log
 from .exceptions import *
+from .probe import arc_probe_webapi
 
 match_arc_bind = on_command('arc绑定', priority=5)
 match_arc_bind_username = on_command('arc绑定用户名', priority=5)
+match_arc_check_bind = on_command('arc检测', aliases={'arc检查', 'arc检查好友状态', 'arc检测好友状态'}, priority=5, permission=SUPERUSER)
 
 log = Log(__name__).getlog()
 
@@ -47,6 +52,20 @@ async def arc_bind_username_handle(bot: Bot, event: MessageEvent):
         await bot.send_private_msg(user_id=_user_id, message=msg)
 
 
+@match_arc_check_bind.handle()
+async def arc_check_bind_handle(bot: Bot, event: MessageEvent):
+    qq = int(str(event.get_message()).strip())
+    result = await check_bind(qq)
+
+    arc_friend_id = result['arc_friend_id']
+    arc_friend_name = result['arc_friend_name']
+    status_add_friend = result['status_add_friend']
+
+    msg = f'用户QQ：{qq}\narc好友码：{arc_friend_id}\narc用户名{arc_friend_name}\narc查分器好友添加状态：{status_add_friend}'
+
+    await bot.send(event, msg)
+
+
 def arc_bind_userid(qq: int, userid: str) -> None:
     myqq = QQ(qq)
 
@@ -62,3 +81,22 @@ def arc_bind_username(qq: int, username: str) -> None:
 
     myqq.arc_friend_name = username
     log.info(f'已将QQ<{qq}>和Arcaea用户名<{username}>成功绑定')
+
+
+async def check_bind(qq: int) -> dict[str, Any]:
+    result = {}
+    myqq = QQ(qq)
+
+    result['arc_friend_id'] = myqq.arc_friend_id
+    result['arc_friend_name'] = myqq.arc_friend_name
+
+    if myqq.arc_friend_name is not None:
+        try:
+            await arc_probe_webapi(myqq.arc_friend_name)
+            result['status_add_friend'] = '已添加好友'
+        except NotFindFriendError:
+            result['status_add_friend'] = '已绑定用户名但未添加好友'
+    else:
+        result['status_add_friend'] = '未设置用户名'
+
+    return result
