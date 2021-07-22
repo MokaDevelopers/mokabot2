@@ -116,7 +116,7 @@ async def arc_probe_handle(bot: Bot, event: MessageEvent):
               f'如果在此之前您并没有同时绑定好友码请先绑定好友码（对备用查分器而言必须同时绑定好友码后再绑定用户名，不然我加不了你好友）'
         log.error(msg)
     except NotBindFriendNameError:
-        msg = f'{s.user_id}未设置用于备用查分器的用户名，请使用man arc指令查看如何设置，设置后请等待维护者更新好友名单'
+        msg = f'{s.user_id}未设置用于备用查分器的用户名（注意是用户名而非好友码），请使用man arc指令查看如何设置，设置后请等待维护者更新好友名单'
     except AllProberUnavailableError:
         msg = '主查分器和全部的备用查分器已经失效'
     except Exception as e:
