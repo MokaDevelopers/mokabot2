@@ -111,7 +111,7 @@ async def arc_probe_handle(bot: Bot, event: MessageEvent):
         msg = f'estertion服务器端发生错误：{e}'
         log.error(msg)
     except NotFindFriendError as e:
-        msg = f'在所有的查询用账号中都找不到该用户{e}，请确认您的用户名输入正确，若不正确请使用man arc重新设置\n如果确认正确则可能是开发者尚未添加你到查分器好友列表中，请等待开发者添加。'
+        msg = f'在所有的查询用账号中都找不到该用户{e}，请确认您的用户名输入正确（包括大小写），若不正确请使用man arc重新设置\n如果确认正确则可能是开发者尚未添加你到查分器好友列表中，请等待开发者添加。'
         log.error(msg)
     except NotBindFriendNameError:
         msg = f'{s.user_id}未设置用于备用查分器的用户名，请使用man arc指令查看如何设置，设置后请等待维护者更新好友名单'
