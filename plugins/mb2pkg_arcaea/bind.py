@@ -47,9 +47,14 @@ async def arc_bind_username_handle(bot: Bot, event: MessageEvent):
     arc_bind_username(user_id, username)
 
     myqq = QQ(user_id)
+    if myqq.arc_friend_id:
+        add_msg = ''
+    else:
+        add_msg = '你还没有绑定好友码（没有好友码我没法加你到查分器好友列表中），请尽快绑定好友码\n'
 
     msg = f'关联完成！已将QQ<{user_id}>关联至Arc用户名<{username}>，请等待管理员为查询用账号添加好友，并且请注意账号名称的大小写\n' \
           f'若您在2021年7月之前已经绑定过好友码，那您无需等待管理员添加您到查分器好友列表中\n' \
+          f'{add_msg}' \
           f'注意：变更用户名后需要重新绑定用户名'
     await bot.send(event, msg)
     msg = f'收到新的arc用户名绑定（用户名:{myqq.arc_friend_name}，好友码:{myqq.arc_friend_id}，QQ:{user_id}），请记得加好友'
