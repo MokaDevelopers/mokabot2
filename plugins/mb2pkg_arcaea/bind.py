@@ -1,15 +1,18 @@
+import os
 from typing import Any
 
+import aiohttp
 import nonebot
 from nonebot import on_command
 from nonebot.adapters import Bot
-from nonebot.adapters.cqhttp import MessageEvent
+from nonebot.adapters.cqhttp import MessageEvent, MessageSegment
 from nonebot.permission import SUPERUSER
+from public_module.mb2pkg_test2pic import draw_image
 
 from public_module.mb2pkg_database import QQ
 from public_module.mb2pkg_mokalogger import Log
+from .config import Config
 from .exceptions import *
-from .probe import arc_probe_webapi
 
 match_arc_bind = on_command('arc绑定', priority=5)
 match_arc_bind_username = on_command('arc绑定用户名', priority=5)
@@ -17,7 +20,9 @@ match_arc_check_bind = on_command('arc检测', aliases={'arc检查', 'arc检查�
 
 log = Log(__name__).getlog()
 
+temp_absdir = nonebot.get_driver().config.temp_absdir
 superusers = nonebot.get_driver().config.superusers
+WEBAPI_ACC_LIST = Config().webapi_prober_account
 ARC_RESULT_LIST = ['bandori', 'guin', 'moe']
 
 
@@ -54,14 +59,31 @@ async def arc_bind_username_handle(bot: Bot, event: MessageEvent):
 
 @match_arc_check_bind.handle()
 async def arc_check_bind_handle(bot: Bot, event: MessageEvent):
-    qq = int(str(event.get_message()).strip())
-    result = await check_bind(qq)
+    arg = str(event.get_message()).strip()
 
-    arc_friend_id = result['arc_friend_id']
-    arc_friend_name = result['arc_friend_name']
-    status_add_friend = result['status_add_friend']
+    if arg:  # 说明是检测查分器是否添加好友
+        qq = int(arg)
+        result = await check_bind(qq)
 
-    msg = f'用户QQ：{qq}\narc好友码：{arc_friend_id}\narc用户名：{arc_friend_name}\narc查分器好友添加状态：{status_add_friend}'
+        arc_friend_id = result['arc_friend_id']
+        arc_friend_name = result['arc_friend_name']
+        status_add_friend = result['status_add_friend']
+        prober_username = result['prober_username']
+
+        msg = f'用户QQ：{qq}\n' \
+              f'arc好友码：{arc_friend_id}\n' \
+              f'arc用户名：{arc_friend_name}\n' \
+              f'arc查分器好友添加状态：{status_add_friend}\n' \
+              f'相应的查分器用户名：{prober_username}'
+    else:  # 说明是自检
+        result = await prober_self_check()
+        msg_list = ['arc查分器自检']
+        for _username, _info in result:
+            msg_list.append(f'{_username}  {_info}')
+
+        savepath = os.path.join(temp_absdir, 'prober_self_check.jpg')
+        await draw_image(msg_list, savepath)
+        msg = MessageSegment.image(file=f'file:///{savepath}')
 
     await bot.send(event, msg)
 
@@ -91,12 +113,61 @@ async def check_bind(qq: int) -> dict[str, Any]:
     result['arc_friend_name'] = myqq.arc_friend_name
 
     if myqq.arc_friend_name is not None:
-        try:
-            await arc_probe_webapi(myqq.arc_friend_name)
-            result['status_add_friend'] = '已添加好友'
-        except NotFindFriendError:
-            result['status_add_friend'] = '已绑定用户名但未添加好友'
+        for _username, _password in WEBAPI_ACC_LIST:
+            async with aiohttp.ClientSession() as session:
+                login_request = {'email': f'{_username}', 'password': f'{_password}'}
+                login_response = await session.post(url='https://webapi.lowiro.com/auth/login', data=login_request, timeout=5)
+                log.debug(await login_response.json())
+                if not (await login_response.json())['isLoggedIn']:
+                    log.warning(f'webapi登录失败，所用查询账号为{_username}。登录返回json：{await login_response.json()}')
+                    continue  # 还没遇到过，不过我感觉如果遇到了那就说明是被封号了
+                log.debug(f'webapi登录成功，所用查询账号为{_username}')
+                user_me_response = await session.get(url='https://webapi.lowiro.com/webapi/user/me', timeout=5)
+                friend_list: list = (await user_me_response.json())['value']['friends']
+                for _item in friend_list:
+                    if result['arc_friend_name'] == _item['name']:
+                        result['prober_username'] = _username
+                        result['status_add_friend'] = '已添加好友'
+                        break
+                else:
+                    result['prober_username'] = None
+                    result['status_add_friend'] = '已绑定用户名但未添加好友'
+                    continue
+                break
+                # 该查询用账号的所有好友均无该用户的好友，换下一个号，此处应该写continue，但是放在末尾写不写都无所谓
     else:
+        result['prober_username'] = None
         result['status_add_friend'] = '未设置用户名'
+
+    return result
+
+
+async def prober_self_check() -> list[tuple[str, str]]:
+    result = []
+
+    for _username, _password in WEBAPI_ACC_LIST:
+
+        async with aiohttp.ClientSession() as session:
+
+            login_request = {'email': f'{_username}', 'password': f'{_password}'}
+            login_response = await session.post(url='https://webapi.lowiro.com/auth/login', data=login_request, timeout=5)
+
+            try:
+                login_json = await login_response.json()
+                assert login_json['isLoggedIn']
+                log.debug(f'webapi登录成功，所用查询账号为{_username}')
+            except Exception as e:
+                result.append((_username, '登录失败'))
+                result.append((' ' * len(_username), str(login_json)))
+                result.append((' ' * len(_username), str(e)))
+
+            user_me_response = await session.get(url='https://webapi.lowiro.com/webapi/user/me', timeout=5)
+            user_me_json = await user_me_response.json()
+
+            max_friend: int = user_me_json['value']['max_friend']
+            friend_list: list = user_me_json['value']['friends']
+            result.append(
+                (_username, f'登录成功，好友数量：{len(friend_list)}/{max_friend}')
+            )
 
     return result
