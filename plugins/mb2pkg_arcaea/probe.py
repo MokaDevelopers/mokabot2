@@ -29,7 +29,7 @@ log = Log(__name__).getlog()
 QUIRE_ACT = Config().prober_username
 QUIRE_PWD = Config().prober_password
 SONGDB = Config().arcsong_db_abspath
-WEBAPI_ACC_LISR = Config().webapi_prober_account
+WEBAPI_ACC_LIST = Config().webapi_prober_account
 ARC_RESULT_LIST = ['bandori', 'guin', 'moe']
 
 ProberResult = dict[str, Union[list[dict[str, dict]], dict[str, dict]]]
@@ -423,7 +423,7 @@ async def arc_probe_webapi(friend_name: str) -> ProberResult:
     result = {'userinfo': {},
               'scores': []}
 
-    for _username, _password in WEBAPI_ACC_LISR:
+    for _username, _password in WEBAPI_ACC_LIST:
         async with aiohttp.ClientSession() as session:
             login_request = {'email': f'{_username}', 'password': f'{_password}'}
             login_response = await session.post(url='https://webapi.lowiro.com/auth/login', data=login_request, timeout=5)
