@@ -82,11 +82,15 @@ async def arc_check_bind_handle(bot: Bot, event: MessageEvent):
               f'arc查分器好友添加状态：{status_add_friend}\n' \
               f'相应的查分器用户名：{prober_username}'
     else:  # 说明是自检
-        result = await prober_self_check()
+        result, same_name_list = await prober_self_check()
         msg_list = ['arc查分器自检']
         for _username, _info in result:
             msg_list.append(f'{_username}  {_info}')
-
+        if same_name_list:  # 如果有用户重复添加到查分器
+            msg_list.append('')
+            msg_list.append('查分器重复添加用户列表')
+            for _friend_name, _prober_name in same_name_list:
+                msg_list.append(f'{_friend_name}  {_prober_name}')
         savepath = os.path.join(temp_absdir, 'prober_self_check.jpg')
         await draw_image(msg_list, savepath)
         msg = MessageSegment.image(file=f'file:///{savepath}')
@@ -148,8 +152,10 @@ async def check_bind(qq: int) -> dict[str, Any]:
     return result
 
 
-async def prober_self_check() -> list[tuple[str, str]]:
+async def prober_self_check() -> tuple[list[tuple[str, str]], list[tuple[str, str]]]:
     result = []
+    all_name_list: list[tuple[str, str]] = []
+    same_name_list: list[tuple[str, str]] = []
 
     for _username, _password in WEBAPI_ACC_LIST:
 
@@ -176,4 +182,23 @@ async def prober_self_check() -> list[tuple[str, str]]:
                 (_username, f'登录成功，好友数量：{len(friend_list)}/{max_friend}')
             )
 
-    return result
+            # 去重环节
+            for _item in friend_list:
+                all_name_list.append(
+                    (_item['name'], _username)  # 好友名，查分器名
+                )
+
+            same_name_list = check_same(all_name_list)
+
+    return result, same_name_list
+
+
+def check_same(all_name_list: list[tuple[str, str]]):
+    result: list[tuple[str, str]] = []
+
+    for _friend_name, _prober_name in all_name_list:
+        for _item in all_name_list:
+            if _friend_name == _item[0] and _prober_name != _item[1]:
+                result.append(_item)
+
+    return sorted(result)
