@@ -113,13 +113,12 @@ async def arc_probe_handle(bot: Bot, event: MessageEvent):
         log.error(msg)
     except NotFindFriendError as e:
         close_str = f'你的实际好友名是{" ".join(e.close_name)}吗？' if e.close_name else ''
-        msg = f'在所有的查询用账号中都找不到该用户{e.friend_name}，请确认您的用户名输入正确（包括大小写），若不正确请使用man arc重新设置\n' \
+        msg = f'在所有的查询用账号中都找不到该用户{e.friend_name}，请确认您的用户名输入正确（包括大小写），若不正确请使用"man arc"重新设置\n' \
               f'如果确认正确则可能是开发者尚未添加你到查分器好友列表中，请等待开发者添加。\n' \
-              f'如果在此之前您并没有同时绑定好友码请先绑定好友码（对备用查分器而言必须同时绑定好友码后再绑定用户名，不然我加不了你好友）\n' \
               f'{close_str}'
         log.error(msg)
     except NotBindFriendNameError:
-        msg = f'{s.user_id}未设置用于备用查分器的用户名（注意是用户名而非好友码），请使用man arc指令查看如何设置，设置后请等待维护者更新好友名单'
+        msg = f'{s.user_id}未设置用于备用查分器的用户名（注意是用户名而非好友码），请使用"man arc"指令查看如何设置，设置后请等待开发者人工添加好友'
     except AllProberUnavailableError:
         msg = '主查分器和全部的备用查分器已经失效'
     except Exception as e:
