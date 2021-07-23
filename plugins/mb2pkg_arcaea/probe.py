@@ -7,6 +7,7 @@ from heapq import nlargest
 from socket import timeout
 from typing import Union, Tuple
 
+import Levenshtein
 import aiohttp
 from aiohttp.client_exceptions import ClientConnectionError
 from brotli import decompress
@@ -111,9 +112,11 @@ async def arc_probe_handle(bot: Bot, event: MessageEvent):
         msg = f'estertion服务器端发生错误：{e}'
         log.error(msg)
     except NotFindFriendError as e:
-        msg = f'在所有的查询用账号中都找不到该用户{e}，请确认您的用户名输入正确（包括大小写），若不正确请使用man arc重新设置\n' \
+        close_str = f'你的实际好友名是{" ".join(e.close_name)}吗？' if e.close_name else ''
+        msg = f'在所有的查询用账号中都找不到该用户{e.friend_name}，请确认您的用户名输入正确（包括大小写），若不正确请使用man arc重新设置\n' \
               f'如果确认正确则可能是开发者尚未添加你到查分器好友列表中，请等待开发者添加。\n' \
-              f'如果在此之前您并没有同时绑定好友码请先绑定好友码（对备用查分器而言必须同时绑定好友码后再绑定用户名，不然我加不了你好友）'
+              f'如果在此之前您并没有同时绑定好友码请先绑定好友码（对备用查分器而言必须同时绑定好友码后再绑定用户名，不然我加不了你好友）\n' \
+              f'{close_str}'
         log.error(msg)
     except NotBindFriendNameError:
         msg = f'{s.user_id}未设置用于备用查分器的用户名（注意是用户名而非好友码），请使用man arc指令查看如何设置，设置后请等待维护者更新好友名单'
@@ -424,6 +427,7 @@ async def arc_probe_webapi(friend_name: str) -> ProberResult:
 
     result = {'userinfo': {},
               'scores': []}
+    close_name_list = []
 
     for _username, _password in WEBAPI_ACC_LIST:
         async with aiohttp.ClientSession() as session:
@@ -441,8 +445,11 @@ async def arc_probe_webapi(friend_name: str) -> ProberResult:
                     result['userinfo'] = _item
                     log.debug(result)
                     return result
+                elif Levenshtein.distance(friend_name, _item['name']) <= 2:
+                    close_name_list.append(_item['name'])
+
             # 该查询用账号的所有好友均无该用户的好友，换下一个号，此处应该写continue，但是放在末尾写不写都无所谓
-    raise NotFindFriendError(friend_name)
+    raise NotFindFriendError(friend_name, close_name_list)
 
 
 def qq_to_userid(qq: int) -> str:

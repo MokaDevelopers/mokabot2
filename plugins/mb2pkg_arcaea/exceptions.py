@@ -1,3 +1,6 @@
+from typing import Optional
+
+
 class ConstError(RuntimeError):
     """定数计算错误"""
     def __init__(self, message):
@@ -66,6 +69,9 @@ class EstertionServerError(RuntimeError):
 
 class NotFindFriendError(RuntimeError):
     """(webapi)因为用户的用户名设置错误，导致全部的查询用账号里没有找到这个用户"""
+    def __init__(self, friend_name: str, close_name: Optional[list]):
+        self.friend_name = friend_name
+        self.close_name = close_name
 
 
 class NotBindFriendNameError(RuntimeError):
