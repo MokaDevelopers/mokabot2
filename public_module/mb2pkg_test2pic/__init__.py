@@ -52,11 +52,14 @@ def nonlsize(strlist: list[str]) -> tuple[float, float]:
 
     # x是宽，y是高
     line_width = []
-    # 计算每一行的宽度，以确定最大所需宽度
+    new_line_count = 0
     for line in strlist:
+        # 计算每一行的宽度，以确定最大所需宽度
         line_width.append(str_width(line))
+        # 计算每行出现\n的次数，以确定包含\n时的实际高度
+        new_line_count += line.count('\n')
     x = round(max(line_width) * 13.1 + 50)
-    y = round(len(strlist) * 33.23 + 50)
+    y = round((len(strlist) + new_line_count) * 33.23 + 50)
     return x, y
 
 
