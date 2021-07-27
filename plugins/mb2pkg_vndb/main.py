@@ -290,13 +290,12 @@ async def return_char_details(info: dict) -> tuple[Optional[str], list[str]]:
 
     # 相关作品
     result_details.append('相关作品')
-    result_details.append('重要程度  /  gal  /  cv')
     for _vn_id, _release_id, _spoiler_level, _role in char.vns:
         cv_id, cv_aid = return_char_cvid_in_vn(char.voiced, _vn_id)
         if cv_id and cv_aid:
-            result_details.append(f' {return_role_in_vn(_role)}  {vid[f"v{_vn_id}"]}  {aid[str(cv_aid)]} ({cv_id})')
+            result_details.append(f' [{return_role_in_vn(_role)}] ({_vn_id}) {vid[f"v{_vn_id}"]}  (CV: {aid[str(cv_aid)]} ({cv_aid}))')
         else:
-            result_details.append(f' {return_role_in_vn(_role)}  {vid[f"v{_vn_id}"]}')
+            result_details.append(f' [{return_role_in_vn(_role)}] ({_vn_id}) {vid[f"v{_vn_id}"]}')
 
     return result_pic, result_details
 
