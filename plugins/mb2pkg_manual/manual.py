@@ -37,6 +37,9 @@ HELP = {
         '    命令示范：man epic7',
         '   　　　　　 man e7',
         '',
+        '【vndb】vndb数据库相关功能指令',
+        '    命令示范：man vndb',
+        '',
         '【RSS】ELF_RSS2相关功能指令',
         '    命令示范：man rss',
     ],
@@ -248,6 +251,43 @@ HELP = {
         '注意：建议复制催化剂列表中的催化剂名称而不是手动输入它',
         '    命令示范：催化剂列表',
     ],
+    'VNDB': [
+        '模块组：mb2pkg_vndb',
+        '插件采用类shell命令模式',
+        '',
+        '第一个参数固定为"vndb"',
+        'vndb',
+        '',
+        '第二个参数是"gal"、"char"或者"cv"，分别对应游戏、角色和声优',
+        'vndb gal',
+        'vndb char',
+        'vndb cv',
+        '',
+        '第三个参数是"search"或者"id"，以此决定是进行查询还是搜索',
+        'vndb gal search',
+        'vndb gal id',
+        '',
+        '第四个参数是查询或者搜索的具体内容，查询只能以id进行查询，而搜索可以是任意',
+        '字符串。请注意，vndbAPI的搜索功能并不是很聪明，请尽量避免模糊搜索，并且在',
+        '搜索人名时尽量使用日文原名，并用空格将姓和名隔开',
+        'vndb gal search Riddle',
+        'vndb cv search あじ秋刀魚',
+        'vndb char id 39202',
+        'vndb cv id 196',
+        '',
+        '',
+        '开发者备注：作品之间的关系是由英语词汇翻译而来，若有更好的翻译建议可以群内找我',
+        'Sequel   续作',
+        'Prequel   前作',
+        'Same setting   同一设定',
+        'Alternative version   替代版本（有无更好的中文叫法？）',
+        'Shares characters   角色客串（共享角色一定是客串吗？）',
+        'Side story   支线故事（有无更好的中文叫法？）',
+        'Parent story   主线剧情（有无更好的中文叫法？）',
+        'Same series   同一系列',
+        'Fandisc   FanDisc',
+        'Original game   原作（这个和FD是互逆关系，但是我不知道这个关系是不是叫原作）',
+    ],
     'ALIAS': [
         '模块组：nonebot_plugin_alias',
         '插件采用类shell命令模式',
@@ -306,6 +346,9 @@ async def moka_manual_handle(bot: Bot, event: MessageEvent):
     elif args in ['alias']:
         savepath = os.path.join(temp_absdir, 'help_alias.jpg')
         await draw_image(HELP['ALIAS'], savepath)
+    elif args in ['vndb']:
+        savepath = os.path.join(temp_absdir, 'help_vndb.jpg')
+        await draw_image(HELP['VNDB'], savepath)
     elif args in ['manager']:
         msg = '请参考该在线文档：\nhttps://github.com/nonepkg/nonebot-plugin-manager/blob/master/README.md'
     elif args in ['rss']:
