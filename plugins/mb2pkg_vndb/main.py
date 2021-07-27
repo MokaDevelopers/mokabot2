@@ -1,6 +1,7 @@
 import asyncio
 import csv
 import os
+import re
 from typing import Union, Optional
 
 import nonebot
@@ -186,9 +187,8 @@ async def return_vn_details(info: dict) -> tuple[Optional[str], list[str]]:
     # 描述信息
     if vn.description:
         # 将描述中的换行全部适配成为test2pic所用的换行形式
-        description = [_ for _ in vn.description.split('\n') if _]
         result_details.append('描述(英)')
-        result_details.extend(description)
+        result_details.extend(add_description(vn.description))
         result_details.append('')
 
     # 角色信息
@@ -267,9 +267,8 @@ async def return_char_details(info: dict) -> tuple[Optional[str], list[str]]:
     # 描述信息
     if char.description:
         # 将描述中的换行全部适配成为test2pic所用的换行形式
-        description = [_ for _ in char.description.split('\n') if _]
         result_details.append('描述(英)')
-        result_details.extend(description)
+        result_details.extend(add_description(char.description))
         result_details.append('')
 
     # 角色身材
@@ -327,9 +326,8 @@ async def return_staff_details(info: dict) -> list[str]:
     # 描述信息
     if char.description:
         # 将描述中的换行全部适配成为test2pic所用的换行形式
-        description = [_ for _ in char.description.split('\n') if _]
         result_details.append('描述(英)')
-        result_details.extend(description)
+        result_details.extend(add_description(char.description))
 
     return result_details
 
@@ -524,3 +522,12 @@ def add_result_details(stype: str) -> list[str]:
         f'本地数据库版本：{local_vndb_timestamp}',
         ''
     ]
+
+
+def add_description(description: str) -> list[str]:
+    """将描述中的换行全部适配成为test2pic所用的换行形式，同时清理标签，便于阅读"""
+    # 将对站内的引用转换为括号注释形式
+    description = re.sub(r'\[url=/\D(\d+)]', r'(\1)', description)
+    # 删除所有匹配的标签（除了剧透标签头[spoiler]）
+    description = re.sub(r'\[/?(b|i|u|s|url[^]]*|quote|raw|code|/spoiler)]', '', description)
+    return [_ for _ in description.split('\n') if _]
