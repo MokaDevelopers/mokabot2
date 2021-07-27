@@ -301,33 +301,33 @@ async def return_char_details(info: dict) -> tuple[Optional[str], list[str]]:
 
 async def return_staff_details(info: dict) -> list[str]:
     result_details = add_result_details('cv')
-    char = StaffInfo(**info)
+    staff = StaffInfo(**info)
 
     # meta信息
     result_details.append('基本信息')
-    result_details.append(f'id　 ：{char.id}')
-    if char.original:
-        name = f'{char.original} ({char.name})'
+    result_details.append(f'id　 ：{staff.id}')
+    if staff.original:
+        name = f'{staff.original} ({staff.name})'
     else:
-        name = f'{char.name}'
+        name = f'{staff.name}'
     result_details.append(f'姓名 ：{name}')
-    if char.gender:
-        result_details.append(f'性别 ：{return_sex_of_char(char.gender)}')
-    result_details.append(f'语种 ：{return_language(char.language)}')
-    alias_dict = return_staff_alias_dict(char.aliases)
+    if staff.gender:
+        result_details.append(f'性别 ：{return_sex_of_char(staff.gender)}')
+    result_details.append(f'语种 ：{return_language(staff.language)}')
+    alias_dict = return_staff_alias_dict(staff.aliases)
     result_details.append('马甲 ：')
     for _aid, _alias in alias_dict.items():
-        if _aid == char.main_alias:
+        if _aid == staff.main_alias:
             result_details.append(f' {_alias}  <常用>')
         else:
             result_details.append(f' {_alias}')
     result_details.append('')
 
     # 描述信息
-    if char.description:
+    if staff.description:
         # 将描述中的换行全部适配成为test2pic所用的换行形式
         result_details.append('描述(英)')
-        result_details.extend(add_description(char.description))
+        result_details.extend(add_description(staff.description))
 
     return result_details
 
