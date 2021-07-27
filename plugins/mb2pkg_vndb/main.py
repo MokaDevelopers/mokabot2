@@ -122,6 +122,8 @@ async def vndb_probe(stype: str, cmd: str, info: str) -> Union[str, MessageSegme
         if not search_result.items:
             if stype in ['char', 'cv']:
                 raise NoResultError('搜索无结果，请注意有可能需要在姓和名之间添加空格')
+            elif stype in ['gal']:
+                raise NoResultError('搜索无结果，请注意当作品名带符号时，不要忽略夹杂在文字中间的符号，或者可以考虑输入在第一个符号之前出现的文字')
             raise NoResultError('搜索无结果')
         elif stype == 'gal':
             for _item in search_result.items:
