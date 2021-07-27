@@ -205,10 +205,10 @@ async def return_vn_details(info: dict) -> tuple[Optional[str], list[str]]:
                     result_details.append(f' ({char["id"]}) {char["name"]}  (CV: {char["cv_alias"]} ({char["cv_id"]}))')
                 else:
                     result_details.append(f' ({char["id"]}) {char["name"]}')
+    result_details.append('')
 
     # 相关作品
     if vn.relations:
-        result_details.append('')
         result_details.append('相关作品')
         for relation_vn in vn.relations:
             relation = return_relation_between_vn(relation_vn.relation)
@@ -329,7 +329,6 @@ async def return_staff_details(info: dict) -> list[str]:
         description = [_ for _ in char.description.split('\n') if _]
         result_details.append('描述(英)')
         result_details.extend(description)
-        result_details.append('')
 
     return result_details
 
@@ -355,8 +354,8 @@ def return_fin_stype(stype: str) -> str:
 def return_relation_between_vn(relation: str) -> str:
     """返回relation的实际含义"""
     return {
-        'seq': '续作　　',  # Sequel
-        'preq': '前作　　',  # Prequel
+        'seq': '　续作　',  # Sequel
+        'preq': '　前作　',  # Prequel
         'set': '同一设定',  # Same setting
         'alt': '替代版本',  # Alternative version
         'char': '角色客串',  # Shares characters
@@ -364,7 +363,7 @@ def return_relation_between_vn(relation: str) -> str:
         'par': '主线剧情',  # Parent story
         'ser': '同一系列',  # Same series
         'fan': 'FanDisc',  # Fandisc
-        'orig': '原作　　',  # Original game
+        'orig': '　原作　',  # Original game
     }[relation]
 
 
