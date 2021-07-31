@@ -378,7 +378,7 @@ def return_sex_of_char(sex: str) -> str:
 def return_role_in_vn(role: str) -> str:
     """返回角色身份的实际含义"""
     return {
-        'main': '主人公　',
+        'main': ' 主人公 ',
         'primary': '主要角色',
         'side': '次要角色',
         'appears': '其他出场',
