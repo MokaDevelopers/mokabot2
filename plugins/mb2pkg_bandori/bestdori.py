@@ -495,6 +495,7 @@ async def make_chart_excel() -> str:
     tag_map = {
         'normal': 'Original',  # 原唱
         'anime': 'Cover',  # 翻唱
+        'tie_up': 'Extra',  # tie up
     }
 
     book = Workbook()
