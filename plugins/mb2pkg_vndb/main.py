@@ -15,7 +15,6 @@ from .client import VNDB
 from .config import Config
 from .data_model import SearchResult, StaffItemsBasic, CharItemsBasic, VNItemsBasic, VNInfo, Char4VNsInfo, CharInfo, StaffInfo
 from .exceptions import *
-from .exceptions import VndbError
 
 match_vndb = on_command('vndb', priority=5)
 
