@@ -3,7 +3,6 @@ from typing import Optional
 
 import nonebot
 
-
 USERDIR = nonebot.get_driver().config.userdata_absdir
 GROUPDIR = nonebot.get_driver().config.groupdata_absdir
 
