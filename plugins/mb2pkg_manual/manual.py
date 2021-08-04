@@ -40,6 +40,10 @@ HELP = {
         '【vndb】vndb数据库相关功能指令',
         '    命令示范：man vndb',
         '',
+        '【SakuraiSenrin】另一个bot',
+        '    命令示范：man SakuraiSenrin',
+        '    命令示范：man senrin',
+        '',
         '【RSS】ELF_RSS2相关功能指令',
         '    命令示范：man rss',
     ],
@@ -313,6 +317,18 @@ HELP = {
         '【查看所有别名】　alias -p',
         '【删除别名】　　　unalias [别名]',
         '【删除所有别名】　unalias -a',
+    ],
+    'SakuraiSenrin': [
+        '模块组：SakuraiSenrin',
+        '',
+        '【随机gal】从恋爱游戏网随机推荐一个gal',
+        '    命令示范：随机gal',
+        '',
+        '【随意一个tag的gal】根据tag随机推荐一个gal',
+        '    命令示范：随机gal 百合',
+        '',
+        '【taglist】查看tag列表',
+        '    命令示范：taglist',
     ]
 }
 
@@ -360,6 +376,9 @@ async def moka_manual_handle(bot: Bot, event: MessageEvent):
     elif args in ['vndb']:
         savepath = os.path.join(temp_absdir, 'help_vndb.jpg')
         await draw_image(HELP['VNDB'], savepath)
+    elif args in ['senrin', 'SakuraiSenrin']:
+        savepath = os.path.join(temp_absdir, 'help_senrin.jpg')
+        await draw_image(HELP['SakuraiSenrin'], savepath)
     elif args in ['manager']:
         msg = '请参考该在线文档：\nhttps://github.com/nonepkg/nonebot-plugin-manager/blob/master/README.md'
     elif args in ['rss']:
