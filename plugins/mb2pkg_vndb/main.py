@@ -47,6 +47,11 @@ with open(aid_csv, 'r', encoding='utf-8') as f_aid_csv:
     for line in lines:
         aid[line[1]] = line[3] or line[2]
 log.debug(f'本地vid、cid和aid已加载，版本{local_vndb_timestamp}')
+# 注：目前不更新vid、cid和aid不会影响插件主要功能正常使用，只会影响以下方面：
+# vid: 影响char指令时，找到的角色的相关作品
+# cid: 不影响任何东西
+# aid: 影响char指令时，角色的相关作品所对应的CV；
+#      影响gal指令查询时，作品的人物列表所对应的CV；
 
 
 @match_vndb.handle()
