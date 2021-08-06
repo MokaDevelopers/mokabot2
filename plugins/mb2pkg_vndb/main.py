@@ -282,11 +282,11 @@ async def return_char_details(info: dict) -> tuple[Optional[str], list[str]]:
             bust = char.bust or '?'
             waist = char.waist or '?'
             hip = char.hip or '?'
-            result_details.append(f' 三围(B/W/H)： {bust}/{waist}/{hip}')
+            result_details.append(f' 三围(B/W/H)： {bust}/{waist}/{hip} cm')
         if char.height:
-            result_details.append(f' 身高： {char.height}')
+            result_details.append(f' 身高： {char.height} cm')
         if char.weight:
-            result_details.append(f' 体重： {char.weight}')
+            result_details.append(f' 体重： {char.weight} kg')
         if char.cup_size:
             result_details.append(f' 罩杯： {char.cup_size.upper()}')
         result_details.append('')
