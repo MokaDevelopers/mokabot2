@@ -8,6 +8,7 @@ from nonebot.adapters.cqhttp import MessageEvent, MessageSegment
 from public_module.mb2pkg_test2pic import draw_image
 
 match_moka_manual = on_command('man', aliases={'manual'}, priority=5)
+match_moka_deprecated_help = on_command('help', priority=5)
 match_moka_pravacy = on_command('moka隐私声明', priority=5)
 
 
@@ -401,4 +402,6 @@ async def moka_pravacy_handle(bot: Bot, event: MessageEvent):
     await bot.send(event, msg)
 
 
-# TODO 重新整理man指令
+@match_moka_deprecated_help.handle()
+async def moka_deprecated_help_handle(bot: Bot, event: MessageEvent):
+    await bot.send(event, 'moka现已使用man（即manual）指令取代弃用的help指令，以避免和其他bot冲突。')
