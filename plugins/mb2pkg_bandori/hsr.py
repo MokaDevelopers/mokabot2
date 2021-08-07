@@ -8,7 +8,7 @@ from .config import Config
 
 match_steeto_hsr = on_command('hsr表', priority=5)
 
-STEETOHSR = os.path.join(Config().steeto_hsr_absdir, 'steeto_hsr.png')
+STEETOHSR = os.path.join(Config().steeto_hsr_absdir, 'steeto_hsr.jpg')
 
 
 @match_steeto_hsr.handle()
