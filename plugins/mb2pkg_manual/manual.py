@@ -399,3 +399,6 @@ async def moka_pravacy_handle(bot: Bot, event: MessageEvent):
     await draw_image(PRIVACY, savepath)
     msg = MessageSegment.image(file=f'file:///{savepath}')
     await bot.send(event, msg)
+
+
+# TODO 重新整理man指令
