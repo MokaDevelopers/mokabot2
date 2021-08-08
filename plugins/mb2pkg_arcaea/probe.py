@@ -113,8 +113,9 @@ async def arc_probe_handle(bot: Bot, event: MessageEvent):
         log.error(msg)
     except NotFindFriendError as e:
         close_str = f'你的实际好友名是{" ".join(e.close_name)}吗？' if e.close_name else ''
-        msg = f'在所有的查询用账号中都找不到该用户{e.friend_name}，请确认您的用户名输入正确（包括大小写），若不正确请使用"man arc"重新设置\n' \
+        msg = f'在所有的查询用账号中都找不到该用户{e.friend_name}，请确认您的用户名输入正确（包括大小写），若不正确请使用"man arc"查看如何重新设置\n' \
               f'如果确认正确则可能是开发者尚未添加你到查分器好友列表中，请等待开发者添加。\n' \
+              f'另外请确认你的好友码是{e.arc_friend_id}，如果该好友码和你的用户名不对应甚至查无此人，开发者将没有任何办法添加你为好友，若不正确也请使用"man arc"查看如何重新设置\n' \
               f'{close_str}'
         log.error(msg)
     except NotBindFriendNameError:
@@ -416,11 +417,12 @@ async def arc_probe_force(friend_id: Union[str, int],
     return result
 
 
-async def arc_probe_webapi(friend_name: str) -> ProberResult:
+async def arc_probe_webapi(friend_name: str, arc_friend_id: str) -> ProberResult:
     """
     使用webapi查分方法查询玩家最近歌曲
 
     :param friend_name: 好友名，用于对比确认是所查询的好友
+    :param arc_friend_id: 好友码，用于raise NotFindFriendError时带参数
     :return: 含userinfo和scores的字典
     """
 
@@ -448,7 +450,7 @@ async def arc_probe_webapi(friend_name: str) -> ProberResult:
                     close_name_list.append(_item['name'])
 
             # 该查询用账号的所有好友均无该用户的好友，换下一个号，此处应该写continue，但是放在末尾写不写都无所谓
-    raise NotFindFriendError(friend_name, close_name_list)
+    raise NotFindFriendError(friend_name, close_name_list, arc_friend_id)
 
 
 def qq_to_userid(qq: int) -> str:
@@ -590,7 +592,7 @@ async def make_arcaea_result(qq: int, userid: Union[str, int],
         elif enable_probe_webapi:
             if myqq.arc_friend_name is None:
                 raise NotBindFriendNameError
-            arcaea_data = await arc_probe_webapi(myqq.arc_friend_name)
+            arcaea_data = await arc_probe_webapi(myqq.arc_friend_name, myqq.arc_friend_id)
         else:
             raise AllProberUnavailableError
         # 当指定了song_index时，指定歌曲的成绩在scores里，此处需要转换到recent里，而scores列表必须清空
