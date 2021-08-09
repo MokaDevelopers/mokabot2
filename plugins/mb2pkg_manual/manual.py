@@ -45,6 +45,10 @@ HELP = {
         '    命令示范：man SakuraiSenrin',
         '    命令示范：man senrin',
         '',
+        '【maimaiDX】另一个bot(即原来的xybot)',
+        '    命令示范：man maimai',
+        '    命令示范：man mm',
+        '',
         '【RSS】ELF_RSS2相关功能指令',
         '    命令示范：man rss',
     ],
@@ -330,6 +334,20 @@ HELP = {
         '',
         '【taglist】查看tag列表',
         '    命令示范：taglist',
+    ],
+    'MAIMAIDX': [
+        '模块组：mai_bot',
+        '',
+        '可用命令如下：',
+        '今日舞萌 查看今天的舞萌运势',
+        'XXXmaimaiXXX什么 随机一首歌',
+        '随个[dx/标准][绿黄红紫白]<难度> 随机一首指定条件的乐曲',
+        '查歌<乐曲标题的一部分> 查询符合条件的乐曲',
+        '[绿黄红紫白]id<歌曲编号> 查询乐曲信息或谱面信息',
+        '<歌曲别名>是什么歌 查询乐曲别名对应的乐曲',
+        '定数查歌 <定数>  查询定数对应的乐曲',
+        '定数查歌 <定数下限> <定数上限>',
+        'mai分数线 <难度+歌曲id> <分数线> 详情请输入“mai分数线 帮助”查看',
     ]
 }
 
@@ -384,6 +402,9 @@ async def moka_manual_handle(bot: Bot, event: MessageEvent):
         msg = '请参考该在线文档：\nhttps://github.com/nonepkg/nonebot-plugin-manager/blob/master/README.md'
     elif args in ['rss']:
         msg = '请参考该在线文档：\nhttps://github.com/Quan666/ELF_RSS'
+    elif args in ['maimai', 'mm']:
+        savepath = os.path.join(temp_absdir, 'help_maimai.jpg')
+        await draw_image(HELP['MAIMAIDX'], savepath)
     else:
         savepath = os.path.join(temp_absdir, 'help.jpg')
         await draw_image(HELP['INTRODUCTION'], savepath)

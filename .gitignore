@@ -145,3 +145,6 @@ config.py
 
 # geckodriver
 geckodriver.exe
+
+# mai-bot
+plugins/mai_bot/src/static
