@@ -404,7 +404,7 @@ async def arc_probe_force(friend_id: Union[str, int],
             for item in result['scores'] + result['userinfo']['recent_score']:
                 # noinspection PyTypeChecker
                 score_song_id: str = item['song_id']
-                if not result['songtitle'].__contains__(score_song_id):
+                if score_song_id not in result['songtitle']:
                     result['songtitle'][score_song_id] = {'en': '<id> ' + score_song_id}
 
     except Exception as e:
