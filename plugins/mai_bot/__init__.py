@@ -10,4 +10,5 @@ from . import *
 2、将所有open类函数中的路径从src改为plugins/mai_bot/src
 3、删除src/plugins/public.py，然后将其中的帮助函数移动到mb2pkg_manual模块
 4、因"分数线"指令和mb2pkg_bandori指令重名，因此将mai-bot中的分数线指令改为"mai分数线"
+5、将所有文件夹改写成python包的形式，以方便nonebot2导入
 """
