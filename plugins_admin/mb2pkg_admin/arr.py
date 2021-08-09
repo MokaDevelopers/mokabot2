@@ -1,7 +1,7 @@
 """
 mokabot反重复请求模块(mokabot Anti Repeated Requests Module)是部署于mokabot的功能性Hook
 这个模块将在Event上报到nonebot2时检测该Event的发送者是否在cd时间内发送了相同消息
-如果是相同的消息，ARR模块将会阻断的传播
+如果是相同的消息，ARR模块将会阻断传播
 """
 
 import time

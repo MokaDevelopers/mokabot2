@@ -438,7 +438,7 @@ async def arc_probe_webapi(friend_name: str, arc_friend_id: str) -> ProberResult
             # 为了加快查分速度，并减少无意义登录次数（重点），将会检查用户名到查分用账号的映射表
             # 分为两个情况：
             # 1、如果用户名在映射表中，那么将会快进到对应的查分用账号
-            # 2、如果用户名不再映射表中，那么会逐个查询查分用账号，同时更新用户名到查分用账号的映射表
+            # 2、如果用户名不再在射表中，那么会逐个查询查分用账号，同时更新用户名到查分用账号的映射表
             if friend_name in webapi_user2acc_map:
                 if _username != webapi_user2acc_map[friend_name]:
                     log.debug(f'已发现{friend_name}用户在查分器{webapi_user2acc_map[friend_name]}，将会跳过{_username}查分器')
