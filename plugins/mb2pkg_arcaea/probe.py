@@ -39,6 +39,7 @@ ProberResult = dict[str, Union[list[dict[str, dict]], dict[str, dict]]]
 
 enable_probe_force = True
 enable_probe_webapi = True
+webapi_user2acc_map = {}  # 用来存储用户名到查询用账号的映射
 
 
 @match_arc_probe.handle()
@@ -429,19 +430,33 @@ async def arc_probe_webapi(friend_name: str, arc_friend_id: str) -> ProberResult
     result = {'userinfo': {},
               'scores': []}
     close_name_list = []
+    global webapi_user2acc_map
 
     for _username, _password in WEBAPI_ACC_LIST:
         async with aiohttp.ClientSession() as session:
+
+            # 为了加快查分速度，并减少无意义登录次数（重点），将会检查用户名到查分用账号的映射表
+            # 分为两个情况：
+            # 1、如果用户名在映射表中，那么将会快进到对应的查分用账号
+            # 2、如果用户名不再映射表中，那么会逐个查询查分用账号，同时更新用户名到查分用账号的映射表
+            if friend_name in webapi_user2acc_map:
+                if _username != webapi_user2acc_map[friend_name]:
+                    log.debug(f'已发现{friend_name}用户在查分器{webapi_user2acc_map[friend_name]}，将会跳过{_username}查分器')
+                    continue
+
             login_request = {'email': f'{_username}', 'password': f'{_password}'}
             login_response = await session.post(url='https://webapi.lowiro.com/auth/login', data=login_request, timeout=5)
+
             log.debug(await login_response.json())
             if not (await login_response.json())['isLoggedIn']:
                 log.warning(f'webapi登录失败，所用查询账号为{_username}。登录返回json：{await login_response.json()}')
                 continue  # 还没遇到过，不过我感觉如果遇到了那就说明是被封号了
             log.debug(f'webapi登录成功，所用查询账号为{_username}')
+
             user_me_response = await session.get(url='https://webapi.lowiro.com/webapi/user/me', timeout=5)
             friend_list: list = (await user_me_response.json())['value']['friends']
             for _item in friend_list:
+                webapi_user2acc_map[_item['name']] = _username  # 更新用户名到查分用账号的映射表
                 if friend_name == _item['name']:
                     result['userinfo'] = _item
                     log.debug(result)
