@@ -698,6 +698,7 @@ async def draw_b30(arcaea_data, force=False):
     recent = []
     clear_type = ['Track Lost', 'Normal Clear', 'Full Recall', 'Pure Memory', 'Easy Clear', 'Hard Clear']
     difficulty = ['PST', 'PRS', 'FTR', 'BYD']
+    global songtitle
 
     if force:
         head_from = '数据来源：mokabot Arcaea强制查询'
@@ -755,7 +756,13 @@ async def draw_b30(arcaea_data, force=False):
     for _item in scores + userinfo['recent_score']:
         score_song_id: str = _item['song_id']
         if score_song_id not in songtitle:
-            songtitle[score_song_id] = {'en': '<id> ' + score_song_id}
+            songtitle[score_song_id] = {
+                'en': '<id> ' + score_song_id,
+                'artist': 'Unknow Artist',
+                'side': 0,
+                'remote_dl': False
+            }
+            log.warn(f'{score_song_id}歌曲未找到')
 
     # 为保证独立性，上一次游玩歌曲的定数为主动反向计算
     last_const = calc_last_const(last_song_data['score'], last_song_data['rating'])
