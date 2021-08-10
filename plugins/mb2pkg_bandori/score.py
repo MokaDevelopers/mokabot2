@@ -8,7 +8,7 @@ from nonebot import on_command
 from nonebot.adapters import Bot
 from nonebot.adapters.cqhttp import MessageSegment, MessageEvent
 
-from public_module.mb2pkg_mokalogger import Log
+from public_module.mb2pkg_mokalogger import getlog
 from public_module.mb2pkg_public_plugin import now_datetime
 from public_module.mb2pkg_test2pic import draw_image
 from .config import Config
@@ -18,7 +18,7 @@ score_res_absdir = Config().score_res_absdir
 score_data_absdir = Config().score_data_absdir
 song_map_path = os.path.join(score_data_absdir, 'song_map.json')
 
-log = Log(__name__).getlog()
+log = getlog()
 
 match_score_list = on_command('谱面列表', aliases={'铺面列表', '谱面列表ex', '铺面列表ex'}, priority=5)
 match_score_find = on_command('查询谱面', aliases={'铺面查询', '谱面查询', '查询铺面'}, priority=5)

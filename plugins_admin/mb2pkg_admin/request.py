@@ -7,9 +7,9 @@ from nonebot.adapters.cqhttp import Event, FriendRequestEvent, GroupRequestEvent
     MessageSegment
 from nonebot.typing import T_State
 
-from public_module.mb2pkg_mokalogger import Log
+from public_module.mb2pkg_mokalogger import getlog
 
-log = Log(__name__).getlog()
+log = getlog()
 
 superusers = nonebot.get_driver().config.superusers
 

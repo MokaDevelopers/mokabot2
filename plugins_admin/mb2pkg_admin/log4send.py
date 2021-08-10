@@ -5,9 +5,9 @@ from nonebot.adapters.cqhttp import MessageEvent, Event
 from nonebot.matcher import Matcher
 from nonebot.typing import T_State
 
-from public_module.mb2pkg_mokalogger import Log
+from public_module.mb2pkg_mokalogger import getlog
 
-log = Log(__name__).getlog()
+log = getlog()
 
 
 async def log_after_bot_send(bot: Bot, exception: Optional[Exception], api: str, data: Dict[str, Any], result: Any):

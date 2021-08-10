@@ -5,12 +5,12 @@ import time
 import nonebot
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 
-from public_module.mb2pkg_mokalogger import Log
+from public_module.mb2pkg_mokalogger import getlog
 from public_module.mb2pkg_public_plugin import get_time, now_datetime, datediff
 from public_module.mb2pkg_test2pic import str_width, draw_image
 from .config import Config
 
-log = Log(__name__).getlog()
+log = getlog()
 
 temp_absdir = nonebot.get_driver().config.temp_absdir
 SONGLIST = Config().songlist_json_abspath

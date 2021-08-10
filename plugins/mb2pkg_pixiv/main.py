@@ -7,10 +7,10 @@ from nonebot import require
 from pixivpy_async import AppPixivAPI
 from pixivpy_async.error import AuthCredentialsError
 
-from public_module.mb2pkg_mokalogger import Log
+from public_module.mb2pkg_mokalogger import getlog
 from .config import Config
 
-log = Log(__name__).getlog()
+log = getlog()
 
 temp_absdir = nonebot.get_driver().config.temp_absdir
 PIXIV_ACT = Config().pixiv_username

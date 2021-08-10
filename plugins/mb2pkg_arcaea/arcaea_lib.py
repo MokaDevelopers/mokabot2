@@ -42,10 +42,10 @@ import aiohttp
 
 # If you don't use mokalogger, you can replace it with "import logging as log",
 # or any other logging method you are familiar with or comfortable with.
-from public_module.mb2pkg_mokalogger import Log
+from public_module.mb2pkg_mokalogger import getlog
 from .config import Config
 
-log = Log(__name__).getlog()
+log = getlog()
 
 # Your arc_static_uuid is just a constant uuid, use "str(uuid.uuid4()).upper()" to generate one and save it.
 DEFAULT_UUID = Config().arc_static_uuid

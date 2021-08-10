@@ -15,7 +15,7 @@ from nonebot.adapters.cqhttp import MessageSegment, GroupMessageEvent, permissio
 from selenium import webdriver
 
 from public_module.mb2pkg_database import Group
-from public_module.mb2pkg_mokalogger import Log
+from public_module.mb2pkg_mokalogger import getlog
 from public_module.mb2pkg_public_plugin import get_time
 from .config import Config
 
@@ -26,7 +26,7 @@ match_enable_notice = on_command('关闭国服公告',
                                  priority=5,
                                  permission=su.SUPERUSER | permission.GROUP_ADMIN | permission.GROUP_OWNER,)
 
-log = Log(__name__).getlog()
+log = getlog()
 
 temp_absdir = nonebot.get_driver().config.temp_absdir
 env = nonebot.get_driver().config.environment

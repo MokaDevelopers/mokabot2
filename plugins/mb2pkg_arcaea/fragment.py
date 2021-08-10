@@ -7,7 +7,7 @@ from nonebot.adapters import Bot
 from nonebot.adapters.cqhttp import MessageEvent, MessageSegment
 
 from public_module.mb2pkg_database import QQ
-from public_module.mb2pkg_mokalogger import Log
+from public_module.mb2pkg_mokalogger import getlog
 from public_module.mb2pkg_public_plugin import datediff, get_time
 from public_module.mb2pkg_test2pic import draw_image
 from .arcaea_lib import Arcaea, APP_VERSION
@@ -15,7 +15,7 @@ from .exceptions import *
 
 match_free_stamina = on_command('arc获取体力', aliases={'arc嫖体力'}, priority=5)
 
-log = Log(__name__).getlog()
+log = getlog()
 
 temp_absdir = nonebot.get_driver().config.temp_absdir
 

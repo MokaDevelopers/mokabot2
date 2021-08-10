@@ -16,7 +16,7 @@ from nonebot.adapters import Bot
 from nonebot.adapters.cqhttp import MessageSegment, MessageEvent
 
 from public_module.mb2pkg_database import QQ
-from public_module.mb2pkg_mokalogger import Log
+from public_module.mb2pkg_mokalogger import getlog
 from .arcaea_lib import APP_VERSION, Arcaea
 from .config import Config
 from .exceptions import *
@@ -25,7 +25,7 @@ from .make_score_image import moe_draw_last, guin_draw_last, bandori_draw_last, 
 match_arc_probe = on_command('arc查询', aliases={'ARC查询', 'av查询', '查询arc', '查询ARC', 'arc强制查询', 'arc最近', 'arc最近查询', 'arc查询最近'}, priority=5)
 match_arc_result_setting = on_command('arc查分样式', priority=5)
 
-log = Log(__name__).getlog()
+log = getlog()
 
 QUIRE_ACT = Config().prober_username
 QUIRE_PWD = Config().prober_password

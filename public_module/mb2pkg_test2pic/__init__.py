@@ -3,10 +3,10 @@ import string
 
 from PIL import Image, ImageDraw, ImageFont
 
-from public_module import mb2pkg_mokalogger
+from public_module.mb2pkg_mokalogger import getlog
 from .config import Config
 
-log = mb2pkg_mokalogger.Log(__name__).getlog()
+log = getlog()
 
 VERSION = Config().VERSION
 FONTPATH = os.path.join(Config().font_absdir, 'NotoSansMonoCJKsc-Regular.otf')

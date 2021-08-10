@@ -9,7 +9,7 @@ from nonebot import on_command
 from nonebot.adapters import Bot
 from nonebot.adapters.cqhttp import MessageSegment, MessageEvent
 
-from public_module.mb2pkg_mokalogger import Log
+from public_module.mb2pkg_mokalogger import getlog
 from public_module.mb2pkg_test2pic import draw_image
 from .client import VNDB
 from .config import Config
@@ -18,7 +18,7 @@ from .exceptions import *
 
 match_vndb = on_command('vndb', priority=5)
 
-log = Log(__name__).getlog()
+log = getlog()
 
 temp_absdir = nonebot.get_driver().config.temp_absdir
 vndb_username, vndb_password = Config().vndb_account

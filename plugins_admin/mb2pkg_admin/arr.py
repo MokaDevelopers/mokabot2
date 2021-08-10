@@ -12,10 +12,10 @@ from nonebot.exception import IgnoredException
 from nonebot.matcher import Matcher
 from nonebot.typing import T_State
 
-from public_module.mb2pkg_mokalogger import Log
+from public_module.mb2pkg_mokalogger import getlog
 from .config import Config
 
-log = Log(__name__).getlog()
+log = getlog()
 
 arr_table: dict[int, tuple[float, str]] = {}  # {QQ号: (上一次发送的时间, 上一次发送的原始消息), ...}
 default_cd = Config().default_cd

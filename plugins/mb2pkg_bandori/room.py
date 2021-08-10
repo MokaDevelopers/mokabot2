@@ -10,11 +10,11 @@ from nonebot.adapters import Bot
 from nonebot.adapters.cqhttp import MessageSegment, MessageEvent
 from nonebot.rule import to_me
 
-from public_module.mb2pkg_mokalogger import Log
+from public_module.mb2pkg_mokalogger import getlog
 from public_module.mb2pkg_public_plugin import now_datetime
 from public_module.mb2pkg_test2pic import draw_image, long_line, str_width
 
-log = Log(__name__).getlog()
+log = getlog()
 
 temp_absdir = nonebot.get_driver().config.temp_absdir
 

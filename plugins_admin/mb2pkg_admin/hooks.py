@@ -2,13 +2,13 @@ from nonebot import get_driver
 from nonebot.adapters import Bot
 from nonebot.message import run_postprocessor, event_postprocessor, event_preprocessor, run_preprocessor
 
-from public_module.mb2pkg_mokalogger import Log
+from public_module.mb2pkg_mokalogger import getlog
 from .arr import arr
 from .log4send import log_after_bot_send, log_before_exec_command
 from .nonebot_plugin_alias.handler import run_alias
 from .nonebot_plugin_manager import check_plugin_permission
 
-log = Log(__name__).getlog()
+log = getlog()
 
 driver = get_driver()
 

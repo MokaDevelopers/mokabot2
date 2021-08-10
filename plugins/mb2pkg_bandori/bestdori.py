@@ -14,7 +14,7 @@ from nonebot.adapters.cqhttp import MessageSegment, MessageEvent
 from openpyxl import Workbook
 from tenacity import retry, stop_after_attempt
 
-from public_module.mb2pkg_mokalogger import Log
+from public_module.mb2pkg_mokalogger import getlog
 from public_module.mb2pkg_public_plugin import datediff, get_time, now_datetime
 from public_module.mb2pkg_test2pic import draw_image
 from .config import Config
@@ -22,7 +22,7 @@ from .config import Config
 match_bandori_track = on_command('分数线', priority=5)
 match_bandori_event_list = on_command('活动列表', priority=5)
 
-log = Log(__name__).getlog()
+log = getlog()
 
 temp_absdir = nonebot.get_driver().config.temp_absdir
 FONTPATH = os.path.join(Config().font_absdir, 'NotoSansMonoCJKsc-Regular.otf')

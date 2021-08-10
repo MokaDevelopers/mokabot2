@@ -5,10 +5,10 @@ from nonebot import on_command
 from nonebot.adapters import Bot
 from nonebot.adapters.cqhttp import MessageEvent
 
-from public_module.mb2pkg_mokalogger import Log
+from public_module.mb2pkg_mokalogger import getlog
 from .exceptions import ConstError
 
-log = Log(__name__).getlog()
+log = getlog()
 
 match_arc_calc = on_command('arc计算', priority=5)
 
