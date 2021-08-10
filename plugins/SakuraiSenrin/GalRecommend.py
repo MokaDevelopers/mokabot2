@@ -8,6 +8,7 @@
     4、将Random_Gal响应器无参数等价视为添加random参数，并将有参数等价视为tag
     5、取消命令前缀#
     6、修改数据目录为data/SakuraiSenrin而不是DataBase
+    7、将路径中的\\换成/，以避免Linux环境下在bot目录下生成以路径为文件名的文件
 
     GalRecommend包含的功能
     1.来自恋爱游戏网的随机Galgame推荐
@@ -33,9 +34,9 @@ async def get_img(pic_url):
     async with AsyncClient(proxies={}) as Client:
         _get_sample = await Client.get(url=pic_url)
         get_sample = _get_sample.read()
-        with open(file=os.path.join(os.getcwd(), 'data\\SakuraiSenrin\\SamplePicGal.jpg'), mode='wb') as WS:
+        with open(file=os.path.join(os.getcwd(), 'data/SakuraiSenrin/SamplePicGal.jpg'), mode='wb') as WS:
             WS.write(get_sample)
-    pic_url = os.path.join(os.getcwd(), 'data\\SakuraiSenrin\\SamplePicGal.jpg')
+    pic_url = os.path.join(os.getcwd(), 'data/SakuraiSenrin/SamplePicGal.jpg')
     return pic_url
 
 
