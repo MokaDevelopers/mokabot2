@@ -400,13 +400,7 @@ async def arc_probe_force(friend_id: Union[str, int],
 
         # scores生成结束
 
-            # score列表复查，对所有没song_id的谱面，使其歌曲名直接使用song_id
-            # noinspection PyTypeChecker
-            for item in result['scores'] + result['userinfo']['recent_score']:
-                # noinspection PyTypeChecker
-                score_song_id: str = item['song_id']
-                if score_song_id not in result['songtitle']:
-                    result['songtitle'][score_song_id] = {'en': '<id> ' + score_song_id}
+        # 因est查分器也不再提供songtitle，因此决定将score列表复查合并到制图功能make_score_image
 
     except Exception as e:
         log.exception(e)

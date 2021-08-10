@@ -749,6 +749,14 @@ async def draw_b30(arcaea_data, force=False):
     pure = last_song_data['perfect_count']
     far = last_song_data['near_count']
     lost = last_song_data['miss_count']
+
+    # 当arcaea更新而moka这边尚未更新songlist.json时，用id临时取代歌名
+    # 该临时取代将会持续到本次mokabot关闭
+    for _item in scores + userinfo['recent_score']:
+        score_song_id: str = _item['song_id']
+        if score_song_id not in songtitle:
+            songtitle[score_song_id] = {'en': '<id> ' + score_song_id}
+
     # 为保证独立性，上一次游玩歌曲的定数为主动反向计算
     last_const = calc_last_const(last_song_data['score'], last_song_data['rating'])
     spf = round(1e7 / (pure + far + lost) / 2)
