@@ -22,6 +22,8 @@ from .config import Config
 from .exceptions import *
 from .make_score_image import moe_draw_last, guin_draw_last, bandori_draw_last, draw_b30, song_list
 
+# TODO 其实可以考虑用pydantic作为模型而不再使用字典
+
 match_arc_probe = on_command('arc查询', aliases={'ARC查询', 'av查询', '查询arc', '查询ARC', 'arc强制查询', 'arc最近', 'arc最近查询', 'arc查询最近'}, priority=5)
 match_arc_result_setting = on_command('arc查分样式', priority=5)
 
