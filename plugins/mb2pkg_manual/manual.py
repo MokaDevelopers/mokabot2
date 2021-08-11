@@ -45,7 +45,7 @@ HELP = {
         '    命令示范：man SakuraiSenrin',
         '    命令示范：man senrin',
         '',
-        '【maimaiDX】另一个bot(即原来的xybot)',
+        '【maimaiDX】另一个bot(指千雪、Xyb)',
         '    命令示范：man maimai',
         '    命令示范：man mm',
         '',
