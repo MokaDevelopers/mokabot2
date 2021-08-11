@@ -91,12 +91,12 @@ async def youtube_api(url: str, method: str, params: dict[str, str]) -> dict[str
 
 def parse_youtudotbe(url: str) -> str:
     """解析 youtu.be 系列视频"""
-    return re.search(r'youtu\.be/(\w+)', url).groups()[0]
+    return re.search(r'youtu\.be/([^?]+)', url).groups()[0]
 
 
 def parse_watchv(url: str) -> str:
     """解析 youtube.com/watch?v= 系列视频"""
-    return re.search(r'youtube\.com/watch\?v=(\w+)', url).groups()[0]
+    return re.search(r'youtube\.com/watch\?v=([^&]+)', url).groups()[0]
 
 
 def formatter_video(data: dict) -> Union[str, Message, MessageSegment]:
