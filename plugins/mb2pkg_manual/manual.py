@@ -49,6 +49,9 @@ HELP = {
         '    命令示范：man maimai',
         '    命令示范：man mm',
         '',
+        '【URL】URL解析器相关功能指令',
+        '    命令示范：man url',
+        '',
         '【RSS】ELF_RSS2相关功能指令',
         '    命令示范：man rss',
     ],
@@ -65,6 +68,7 @@ HELP = {
         '【插件管理】动态管理插件',
         '动态管理每个插件的权限',
         '    命令示范：man manager',
+        '    　　　　　man npm',
         '',
         '【隐私声明】moka会做什么，不会做什么',
         '实际上就是告诉你日志里都写了点啥',
@@ -349,6 +353,17 @@ HELP = {
         '定数查歌 <定数下限> <定数上限>',
         'mai分数线 <难度+歌曲id> <分数线> 详情请输入“mai分数线 帮助”查看',
         'b40 <XXX> 查询对应用户的b40',
+    ],
+    'URL': [
+        '模块组：mb2pkg_url_parse',
+        '',
+        '该模块尝试解析某些网站的url链接，例如bilibili',
+        '该模块可通过npm（nonebot_plugin_manager）关闭，具体请参考man npm',
+        '目前已经可以对以下网站的url提供解析：',
+        '1、哔哩哔哩',
+        '2、哔哩哔哩小程序',
+        '3、YouTube',
+        '更多网站的解析器正在开发之中...',
     ]
 }
 
@@ -399,7 +414,10 @@ async def moka_manual_handle(bot: Bot, event: MessageEvent):
     elif args in ['senrin', 'SakuraiSenrin']:
         savepath = os.path.join(temp_absdir, 'help_senrin.jpg')
         await draw_image(HELP['SakuraiSenrin'], savepath)
-    elif args in ['manager']:
+    elif args in ['url']:
+        savepath = os.path.join(temp_absdir, 'help_url.jpg')
+        await draw_image(HELP['URL'], savepath)
+    elif args in ['manager', 'npm']:
         msg = '请参考该在线文档：\nhttps://github.com/nonepkg/nonebot-plugin-manager/blob/master/README.md'
     elif args in ['rss']:
         msg = '请参考该在线文档：\nhttps://github.com/Quan666/ELF_RSS'

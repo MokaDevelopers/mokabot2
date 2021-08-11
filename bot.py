@@ -26,5 +26,4 @@ nonebot.load_plugin('mb2pkg_api')
 if __name__ == '__main__':
     nonebot.run()
 
-# TODO 加入youtube、twitter、pixiv、github、zhihu、tieba的解析
 # TODO 为所有mokabot2自研插件加入许可证和全部的readme.md后开源
