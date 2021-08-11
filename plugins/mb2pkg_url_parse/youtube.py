@@ -103,7 +103,12 @@ def formatter_video(data: dict) -> Union[str, Message, MessageSegment]:
     video = YouTubeVideoListResponse(**data).items[0].snippet
 
     dotx3_description = '...' if len(video.description) > 30 else ''
-    pic = MessageSegment.image(video.thumbnails['standard'].url) if 'standard' in video.thumbnails else None
+    if 'standard' in video.thumbnails:
+        pic = MessageSegment.image(video.thumbnails['standard'].url)
+    else:  # thumbnails字典没有standard大小封面的时候直接用剩余最大的那个作为封面
+        key = list(video.thumbnails)[-1]
+        pic = MessageSegment.image(video.thumbnails[key].url)
+
     # API返回的时间均为UTC时间，需要进行转换
     utc_now_stamp = time.mktime(datetime.utcnow().timetuple())
     publish_time_stamp = time.mktime(video.publishedAt.timetuple())
