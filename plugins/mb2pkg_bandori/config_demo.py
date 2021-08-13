@@ -14,6 +14,8 @@ class Config(BaseSettings):
     font_absdir: str = os.path.join(plugin_absdir, 'res/fonts')
     # steeto制作的hsr表文件夹
     steeto_hsr_absdir: str = os.path.join(plugin_absdir, 'res/steeto_hsr')
+    # 阿怪制作的hsr表文件夹
+    gao_ora_hsr_absdir: str = os.path.join(plugin_absdir, 'res/Gao_Ora_hsr')
     # 邦邦谱面文件夹
     score_res_absdir: str = os.path.join(plugin_absdir, 'res/score')
     # 邦邦谱面生成数据
