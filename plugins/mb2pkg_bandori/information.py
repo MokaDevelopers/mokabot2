@@ -70,7 +70,7 @@ async def job_send_game_notice():
                 for group in groups:
                     group_id = group['group_id']
                     mygroup = Group(group_id)
-                    if mygroup.__getattr__(news_xx) is None or mygroup.__getattr__(news_xx) != '0':
+                    if mygroup.__getattr__(news_xx) == '1':
                         for notice in notices:
                             msg = f'{Xfu}服新公告\n' \
                                   f'标题：{notice["title"]}\n' \
@@ -82,8 +82,9 @@ async def job_send_game_notice():
                                 log.error(f'发往<{group_id}>时发送失败，原因：{senderror}')
                             await asyncio.sleep(1)
                         await asyncio.sleep(10)
-                    else:
-                        log.warn(f'{group_id}设置{news_xx}参数为0，取消该群组发送{Xfu}服公告')
+                    # else:
+                    # 绕过log，因为群组太多
+                    #     log.warn(f'{group_id}设置{news_xx}参数为0或未设置，取消该群组发送{Xfu}服公告')
 
     except Exception as e:
         log.exception(e)

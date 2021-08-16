@@ -11,6 +11,7 @@ log = getlog()
 
 
 async def log_after_bot_send(bot: Bot, exception: Optional[Exception], api: str, data: Dict[str, Any], result: Any):
+    # TODO 邦邦公告时，若使用send_group_msg作为发送的api，则不会被记录，原因是api名称不一样
     if api == 'send_msg':
         # 因mai-bot会使用base64发送图片，导致整个图片base64被记入日志，因此在这里预处理
         fin_data = {}
