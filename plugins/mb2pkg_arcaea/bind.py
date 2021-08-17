@@ -1,5 +1,4 @@
 import os
-from typing import Any
 
 import aiohttp
 import nonebot
@@ -69,30 +68,9 @@ async def arc_check_bind_handle(bot: Bot, event: MessageEvent):
 
     if arg:  # 说明是检测查分器是否添加好友
         qq = int(arg)
-        result = await check_bind(qq)
-
-        arc_friend_id = result['arc_friend_id']
-        arc_friend_name = result['arc_friend_name']
-        status_add_friend = result['status_add_friend']
-        prober_username = result['prober_username']
-
-        msg = f'用户QQ：{qq}\n' \
-              f'arc好友码：{arc_friend_id}\n' \
-              f'arc用户名：{arc_friend_name}\n' \
-              f'arc查分器好友添加状态：{status_add_friend}\n' \
-              f'相应的查分器用户名：{prober_username}'
+        msg = await check_bind(qq)
     else:  # 说明是自检
-        result, same_name_list = await prober_self_check()
-        msg_list = ['arc查分器自检']
-        for _username, _info in result:
-            msg_list.append(f'{_username}  {_info}')
-        if same_name_list:  # 如果有用户重复添加到查分器
-            msg_list.append('')
-            msg_list.append('查分器重复添加用户列表')
-            for _friend_name, _prober_name in same_name_list:
-                msg_list.append(f'{_friend_name}  {_prober_name}')
-        savepath = os.path.join(temp_absdir, 'prober_self_check.jpg')
-        await draw_image(msg_list, savepath)
+        savepath = await prober_self_check()
         msg = MessageSegment.image(file=f'file:///{savepath}')
 
     await bot.send(event, msg)
@@ -115,14 +93,13 @@ def arc_bind_username(qq: int, username: str) -> None:
     log.info(f'已将QQ<{qq}>和Arcaea用户名<{username}>成功绑定')
 
 
-async def check_bind(qq: int) -> dict[str, Any]:
-    result = {}
+async def check_bind(qq: int) -> str:
     myqq = QQ(qq)
 
-    result['arc_friend_id'] = myqq.arc_friend_id
-    result['arc_friend_name'] = myqq.arc_friend_name
+    arc_friend_id = myqq.arc_friend_id
+    arc_friend_name = myqq.arc_friend_name
 
-    if myqq.arc_friend_name is not None:
+    if arc_friend_name is not None:
         for _username, _password in WEBAPI_ACC_LIST:
             async with aiohttp.ClientSession() as session:
                 login_request = {'email': f'{_username}', 'password': f'{_password}'}
@@ -135,24 +112,30 @@ async def check_bind(qq: int) -> dict[str, Any]:
                 user_me_response = await session.get(url='https://webapi.lowiro.com/webapi/user/me', timeout=5)
                 friend_list: list = (await user_me_response.json())['value']['friends']
                 for _item in friend_list:
-                    if result['arc_friend_name'] == _item['name']:
-                        result['prober_username'] = _username
-                        result['status_add_friend'] = '已添加好友'
+                    if arc_friend_name == _item['name']:
+                        prober_username = _username
+                        status_add_friend = '已添加好友'
                         break
                 else:
-                    result['prober_username'] = None
-                    result['status_add_friend'] = '已绑定用户名但未添加好友'
+                    prober_username = None
+                    status_add_friend = '已绑定用户名但未添加好友'
                     continue
                 break
                 # 该查询用账号的所有好友均无该用户的好友，换下一个号，此处应该写continue，但是放在末尾写不写都无所谓
     else:
-        result['prober_username'] = None
-        result['status_add_friend'] = '未设置用户名'
+        prober_username = None
+        status_add_friend = '未设置用户名'
 
-    return result
+    msg = f'用户QQ：{qq}\n' \
+          f'arc好友码：{arc_friend_id}\n' \
+          f'arc用户名：{arc_friend_name}\n' \
+          f'arc查分器好友添加状态：{status_add_friend}\n' \
+          f'相应的查分器用户名：{prober_username}'
+
+    return msg
 
 
-async def prober_self_check() -> tuple[list[tuple[str, str]], list[tuple[str, str]]]:
+async def prober_self_check() -> str:
     result = []
     all_name_list: list[tuple[str, str]] = []
     same_name_list: list[tuple[str, str]] = []
@@ -190,7 +173,18 @@ async def prober_self_check() -> tuple[list[tuple[str, str]], list[tuple[str, st
 
             same_name_list = check_same(all_name_list)
 
-    return result, same_name_list
+    msg_list = ['arc查分器自检']
+    for _username, _info in result:
+        msg_list.append(f'{_username}  {_info}')
+    if same_name_list:  # 如果有用户重复添加到查分器
+        msg_list.append('')
+        msg_list.append('查分器重复添加用户列表')
+        for _friend_name, _prober_name in same_name_list:
+            msg_list.append(f'{_friend_name}  {_prober_name}')
+    savepath = os.path.join(temp_absdir, 'prober_self_check.jpg')
+    await draw_image(msg_list, savepath)
+
+    return savepath
 
 
 def check_same(all_name_list: list[tuple[str, str]]):
