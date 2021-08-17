@@ -18,6 +18,7 @@ from nonebot.adapters.cqhttp import MessageSegment, MessageEvent
 from public_module.mb2pkg_database import QQ
 from public_module.mb2pkg_mokalogger import getlog
 from .arcaea_lib import APP_VERSION, Arcaea
+from .bind import return_this_prober_user_me
 from .config import Config
 from .exceptions import *
 from .make_score_image import moe_draw_last, guin_draw_last, bandori_draw_last, draw_b30, song_list
@@ -125,6 +126,8 @@ async def arc_probe_handle(bot: Bot, event: MessageEvent):
         msg = f'{s.user_id}未设置用于备用查分器的用户名（注意是用户名而非好友码），请使用"man arc"指令查看如何设置，设置后请等待开发者人工添加好友'
     except AllProberUnavailableError:
         msg = '主查分器和全部的备用查分器已经失效'
+    except WebapiProberLoginError as e:
+        msg = f'查分器使用webapi登陆失败：{e}'
     except Exception as e:
         msg = f'查询以异常状态结束（{e}），本次错误已经被记录，请重新查询。若反复出现此异常，可暂时先用查分器本体查询，或使用arc强制查询'
         log.exception(e)
@@ -440,17 +443,9 @@ async def arc_probe_webapi(friend_name: str, arc_friend_id: str) -> ProberResult
                     log.debug(f'已发现{friend_name}用户在查分器{webapi_user2acc_map[friend_name]}，将会跳过{_username}查分器')
                     continue
 
-            login_request = {'email': f'{_username}', 'password': f'{_password}'}
-            login_response = await session.post(url='https://webapi.lowiro.com/auth/login', data=login_request, timeout=5)
+            user_me_json = await return_this_prober_user_me(_username, _password, session)
 
-            log.debug(await login_response.json())
-            if not (await login_response.json())['isLoggedIn']:
-                log.warning(f'webapi登录失败，所用查询账号为{_username}。登录返回json：{await login_response.json()}')
-                continue  # 还没遇到过，不过我感觉如果遇到了那就说明是被封号了
-            log.debug(f'webapi登录成功，所用查询账号为{_username}')
-
-            user_me_response = await session.get(url='https://webapi.lowiro.com/webapi/user/me', timeout=5)
-            friend_list: list = (await user_me_response.json())['value']['friends']
+            friend_list: list = user_me_json['value']['friends']
             for _item in friend_list:
                 webapi_user2acc_map[_item['name']] = _username  # 更新用户名到查分用账号的映射表
                 if friend_name == _item['name']:

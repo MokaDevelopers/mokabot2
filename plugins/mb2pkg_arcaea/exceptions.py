@@ -79,6 +79,10 @@ class NotBindFriendNameError(RuntimeError):
     """(webapi)用户未设置用户名"""
 
 
+class WebapiProberLoginError(RuntimeError):
+    """(webapi)查分器无法登录"""
+
+
 class AllProberUnavailableError(RuntimeError):
     """全部的查分途径都挂了，字面意思"""
 
