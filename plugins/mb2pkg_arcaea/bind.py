@@ -136,7 +136,10 @@ async def check_bind(qq: int) -> str:
     if arc_friend_name is not None:
         for _username, _password in WEBAPI_ACC_LIST:
             async with aiohttp.ClientSession() as session:
-                user_me_json = await return_this_prober_user_me(_username, _password, session)
+                try:
+                    user_me_json = await return_this_prober_user_me(_username, _password, session)
+                except WebapiProberLoginError:
+                    pass
                 friend_list: list = user_me_json['value']['friends']
                 for _item in friend_list:
                     if arc_friend_name == _item['name']:
