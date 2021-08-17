@@ -293,6 +293,7 @@ async def prober_self_check_detail() -> str:
     for user in username_only_list:
         result.append(f'  {user["qq"]}  {user["username"]}')
     result.append('')
+
     result.extend(['已经绑定了好友码、用户名，但是在查分器里找不到的用户', '（qq | friend_id | username | name_typo?）'])
     for user in unadded_list:
         for arc_friend_name in all_name_dict:
@@ -303,9 +304,16 @@ async def prober_self_check_detail() -> str:
             close_name = ''
         result.append(f'  {user["qq"]}  {user["friend_id"]}  {user["username"]}  {close_name}')
     result.append('')
+
     result.extend(['只绑定了用户名，没有绑定好友码，但是在查分器有记录的用户', '（qq | username | prober_name）'])
     for user in username_in_prober_list:
         result.append(f'  {user["qq"]}  {user["username"]}  {user["prober_name"]}')
+    result.append('')
+
+    if failed_prober:
+        result.append('以下查分器已失效，请注意：')
+        for prober in failed_prober:
+            result.append(f'  {prober}')
 
     savepath = os.path.join(temp_absdir, 'prober_self_check_detail.jpg')
     await draw_image(result, savepath)
