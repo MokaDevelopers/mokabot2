@@ -358,12 +358,13 @@ HELP = {
         '模块组：mb2pkg_url_parse',
         '',
         '该模块尝试解析某些网站的url链接，例如bilibili',
-        '该模块可通过npm（nonebot_plugin_manager）关闭，具体请参考man npm',
+        '该模块可通过npm（nonebot_plugin_manager）关闭，如需关闭请使用以下指令：',
+        '    npm block mb2pkg_url_parse',
         '目前已经可以对以下网站的url提供解析：',
         '1、哔哩哔哩',
         '2、哔哩哔哩小程序',
         '3、YouTube',
-        '更多网站的解析器正在开发之中...',
+        '更多网站的解析器（知乎、贴吧、Twitter、Github等）正在开发之中...',
     ]
 }
 

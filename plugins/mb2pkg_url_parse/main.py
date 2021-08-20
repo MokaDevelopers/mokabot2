@@ -5,6 +5,7 @@ from nonebot.adapters.cqhttp import MessageEvent
 
 from public_module.mb2pkg_mokalogger import getlog
 from .base import BaseParse
+from .bilibili import BilibiliParse
 from .youtube import YouTubeParse
 
 log = getlog()
@@ -31,3 +32,4 @@ class SetParse:
 
 
 SetParse(YouTubeParse)
+SetParse(BilibiliParse)
