@@ -25,6 +25,7 @@ temp_absdir = nonebot.get_driver().config.temp_absdir
 superusers = nonebot.get_driver().config.superusers
 WEBAPI_ACC_LIST = Config().webapi_prober_account
 ARC_RESULT_LIST = ['bandori', 'guin', 'moe']
+all_name_dict: dict[str, str] = {}  # （所有）好友到查分器名的映射
 
 
 @match_arc_bind.handle()
@@ -59,9 +60,15 @@ async def arc_bind_username_handle(bot: Bot, event: MessageEvent):
           f'{add_msg}' \
           f'注意：变更用户名后需要重新绑定用户名'
     await bot.send(event, msg)
-    msg = f'收到新的arc用户名绑定（用户名:{myqq.arc_friend_name}，好友码:{myqq.arc_friend_id}，QQ:{user_id}），请记得加好友'
+    if username in all_name_dict:
+        append_msg = f'该用户已经在查分器{all_name_dict[username]}中'
+    else:
+        append_msg = f'请记得加好友'
     for _user_id in superusers:
-        await bot.send_private_msg(user_id=_user_id, message=msg)
+        await bot.send_private_msg(
+            user_id=_user_id,
+            message=f'收到新的arc用户名绑定（用户名:{myqq.arc_friend_name}，好友码:{myqq.arc_friend_id}，QQ:{user_id}），' + append_msg
+        )
 
 
 @match_arc_check_bind.handle()
@@ -167,7 +174,7 @@ async def check_bind(qq: int) -> str:
 
 async def prober_self_check() -> str:
     result = []
-    all_name_list: list[tuple[str, str]] = []
+    all_name_list: list[tuple[str, str]] = []  # 因为必须要利用此去重，所以不能使用dict来存储，因为dict不能存在两个相同的key
 
     for _username, _password in WEBAPI_ACC_LIST:
         async with aiohttp.ClientSession() as session:
@@ -239,7 +246,8 @@ async def prober_self_check_detail() -> str:
     unadded_list: list[dict] = []
 
     failed_prober = []
-    all_name_dict: dict[str, str] = {}  # （所有）好友到查分器名的映射
+    global all_name_dict
+    all_name_dict = {}  # 清空
 
     # 构造all_name_dict
     for _username, _password in WEBAPI_ACC_LIST:
