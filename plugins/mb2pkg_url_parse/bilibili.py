@@ -176,7 +176,7 @@ async def video_detail(url):
     share: int = res['stat']['share']
     like: int = res['stat']['like']
     stat = f'▶:{view} 💬:{reply} ⭐:{favorite} 💰:{coin} ↗:{share} 👍:{like}\n'
-    msg = MessageSegment.image(file=pic) + '\n' + str(title) + str(up) + stat + str(desc)
+    msg = MessageSegment.image(file=pic) + '\n' + str(title) + str(up) + stat + str(desc.strip())
     return msg, vurl
 
 
@@ -197,7 +197,7 @@ async def bangumi_detail(url):
     for i in res['style']:
         style += i + ","
     style = f"类型：{style[:-1]}\n"
-    evaluate = f"简介：{res['evaluate']}\n"
+    evaluate = f"简介：{res['evaluate']}"
     pic: str = res['cover']  # url to pic
     msg = MessageSegment.image(file=pic) + '\n' + str(title) + str(desc) + str(style) + str(evaluate)
     return msg, vurl
@@ -250,6 +250,6 @@ async def article_detail(url):
     coin: int = res['stats']['coin']
     share: int = res['stats']['share']
     reply: int = res['stat']['reply']
-    stat = f'▶:{view} 👍:{like} 👎：{dislike} 💬:{reply} ⭐:{favorite} 💰:{coin} ↗:{share}\n'
+    stat = f'▶:{view} 👍:{like} 👎：{dislike} 💬:{reply} ⭐:{favorite} 💰:{coin} ↗:{share}'
     msg = str(title) + str(up) + stat
     return msg, vurl
