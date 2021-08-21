@@ -57,7 +57,7 @@ nonebot.load_plugins('plugins')  # 将会加载plugins文件夹中所有插件
 
 `mokabot2`系列插件均使用[mokalogger](public_module/mb2pkg_mokalogger/__init__.py)作为默认日志记录工具，该插件特性请具体参考`mokalogger`文档。
 
-若不使用`mokalogger`，请在移植将以下两行：
+若不使用`mokalogger`，请在移植时将以下两行：
 ```python
 from public_module.mb2pkg_mokalogger import getlog
 ...
