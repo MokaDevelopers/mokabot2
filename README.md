@@ -32,7 +32,7 @@
 仅部署单个插件是推荐的部署方式，大多数情况下，你可以将插件直接加载至你自己已经部署的bot上而无需其他配置。
 
  > 注意：<br>
- > 请不要移植[mb2pkg_api](mb2pkg_api)模块，该模块仅供mokabot2线上服务器使用。
+ 请不要移植[mb2pkg_api](mb2pkg_api)模块，该模块仅供mokabot2线上服务器使用。
 
 ### 1.2 部署单个插件
 
@@ -70,7 +70,7 @@ import logging as log
 或者任意你愿意或者熟悉的日志记录方式。
 
  > 提示：<br>
- > `mokalogger`继承自`logging`，因此你可以像使用`logging`一样使用`mokalogger`
+ `mokalogger`继承自`logging`，因此你可以像使用`logging`一样使用`mokalogger`
 。
 
 #### 1.2.4 配置文字转图片系统
