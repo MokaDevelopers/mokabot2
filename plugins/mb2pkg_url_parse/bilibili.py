@@ -97,7 +97,7 @@ class BilibiliParse(BaseParse):
 
 async def b23_extract(text):
     b23 = re.compile(r'b23.tv(\\)?/(\w+)|(bili(22|23|33|2233).cn)(\\)?/(\w+)').search(text)
-    url = f'https://{b23[0]}'
+    url = f'https://b23.tv/{b23[2]}'
     async with aiohttp.request('GET', url, timeout=aiohttp.client.ClientTimeout(10)) as resp:
         r = str(resp.url)
     return r
