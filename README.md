@@ -134,3 +134,4 @@ from public_module.mb2pkg_public_plugin import ...
  - GPLv3  [SakuraiSenrin](https://github.com/Hajimarino-HOPE/SakuraiSenrin)  <br>
  - MIT  [nonebot_plugin_alias](https://github.com/MeetWq/nonebot-plugin-alias)  <br>
  - MIT  [nonebot_plugin_manager](https://github.com/nonepkg/nonebot-plugin-manager)  <br>
+ - MIT  [nonebot_plugin_statistical](https://github.com/HibiKier/nonebot_plugin_statistical)  <br>
