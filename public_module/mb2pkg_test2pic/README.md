@@ -1,4 +1,5 @@
 # <p align="center">mb2pkg_test2pic
+<p align="center">v2.0.0
 <p align="center">mokabot2自用的文字转图片系统
 
 ~~本来是打算叫做`mb2pkg_text2pic`的，但是在很早的时候出现了一个typo就写成这样了。不过都过了这么久了干脆就不改了吧。~~

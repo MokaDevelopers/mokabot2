@@ -1,4 +1,5 @@
 # <p align="center">mb2pkg_mokalogger
+<p align="center">v2.0.0
 <p align="center">mokabot2自用的日志系统
 
 ## 使用方法

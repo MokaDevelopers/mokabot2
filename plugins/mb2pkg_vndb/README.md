@@ -1,4 +1,5 @@
 # <p align="center">mb2pkg_vndb
+<p align="center">v2.0.0
 <p align="center">一个使用了VNDB（The Visual Novel Database）API的查询工具
 
 ## 部署

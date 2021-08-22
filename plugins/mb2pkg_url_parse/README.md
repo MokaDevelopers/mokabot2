@@ -1,4 +1,5 @@
 # <p align="center">mb2pkg_url_parse
+<p align="center">v2.0.0
 <p align="center">通用URL解析器。
 
 ## 部署

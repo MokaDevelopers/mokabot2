@@ -1,4 +1,5 @@
 # <p align="center">mb2pkg_bandori
+<p align="center">v2.0.0
 <p align="center">适用于mokabot2的邦邦模块，提供关于Bangdream的一些功能。
 
  > ⚠警告：<br>

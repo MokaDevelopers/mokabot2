@@ -1,3 +1,7 @@
+__author__ = '秋葉亜里沙 https://github.com/zhanbao2000'
+
+__version__ = '2.0.0'
+
 import os
 import string
 
@@ -8,7 +12,6 @@ from .config import Config
 
 log = getlog()
 
-VERSION = Config().VERSION
 FONTPATH = os.path.join(Config().font_absdir, 'NotoSansMonoCJKsc-Regular.otf')
 
 
@@ -113,11 +116,10 @@ async def draw_image(strlist: list[str], savepath: str, max_width: int = 0) -> N
     # 预添加尾部版权信息
     tail = ['',
             '',
-            'moka观测仪与自动报告系统',
+            'mokabot2',
             'Image Lib: Python Imaging Library (PIL)',
-            'Thanks: mirai-go, go-cqhttp, nonebot',
-            'Maintainer: 秋葉亜里沙 (1044180749)',
-            f'Version: {VERSION}']
+            'Thanks: mirai-go, go-cqhttp, nonebot2',
+            'Maintainer: 秋葉亜里沙 (1044180749)']
     strlist = strlist + tail
 
     # 预处理超长换行

@@ -1,4 +1,5 @@
 # <p align="center">mb2pkg_database
+<p align="center">v2.0.0
 <p align="center">mokabot2自用的数据库接口
 
 ## 部署

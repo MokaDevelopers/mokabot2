@@ -1,4 +1,5 @@
 # <p align="center">mb2pkg_epic7
+<p align="center">v2.0.0
 <p align="center">适用于mokabot2的第七史诗模块，目前只有催化剂查询功能。
 
 ## 部署

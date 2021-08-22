@@ -1,4 +1,5 @@
 # <p align="center">mb2pkg_arcaea
+<p align="center">v2.0.0
 <p align="center">适用于mokabot2的Arcaea模块，面向Arcaea用户提供一些基本的工具，例如查询成绩、查询定数表、计算分数、<del>免残片获取体力</del>、<del>世界模式导航</del>等。
 
  > ⚠警告：<br>
