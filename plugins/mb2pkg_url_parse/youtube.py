@@ -45,7 +45,7 @@ class YouTubeParse(BaseParse):
     async def fetch(subtype: str, suburl: str) -> Union[str, Message, MessageSegment]:
         if subtype == 'video':
             video_params = {
-                'part': 'snippet',
+                'part': 'snippet,statistics',
                 'id': suburl,
                 'key': gcp_youtube_apikey
             }
@@ -100,7 +100,9 @@ def parse_watchv(url: str) -> str:
 
 
 def formatter_video(data: dict) -> Union[str, Message, MessageSegment]:
-    video = YouTubeVideoListResponse(**data).items[0].snippet
+    response = YouTubeVideoListResponse(**data).items[0]
+    video = response.snippet
+    stat = response.statistics
 
     dotx3_description = '...' if len(video.description) > 30 else ''
     if 'standard' in video.thumbnails:
@@ -119,8 +121,9 @@ def formatter_video(data: dict) -> Union[str, Message, MessageSegment]:
 
     text = f'标题：{video.title}\n' \
            f'时间：{publish_time}({publish_delta})\n' \
+           f'频道：{video.channelTitle}\n' \
            f'描述：{video.description[:30]}{dotx3_description}\n' \
-           f'频道：{video.channelTitle}'
+           f'▶:{stat.viewCount} 👍:{stat.likeCount} 👎:{stat.dislikeCount} ⭐:{stat.favoriteCount} 💬:{stat.commentCount}'
 
     if video.tags is not None:
         dotx3_tags = '...' if len(video.tags) > 12 else ''
@@ -166,10 +169,18 @@ class YouTubeVideoListResponse(BaseModel):
             localized: Optional[Localized]
             defaultAudioLanguage: Optional[str]
 
+        class Statistics(BaseModel):
+            viewCount: Optional[str]
+            likeCount: Optional[str]
+            dislikeCount: Optional[str]
+            favoriteCount: Optional[str]
+            commentCount: Optional[str]
+
         kind: str
         etag: str
         id: str
         snippet: Snippet
+        statistics: Statistics
 
     kind: str
     etag: str
