@@ -149,11 +149,11 @@ from public_module.mb2pkg_public_plugin import ...
 `mokabot2`所有的自制插件均采用`MIT`协议开源。特别的，bot中还包含了使用了一些可选的第三方插件，本项目的第三方插件部分及其衍生作品均保留其原始许可证。
 ### 3.2 开源许可证列表
 
- - MIT  [nonebot2](https://github.com/nonebot/nonebot2) <br>
- - GPLv3  [ELF_RSS2](plugins/ELF_RSS2) <br>
- - MIT  [mai-bot](https://github.com/Diving-Fish/mai-bot) <br>
- - MIT  [nonebot_plugin_apscheduler](https://github.com/nonebot/plugin-apscheduler)  <br>
- - GPLv3  [SakuraiSenrin](https://github.com/Hajimarino-HOPE/SakuraiSenrin)  <br>
- - MIT  [nonebot_plugin_alias](https://github.com/MeetWq/nonebot-plugin-alias)  <br>
- - MIT  [nonebot_plugin_manager](https://github.com/nonepkg/nonebot-plugin-manager)  <br>
- - MIT  [nonebot_plugin_statistical](https://github.com/HibiKier/nonebot_plugin_statistical)  <br>
+ - MIT  [nonebot/nonebot2](https://github.com/nonebot/nonebot2) <br>
+ - GPLv3  [Quan666/ELF_RSS](https://github.com/Quan666/ELF_RSS) <br>
+ - MIT  [Diving-Fish/mai-bot](https://github.com/Diving-Fish/mai-bot) <br>
+ - MIT  [nonebot/plugin-apscheduler](https://github.com/nonebot/plugin-apscheduler)  <br>
+ - GPLv3  [Hajimarino-HOPE/SakuraiSenrin](https://github.com/Hajimarino-HOPE/SakuraiSenrin)  <br>
+ - MIT  [MeetWq/nonebot-plugin-alias](https://github.com/MeetWq/nonebot-plugin-alias)  <br>
+ - MIT  [nonepkg/nonebot-plugin-manager](https://github.com/nonepkg/nonebot-plugin-manager)  <br>
+ - MIT  [HibiKier/nonebot_plugin_statistical](https://github.com/HibiKier/nonebot_plugin_statistical)  <br>
