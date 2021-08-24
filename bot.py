@@ -25,5 +25,3 @@ nonebot.load_plugin('mb2pkg_api')
 
 if __name__ == '__main__':
     nonebot.run()
-
-# TODO 为所有mokabot2自研插件加入许可证和全部的readme.md后开源
