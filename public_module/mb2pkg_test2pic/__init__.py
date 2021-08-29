@@ -116,10 +116,9 @@ async def draw_image(strlist: list[str], savepath: str, max_width: int = 0) -> N
     # 预添加尾部版权信息
     tail = ['',
             '',
-            'mokabot2',
-            'Image Lib: Python Imaging Library (PIL)',
-            'Thanks: mirai-go, go-cqhttp, nonebot2',
-            'Maintainer: 秋葉亜里沙 (1044180749)']
+            'mokabot2 by 秋葉亜里沙 (1044180749)',
+            'https://github.com/zhanbao2000/mokabot2'
+            ]
     strlist = strlist + tail
 
     # 预处理超长换行
