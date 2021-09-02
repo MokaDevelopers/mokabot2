@@ -1,4 +1,5 @@
-from typing import Optional, Dict, Any, Union
+import re
+from typing import Optional, Dict, Any
 
 from nonebot.adapters import Bot
 from nonebot.adapters.cqhttp import MessageEvent, Event, MessageSegment
@@ -8,6 +9,8 @@ from nonebot.typing import T_State
 from public_module.mb2pkg_mokalogger import getlog
 
 log = getlog()
+
+b64 = re.compile(r'\[CQ:image,file=base64://\S+]')
 
 
 async def log_after_bot_send(bot: Bot, exception: Optional[Exception], api: str, data: Dict[str, Any], result: Any):
@@ -19,10 +22,14 @@ async def log_after_bot_send(bot: Bot, exception: Optional[Exception], api: str,
             if k == 'message':
                 if isinstance(v, list):
                     for msgsmt in v:
+                        msgsmt: MessageSegment
                         if msgsmt.type == 'image' and 'file' in msgsmt.data and msgsmt.data['file'].startswith('base64://'):
                             msg.append('base64 image')
                         else:
                             msg.append(msgsmt)
+                elif isinstance(v, str):
+                    msgstr: str = v
+                    msg.append(b64.sub('[base64 image]', msgstr))
                 else:
                     msg.append(v)
             else:
