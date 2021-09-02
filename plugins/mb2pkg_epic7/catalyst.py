@@ -25,6 +25,7 @@ rare_item_in_needs = Config().rare_item_in_needs
 rare_item_in_AP_store = Config().rare_item_in_AP_store
 rating_filter = Config().rating_filter
 
+# TODO 记得把第三章的没加的图给加上
 with open(catalyst_json_abspath, 'r+', encoding='utf-8') as f:
     catalyst = json.load(f)
 
