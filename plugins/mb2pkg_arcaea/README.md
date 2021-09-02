@@ -78,7 +78,7 @@ res
 |`res_bandori/`|Bandori风格的b30制图素材|见[Release](https://github.com/zhanbao2000/mokabot2/releases)|
 |`res_guin/`|Guin风格的b30制图素材|见[Release](https://github.com/zhanbao2000/mokabot2/releases)|
 |`res_moe/`|moe风格的b30制图素材|见[Release](https://github.com/zhanbao2000/mokabot2/releases)|
-|`songs/`|Arcaea歌曲列表|从Arcaea客户端解包获取(注)|
+|`songs/`|Arcaea歌曲曲绘|从Arcaea客户端解包获取(注)|
 |`arcsong.db`|谱面清单|来自[BotArcAPI](https://github.com/TheSnowfield/BotArcAPIs-Memories/releases)|
 |`packlist.json`|曲包清单|从Arcaea客户端解包获取|
 |`songlist.json`|歌曲清单|从Arcaea客户端解包获取|
