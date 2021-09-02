@@ -36,6 +36,9 @@ async def log_after_bot_send(bot: Bot, exception: Optional[Exception], api: str,
                 fin_data[k] = v
         log.info(f'Bot发送消息，meta={fin_data}，msg={msg}，result={result}')
 
+        if result is None:
+            log.warn('Bot发送消息失败')
+
 
 async def log_before_exec_command(matcher: Matcher, bot: Bot, event: Event, state: T_State):
     if isinstance(event, MessageEvent):
