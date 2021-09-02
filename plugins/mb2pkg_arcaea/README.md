@@ -78,10 +78,13 @@ res
 |`res_bandori/`|Bandori风格的b30制图素材|见[Release](https://github.com/zhanbao2000/mokabot2/releases)|
 |`res_guin/`|Guin风格的b30制图素材|见[Release](https://github.com/zhanbao2000/mokabot2/releases)|
 |`res_moe/`|moe风格的b30制图素材|见[Release](https://github.com/zhanbao2000/mokabot2/releases)|
+|`songs/`|Arcaea歌曲列表|从Arcaea客户端解包获取(注)|
 |`arcsong.db`|谱面清单|来自[BotArcAPI](https://github.com/TheSnowfield/BotArcAPIs-Memories/releases)|
 |`packlist.json`|曲包清单|从Arcaea客户端解包获取|
 |`songlist.json`|歌曲清单|从Arcaea客户端解包获取|
 |`twitter_const/`|Arcaea推特定数表|来自[Arcaea_I_G](https://twitter.com/Arcaea_I_G)|
+
+ > 注：本插件`res/`目录中的`songs/`目录结构和Arcaea客户端解包的`songs/`目录的结构并不是一样的，在放置素材时请注意调整。或者你可以考虑使用 [该脚本](https://gist.github.com/zhanbao2000/669cf028697cf13d4b0b3d8422479425) 来自动完成，除了`songs/`外，该脚本也可以完成`char/`和`songlist.json`的资源文件同步。
 
 ### 配置config
 
