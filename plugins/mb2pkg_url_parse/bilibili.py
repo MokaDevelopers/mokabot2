@@ -254,7 +254,7 @@ async def article_detail(url):
     favorite: int = res['stats']['favorite']
     coin: int = res['stats']['coin']
     share: int = res['stats']['share']
-    reply: int = res['stat']['reply']
+    reply: int = res['stats']['reply']
     stat = f'▶:{view} 👍:{like} 👎：{dislike} 💬:{reply} ⭐:{favorite} 💰:{coin} ↗:{share}'
     msg = str(title) + str(up) + stat
     return msg, vurl
