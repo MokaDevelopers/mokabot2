@@ -8,6 +8,7 @@ from .base import BaseParse
 from .bilibili import BilibiliParse
 from .youtube import YouTubeParse
 from .tieba import TiebaParse
+from .github import GithubParse
 
 log = getlog()
 
@@ -35,3 +36,4 @@ class SetParse:
 SetParse(YouTubeParse)
 SetParse(BilibiliParse)
 SetParse(TiebaParse)
+SetParse(GithubParse)

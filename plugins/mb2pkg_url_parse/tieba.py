@@ -1,8 +1,8 @@
-
 """
 帖子解析：
     帖子标题（text）：#j_core_title_wrap > div.core_title.core_title_theme_bright > h1
-    发帖用户头像（img src）：#j_p_postlist > div.l_post.j_l_post.l_post_bright.noborder > div.d_author > ul > li.icon > div > a > img
+    发帖用户头像（img src）：#j_p_postlist > div.l_post.j_l_post.l_post_bright.noborder
+    > div.d_author > ul > li.icon > div > a > img
     发帖用户名（text）：#j_p_postlist > div.l_post.j_l_post.l_post_bright.noborder > div.d_author > ul > li.d_name > a
     回帖个数（text）：#thread_theme_5 > div.l_thread_info > ul > li:nth-child(2) > span:nth-child(1)
     回帖页数（text）：#thread_theme_5 > div.l_thread_info > ul > li:nth-child(2) > span:nth-child(2)
@@ -15,17 +15,19 @@
     关注他的人个数（text）：#container > div.right_aside > div:nth-child(3) > h1 > span > a
 """
 
-from typing import Optional, Type, Union
-from pydantic import BaseModel
-from base import BaseParse
-from nonebot import on_regex
-from nonebot.matcher import Matcher
-from pyquery import PyQuery
-from nonebot.adapters.cqhttp import MessageSegment, Message
-import aiohttp
 import re
-from public_module.mb2pkg_mokalogger import getlog
+from typing import Optional, Type, Union
 from urllib import parse
+
+import aiohttp
+from nonebot import on_regex
+from nonebot.adapters.cqhttp import MessageSegment, Message
+from nonebot.matcher import Matcher
+from pydantic import BaseModel
+from pyquery import PyQuery
+
+from base import BaseParse
+from public_module.mb2pkg_mokalogger import getlog
 
 log = getlog()
 
@@ -70,10 +72,11 @@ class TiebaParse(BaseParse):
                     params = {
                         'post_title': doc('#j_core_title_wrap > div.core_title.core_title_theme_bright > h1').text(),
                         'post_user': doc(
-                            '#j_p_postlist > div.l_post.j_l_post.l_post_bright.noborder > div.d_author > ul > li.d_name > a').text(),
+                            '#j_p_postlist > div.l_post.j_l_post.l_post_bright.noborder'
+                            ' > div.d_author > ul > li.d_name > a').text(),
                         'post_user_head':
-                            doc('#j_p_postlist > div.l_post.j_l_post.l_post_bright.noborder > div.d_author > ul > li.icon > div > a > img')
-                                .attr('src'),
+                            doc('#j_p_postlist > div.l_post.j_l_post.l_post_bright.noborder '
+                                '> div.d_author > ul > li.icon > div > a > img').attr('src'),
                         'subpost_num': doc(
                             '#thread_theme_5 > div.l_thread_info > ul > li:nth-child(2) > span:nth-child(1)').text(),
                         'subpost_page_num': doc(
@@ -101,7 +104,6 @@ class TiebaParse(BaseParse):
                     user_model = UserModel(**params)
                     self._msg = user_msg_generate(user_model)
         except Exception as e:
-            log.error(f'未知错误{e}')
             log.exception(e)
 
     async def fetch(self, subtype: str, suburl: str) -> Union[str, Message, MessageSegment]:
@@ -115,7 +117,8 @@ def post_msg_generate(model: PostModel) -> Optional[MessageSegment, Message, str
 
 def user_msg_generate(model: UserModel) -> Optional[MessageSegment, Message, str]:
     return MessageSegment.image(file=model.user_head) + '\n' \
-           + f'👤:{model.user_name}({model.tieba_age}年) 📃:{model.post_num} ⭐:{model.followers_num} 💗:{model.subscribe_num}'
+           + f'👤:{model.user_name}({model.tieba_age}年) 📃:{model.post_num} ' \
+             f'⭐:{model.followers_num} 💗:{model.subscribe_num}'
 
 
 def url_parse(endpoint: str, url: str, default: str = None) -> str:
