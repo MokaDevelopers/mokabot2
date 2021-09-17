@@ -9,7 +9,7 @@ from .config import Config
 
 match_twitter_const = on_command('const8', aliases={'const9', 'const10'}, priority=5)
 match_wiki_const = on_command('定数表', priority=5)  # TODO 使用arc中文维基的定数表
-match_wiki_TC = on_command('tc表', priority=5)  # TODO 使用arc中文维基的tc表
+match_wiki_TC = on_command('tc表', priority=5)  # TODO 使用arc中文维基的tc表(解析已完成，需要接入聊天)
 match_wiki_PM = on_command('pm表', priority=5)  # TODO 使用arc中文维基的pm表
 
 
@@ -26,14 +26,14 @@ class TCDifficultyModel(BaseModel):
     songs: list[SongModel]
 
 
-class ConstModel(BaseModel):
-    const: str
-    songs: list[SongModel]
-
-
 class TCModel(BaseModel):
     authors: list[str,str]
     difficulties_list: list[TCDifficultyModel]
+
+
+class ConstModel(BaseModel):
+    const: str
+    songs: list[SongModel]
 
 
 @match_twitter_const.handle()
@@ -53,9 +53,8 @@ async def wiki_tc_handle(bot: Bot, event: MessageEvent):
 def tc_text_parse(text: str) -> Optional[TCModel]:
     bs = BeautifulSoup(text, features='lxml')
     base_node = bs.select_one('#mw-content-text > div > table > tbody')
-    authors = (bs.select_one('#mw-content-text > div > table > tbody > tr:nth-child(2) > td > a:nth-child(1)').string,
-               bs.select_one('#mw-content-text > div > table > tbody > tr:nth-child(2) > td > a:nth-child(2)').string)
-    # authors = [bs.select_one(f'#mw-content-text > div > table > tbody > tr:nth-child(2) > td > a:nth-child({i})') for i in range(1, 2)]
+    authors = [bs.select_one('#mw-content-text > div > table > tbody > tr:nth-child(2) > td > a:nth-child(1)').string,
+               bs.select_one('#mw-content-text > div > table > tbody > tr:nth-child(2) > td > a:nth-child(2)').string]
     tr_list = [s for s in list(base_node.children) if s != '\n'][3:]
     temp_songs_list = []
     temp_diff_list = []
