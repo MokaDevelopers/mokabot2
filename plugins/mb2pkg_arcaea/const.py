@@ -1,5 +1,9 @@
+import json
+import os.path
 from typing import Optional
 
+import nonebot
+import yaml
 from bs4 import BeautifulSoup
 from nonebot import on_command
 from nonebot.adapters import Bot
@@ -12,13 +16,14 @@ match_twitter_const = on_command('const8', aliases={'const9', 'const10'}, priori
 match_wiki_const = on_command('定数表', priority=5)  # TODO 使用arc中文维基的定数表
 match_wiki_TC = on_command('tc表', priority=5)  # TODO 使用arc中文维基的tc表(解析已完成，需要接入聊天)
 match_wiki_PM = on_command('pm表', priority=5)  # TODO 使用arc中文维基的pm表(解析已完成，需要接入聊天)
+temp_absdir = nonebot.get_driver().config.temp_absdir
 
 
 class SongModel(BaseModel):
     name: str
     icon_url: str = None
-    difficulty: str
-    const: str = None
+    difficulty: str = None
+    const: list[str, ...] = None
 
 
 class TCDifficultyModel(BaseModel):
@@ -91,6 +96,7 @@ def tc_text_parse(text: str) -> Optional[TCModel]:
     return TCModel(authors=authors, difficulties_list=temp_diff_list)
 
 
+# ⚠️注意 部分歌曲无图片(icon_url = None)，所有歌曲无定数(const = None)，加载时需注意
 def pm_text_parse(text: str) -> Optional[PMModel]:
     bs = BeautifulSoup(text.replace('\n', ''), features='lxml')
     base_node = bs.find('tbody')
@@ -106,3 +112,13 @@ def pm_text_parse(text: str) -> Optional[PMModel]:
                                    difficulty=song.find('b').string))
         diff_list.append(PMDifficultyModel(difficulty=diff, songs=songs))
     return PMModel(authors=authors, difficulties_list=diff_list)
+
+
+def save_model(model: BaseModel, filename: str, absdir: str):
+    with open(os.path.join(absdir, filename), 'a+') as f:
+        f.write(yaml.dump(json.loads(model.json())))
+
+
+def load_model_from_yaml(model_type: type, filename: str, absdir: str) -> Optional[BaseModel]:
+    with open(os.path.join(absdir, filename), 'r') as f:
+        return model_type(**yaml.load(f, Loader=yaml.FullLoader))
