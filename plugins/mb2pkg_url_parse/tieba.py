@@ -16,7 +16,7 @@
 """
 
 import re
-from typing import Optional, Type, Union
+from typing import Type, Union
 from urllib import parse
 
 import aiohttp
@@ -26,8 +26,8 @@ from nonebot.matcher import Matcher
 from pydantic import BaseModel
 from pyquery import PyQuery
 
-from base import BaseParse
 from public_module.mb2pkg_mokalogger import getlog
+from .base import BaseParse
 
 log = getlog()
 
@@ -110,12 +110,12 @@ class TiebaParse(BaseParse):
         return self._msg
 
 
-def post_msg_generate(model: PostModel) -> Optional[MessageSegment, Message, str]:
-    return MessageSegment.image(file='http::' + model.post_user_head) + '\n' \
+def post_msg_generate(model: PostModel) -> Union[MessageSegment, Message, str, None]:
+    return MessageSegment.image(file='http:' + model.post_user_head) + '\n' \
            + f'📃:{model.post_title} 👤:{model.post_user} 💬:{model.subpost_num} (共{model.subpost_page_num}页)'
 
 
-def user_msg_generate(model: UserModel) -> Optional[MessageSegment, Message, str]:
+def user_msg_generate(model: UserModel) -> Union[MessageSegment, Message, str, None]:
     return MessageSegment.image(file=model.user_head) + '\n' \
            + f'👤:{model.user_name}({model.tieba_age}年) 📃:{model.post_num} ' \
              f'⭐:{model.followers_num} 💗:{model.subscribe_num}'
