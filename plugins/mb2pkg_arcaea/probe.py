@@ -40,7 +40,7 @@ ProberResult = dict[str, Union[list[dict[str, dict]], dict[str, dict]]]
 # 这里采用固定的返回格式，以此作为查分器响应的基础格式，这个格式最初由estertion的查分器所使用
 # {'userinfo': {...: ...}, 'scores': [..., ...]}
 
-enable_probe_force = True
+enable_probe_force = False
 enable_probe_webapi = True
 webapi_user2acc_map = {}  # 用来存储用户名到查询用账号的映射
 
