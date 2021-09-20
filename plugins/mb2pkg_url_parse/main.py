@@ -7,6 +7,8 @@ from public_module.mb2pkg_mokalogger import getlog
 from .base import BaseParse
 from .bilibili import BilibiliParse
 from .youtube import YouTubeParse
+from .tieba import TiebaParse
+from .github import GithubParse
 
 log = getlog()
 
@@ -33,3 +35,5 @@ class SetParse:
 
 SetParse(YouTubeParse)
 SetParse(BilibiliParse)
+SetParse(TiebaParse)
+SetParse(GithubParse)
