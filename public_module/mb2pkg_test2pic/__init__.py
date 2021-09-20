@@ -117,7 +117,7 @@ async def draw_image(strlist: list[str], savepath: str, max_width: int = 0) -> N
     tail = ['',
             '',
             'mokabot2 by 秋葉亜里沙 (1044180749)',
-            'https://github.com/zhanbao2000/mokabot2'
+            'https://github.com/MokaDevelopers/mokabot2'
             ]
     strlist = strlist + tail
 
