@@ -145,7 +145,7 @@ async def list_event(server: str) -> str:
     """
 
     result = []
-    event_type_dict = {'story': '一般', 'challenge': 'ＣＰ', 'versus': '对邦', 'live_try': 'ＥＸ', 'mission_live': '任务'}
+    event_type_dict = {'story': '一般', 'challenge': 'ＣＰ', 'versus': '对邦', 'live_try': 'ＥＸ', 'mission_live': '任务', 'festival': 'FES'}
     server_dict = {'JP': 0, 'EN': 1, 'TW': 2, 'CN': 3, 'KR': 4}
 
     # 从bestdori获取数据
