@@ -1,17 +1,16 @@
+import json
+from typing import Type, Optional, Union
+from urllib import parse
 
-import re
-
-from pydantic import BaseModel
-from .base import BaseParse
+import aiohttp
+from nonebot import on_regex
 from nonebot.adapters.cqhttp import Message, MessageSegment
 from nonebot.matcher import Matcher
-from nonebot import on_regex
-from typing import Type, Optional, Union
-import aiohttp
-import json
-from urllib import parse
+from pydantic import BaseModel
+
 from public_module.mb2pkg_mokalogger import getlog
-from exceptions import StatusCodeError, NoSuchTypeError
+from .base import BaseParse
+from .exceptions import StatusCodeError, NoSuchTypeError
 
 log = getlog()
 
@@ -80,7 +79,7 @@ class GithubParse(BaseParse):
                 return 'user', path_list[0]
             if len(path_list) == 2:
                 return 'repo', '/'.join(path_list)
-            raise NoSuchTypeError('不支持的类型:'+'/'.join(path_list))
+            raise NoSuchTypeError('不支持的类型:' + '/'.join(path_list))
 
         except NoSuchTypeError as ne:
             log.error(ne.args[0])
@@ -90,10 +89,10 @@ class GithubParse(BaseParse):
     async def fetch(self, subtype: str, suburl: str) -> Union[str, Message, MessageSegment]:
         if subtype == 'user':
             user_model = await get_user_model(suburl)
-            return f'👤:{user_model.login}({user_model.type}) ' \
-                .join(f'📬:{user_model.email}' if user_model.email else '') \
-                .join(f'📝:{user_model.bio}' if user_model.bio else '') \
-                .join(f'⭐️:{user_model.followers} 💗:{user_model.following}')
+            return '👤:' + user_model.login + '(' + user_model.type + ')' \
+                   + (('📬:' + user_model.email + '\n') if user_model.email else '\n') \
+                   + (('📝:' + user_model.bio + '\n') if user_model.bio else '') \
+                   + f'⭐️:{user_model.followers} 💗:{user_model.following}'
         if subtype == 'repo':
             repo_model = await get_repo_model(suburl)
             return f'''📦:{repo_model.full_name} 👤:{repo_model.owner.login}({repo_model.owner.type})\n
