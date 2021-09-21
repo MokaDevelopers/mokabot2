@@ -40,9 +40,9 @@ class RepoModel(BaseModel):
 
 async def get_user_model(username: str) -> UserModel:
     try:
-        async with aiohttp.request('GET', f'https://api.gtihub.com/users{username}', headers=headers) as resp:
+        async with aiohttp.request('GET', f'https://api.github.com/users/{username}', headers=headers) as resp:
             if resp.status != 200:
-                async with aiohttp.request('GET', f'https://api.github.com/orgs{username}', headers=headers) as resp2:
+                async with aiohttp.request('GET', f'https://api.github.com/orgs/{username}', headers=headers) as resp2:
                     return UserModel(**(json.loads(await resp2.text(encoding='UTF-8'))))
             return UserModel(**(json.loads(await resp.text(encoding='UTF-8'))))
 
@@ -54,9 +54,9 @@ async def get_user_model(username: str) -> UserModel:
 
 async def get_repo_model(fullname: str) -> RepoModel:
     try:
-        async with aiohttp.request('GET', f'https://api.gtihub.com/repos{fullname}', headers=headers) as resp:
+        async with aiohttp.request('GET', f'https://api.github.com/repos/{fullname}', headers=headers) as resp:
             if resp.status != 200:
-                raise StatusCodeError(f'url:https://api.gtihub.com/repos{fullname} Status:{resp.status}')
+                raise StatusCodeError(f'url:https://api.github.com/repos/{fullname} Status:{resp.status}')
             return RepoModel(**(json.loads(await resp.text(encoding='UTF-8'))))
 
     except StatusCodeError as se:
@@ -67,7 +67,6 @@ async def get_repo_model(fullname: str) -> RepoModel:
 
 class GithubParse(BaseParse):
     def __init__(self):
-        self._msg = ''
         self._matcher = on_regex('(github.com/[A-Za-z0-9]+/[A-Za-z0-9]+)|(github.com/[A-Za-z0-9]+)')
 
     @property
@@ -76,23 +75,12 @@ class GithubParse(BaseParse):
 
     async def preprocesse(self, url: str) -> tuple[str, str]:
         try:
-            r = re.compile(r'/[A-Za-z0-9]+')
-            results = re.findall(r, parse.urlparse(url).path)
-            if len(results) == 2:
-                repo_model = await get_repo_model(''.join(results))
-                self._msg = f'''📦:{repo_model.full_name} 👤:{repo_model.owner.login}({repo_model.owner.type})\n
-                ⌨️:{repo_model.language} ⭐️:{repo_model.stargazers_count} forks:{repo_model.forks_count}\n
-                🌐:{repo_model.html_url}
-                '''
-                return 'repo', repo_model.full_name
-            if len(results) == 1:
-                user_model = await get_user_model(results[0])
-                self._msg = f'👤:{user_model.login}({user_model.type}) ' \
-                    .join(f'📬:{user_model.email}\n' if user_model.email else '\n') \
-                    .join(f'📝:{user_model.bio}\n' if user_model.bio else '') \
-                    .join(f'⭐️:{user_model.followers} 💗:{user_model.following}')
-                return 'user', user_model.login
-            raise NoSuchTypeError(f'不支持的类型. url:{url}')
+            path_list = parse.urlparse(url).path.split('/')[1:]
+            if len(path_list) == 1:
+                return 'user', path_list[0]
+            if len(path_list) == 2:
+                return 'repo', '/'.join(path_list)
+            raise NoSuchTypeError('不支持的类型:'+'/'.join(path_list))
 
         except NoSuchTypeError as ne:
             log.error(ne.args[0])
@@ -100,4 +88,15 @@ class GithubParse(BaseParse):
             log.exception(e)
 
     async def fetch(self, subtype: str, suburl: str) -> Union[str, Message, MessageSegment]:
-        return self._msg
+        if subtype == 'user':
+            user_model = await get_user_model(suburl)
+            return f'👤:{user_model.login}({user_model.type}) ' \
+                .join(f'📬:{user_model.email}' if user_model.email else '') \
+                .join(f'📝:{user_model.bio}' if user_model.bio else '') \
+                .join(f'⭐️:{user_model.followers} 💗:{user_model.following}')
+        if subtype == 'repo':
+            repo_model = await get_repo_model(suburl)
+            return f'''📦:{repo_model.full_name} 👤:{repo_model.owner.login}({repo_model.owner.type})\n
+                            ⌨️:{repo_model.language} ⭐️:{repo_model.stargazers_count} forks:{repo_model.forks_count}\n
+                            🌐:{repo_model.html_url}
+                            '''
