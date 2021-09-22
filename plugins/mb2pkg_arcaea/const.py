@@ -114,6 +114,18 @@ def pm_text_parse(text: str) -> Optional[PMModel]:
     return PMModel(authors=authors, difficulties_list=diff_list)
 
 
+def find_songs_in_range(const_model: ConstModel, lower: float, upper: float) -> list:
+    diff = ('FTR', 'PRS', 'PST', 'BYD')
+    result = []
+    for song in const_model.songs:
+        const_list = song.const
+        for c in const_list:
+            if lower <= c <= upper:
+                result.append((diff[const_list.index(c)], song.name, c))
+    result.sort(reverse=True, key=lambda x: x[2])
+    return result
+
+
 def save_model(model: BaseModel, filename: str, absdir: str):
     with open(os.path.join(absdir, filename), 'a+') as f:
         f.write(yaml.dump(json.loads(model.json())))
