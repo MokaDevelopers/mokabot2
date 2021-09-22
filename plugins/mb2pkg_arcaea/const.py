@@ -2,6 +2,7 @@ import json
 import os.path
 from typing import Optional
 
+import aiohttp
 import nonebot
 import yaml
 from bs4 import BeautifulSoup
@@ -10,20 +11,21 @@ from nonebot.adapters import Bot
 from nonebot.adapters.cqhttp import MessageSegment, MessageEvent
 from pydantic import BaseModel
 
+from public_module.mb2pkg_test2pic import str_width, draw_image
 from .config import Config
 
 match_twitter_const = on_command('const8', aliases={'const9', 'const10'}, priority=5)
 match_wiki_const = on_command('定数表', priority=5)  # TODO 使用arc中文维基的定数表
-match_wiki_TC = on_command('tc表', priority=5)  # TODO 使用arc中文维基的tc表(解析已完成，需要接入聊天)
-match_wiki_PM = on_command('pm表', priority=5)  # TODO 使用arc中文维基的pm表(解析已完成，需要接入聊天)
+match_wiki_TC = on_command('tc表', priority=5)
+match_wiki_PM = on_command('pm表', priority=5)
 temp_absdir = nonebot.get_driver().config.temp_absdir
 
 
 class SongModel(BaseModel):
     name: str
-    icon_url: str = None
-    difficulty: str = None
-    const: list[str, ...] = None
+    icon_url: Optional[str] = None
+    difficulty: Optional[str] = None
+    const: Optional[list[str, ...]] = None
 
 
 class TCDifficultyModel(BaseModel):
@@ -33,7 +35,7 @@ class TCDifficultyModel(BaseModel):
 
 
 class TCModel(BaseModel):
-    authors: list[str, str]
+    authors: list[str]
     difficulties_list: list[TCDifficultyModel]
 
 
@@ -62,7 +64,68 @@ async def twitter_const_handle(bot: Bot, event: MessageEvent):
 
 @match_wiki_TC.handle()
 async def wiki_tc_handle(bot: Bot, event: MessageEvent):
-    pass
+    async with aiohttp.request('GET', 'https://wiki.arcaea.cn/index.php/TC%E9%9A%BE%E5%BA%A6%E8%A1%A8') as r:
+        model = tc_text_parse(await r.text())
+
+    head = [
+        'Arcaea TC 难度表 (来自Arcaea中文维基)',
+        f'编表者：{"、".join(model.authors)}',
+        '从上到下=从难到易',
+    ]
+    end = [
+        '采用知识共享署名-非商业性使用-相同方式共享授权',
+        'creativecommons.org/licenses/by-nc-sa/3.0'
+    ]
+    text = ['推荐TCptt(挡位上限)']
+
+    for diff in model.difficulties_list:
+        chart_list = diff.songs
+        recommend_ptt = diff.recommend_ptt + diff.limit.replace('（', '(').replace('）', ')')
+        space = str_width(recommend_ptt) * ' '
+        for index, chart in enumerate(chart_list):
+            if index == 0:
+                text.append(f'{recommend_ptt} {chart.name} {"BYD" if chart.difficulty == "BYD" else ""}')
+            else:
+                text.append(f'{space} {chart.name} {"BYD" if chart.difficulty == "BYD" else ""}')
+
+    lines = head + ['', ''] + text + [''] + end + ['']
+    savepath = os.path.join(temp_absdir, f'tc.jpg')
+    await draw_image(lines, savepath)
+
+    await bot.send(event, message=MessageSegment.image(file=f'file:///{savepath}'))
+
+
+@match_wiki_PM.handle()
+async def wiki_pm_handle(bot: Bot, event: MessageEvent):
+    async with aiohttp.request('GET', 'https://wiki.arcaea.cn/index.php/PM%E9%9A%BE%E5%BA%A6%E8%A1%A8') as r:
+        model = pm_text_parse(await r.text())
+
+    head = [
+        'Arcaea PM 难度表 (来自Arcaea中文维基)',
+        model.authors,
+        '从上到下=从难到易',
+    ]
+    end = [
+        '采用知识共享署名-非商业性使用-相同方式共享授权',
+        'creativecommons.org/licenses/by-nc-sa/3.0'
+    ]
+    text = ['级数    歌曲']
+
+    for diff in model.difficulties_list:
+        chart_list = diff.songs
+        diff.difficulty = diff.difficulty + (7 - str_width(diff.difficulty)) * ' '
+        space = 7 * ' '
+        for index, chart in enumerate(chart_list):
+            if index == 0:
+                text.append(f'{diff.difficulty} {chart.name} {" [BYD]" if chart.difficulty == "BYD" else ""}')
+            else:
+                text.append(f'{space} {chart.name} {" [BYD]" if chart.difficulty == "BYD" else ""}')
+
+    lines = head + ['', ''] + text + [''] + end + ['']
+    savepath = os.path.join(temp_absdir, f'pm.jpg')
+    await draw_image(lines, savepath)
+
+    await bot.send(event, message=MessageSegment.image(file=f'file:///{savepath}'))
 
 
 # ⚠️注意 部分歌曲无图片(icon_url = None)，所有歌曲无定数(const = None)，加载时需注意
