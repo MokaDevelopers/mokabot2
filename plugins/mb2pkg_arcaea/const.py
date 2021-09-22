@@ -76,7 +76,7 @@ async def wiki_tc_handle(bot: Bot, event: MessageEvent):
         '采用知识共享署名-非商业性使用-相同方式共享授权',
         'creativecommons.org/licenses/by-nc-sa/3.0'
     ]
-    text = ['推荐TCptt(挡位上限)']
+    text = ['推荐TCptt(档位上限)']
 
     for diff in model.difficulties_list:
         chart_list = diff.songs
@@ -88,7 +88,7 @@ async def wiki_tc_handle(bot: Bot, event: MessageEvent):
             else:
                 text.append(f'{space} {chart.name} {"BYD" if chart.difficulty == "BYD" else ""}')
 
-    lines = head + ['', ''] + text + [''] + end + ['']
+    lines = head + ['', ''] + text + ['', ''] + end
     savepath = os.path.join(temp_absdir, f'tc.jpg')
     await draw_image(lines, savepath)
 
@@ -121,7 +121,7 @@ async def wiki_pm_handle(bot: Bot, event: MessageEvent):
             else:
                 text.append(f'{space} {chart.name} {" [BYD]" if chart.difficulty == "BYD" else ""}')
 
-    lines = head + ['', ''] + text + [''] + end + ['']
+    lines = head + ['', ''] + text + ['', ''] + end
     savepath = os.path.join(temp_absdir, f'pm.jpg')
     await draw_image(lines, savepath)
 
