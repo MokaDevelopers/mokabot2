@@ -25,7 +25,7 @@ class SongModel(BaseModel):
     name: str
     icon_url: Optional[str] = None
     difficulty: Optional[str] = None
-    const: Optional[list[str, ...]] = None
+    const: Optional[list] = None
 
 
 class TCDifficultyModel(BaseModel):
@@ -40,7 +40,6 @@ class TCModel(BaseModel):
 
 
 class ConstModel(BaseModel):
-    const: str
     songs: list[SongModel]
 
 
@@ -175,6 +174,24 @@ def pm_text_parse(text: str) -> Optional[PMModel]:
                                    difficulty=song.find('b').string))
         diff_list.append(PMDifficultyModel(difficulty=diff, songs=songs))
     return PMModel(authors=authors, difficulties_list=diff_list)
+
+
+def const_text_parse(text: str) -> ConstModel:
+    bs = BeautifulSoup(text.replace('\n', ''), features='lxml')
+    songs_list = []
+    name = str('')
+    temp = []
+    for item in list(bs.select_one('#mw-content-text > div > table > tbody').strings)[5:]:
+        if len(item) <= 4 and ('.' in item):
+            temp.append(float(item))
+        else:
+            if len(temp):
+                songs_list.append(SongModel(name=name, const=temp))
+                temp.clear()
+                name = item
+            else:
+                name = item
+    return ConstModel(songs=songs_list)
 
 
 def find_songs_in_range(const_model: ConstModel, lower: float, upper: float) -> list:
