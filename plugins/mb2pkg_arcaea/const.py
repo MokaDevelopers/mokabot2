@@ -19,6 +19,7 @@ match_wiki_const = on_command('定数表', priority=5)  # TODO 使用arc中文�
 match_wiki_TC = on_command('tc表', priority=5)
 match_wiki_PM = on_command('pm表', priority=5)
 temp_absdir = nonebot.get_driver().config.temp_absdir
+data_absdir = nonebot.get_driver().config.data_absdir
 
 
 class SongModel(BaseModel):
@@ -63,8 +64,7 @@ async def twitter_const_handle(bot: Bot, event: MessageEvent):
 
 @match_wiki_TC.handle()
 async def wiki_tc_handle(bot: Bot, event: MessageEvent):
-    async with aiohttp.request('GET', 'https://wiki.arcaea.cn/index.php/TC%E9%9A%BE%E5%BA%A6%E8%A1%A8') as r:
-        model = tc_text_parse(await r.text())
+    model = load_model_from_yaml(TCModel, 'tc.yaml', data_absdir)
 
     head = [
         'Arcaea TC 难度表 (来自Arcaea中文维基)',
@@ -96,8 +96,7 @@ async def wiki_tc_handle(bot: Bot, event: MessageEvent):
 
 @match_wiki_PM.handle()
 async def wiki_pm_handle(bot: Bot, event: MessageEvent):
-    async with aiohttp.request('GET', 'https://wiki.arcaea.cn/index.php/PM%E9%9A%BE%E5%BA%A6%E8%A1%A8') as r:
-        model = pm_text_parse(await r.text())
+    model = load_model_from_yaml(PMModel, 'pm.yaml', data_absdir)
 
     head = [
         'Arcaea PM 难度表 (来自Arcaea中文维基)',
