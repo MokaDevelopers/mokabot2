@@ -207,7 +207,7 @@ def find_songs_in_range(const_model: ConstModel, lower: float, upper: float) -> 
 
 
 def save_model(model: BaseModel, filename: str, absdir: str):
-    with open(os.path.join(absdir, filename), 'a+') as f:
+    with open(os.path.join(absdir, filename), 'w+') as f:
         f.write(yaml.dump(json.loads(model.json())))
 
 
