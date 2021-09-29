@@ -195,12 +195,15 @@ async def wiki_const_handle(bot: Bot, event: MessageEvent):
     last_index = ''
     for song in songs:
         # 为每行添加index
-        if song.name[0] in string.punctuation + string.digits:
-            index = '#'
-        elif song.name[0] in string.ascii_letters:
-            index = song.name[0].upper()
+        if order.lower() in ['ftr', 'prs', 'pst', 'byd']:
+            index = ' '
         else:
-            index = 'α'  # 希腊字母，如αterlβus、γuarδina、ΟΔΥΣΣΕΙΑ、ω4
+            if song.name[0] in string.punctuation + string.digits:
+                index = '#'
+            elif song.name[0] in string.ascii_letters:
+                index = song.name[0].upper()
+            else:
+                index = 'α'  # 希腊字母，如αterlβus、γuarδina、ΟΔΥΣΣΕΙΑ、ω4
 
         name = song.name if len(song.name) <= 30 else f'{song.name[:27]}...'
         text.append(
