@@ -13,6 +13,7 @@ from nonebot.adapters import Bot
 from nonebot.adapters.cqhttp import MessageSegment, MessageEvent
 from pydantic import BaseModel
 
+from public_module.mb2pkg_mokalogger import getlog
 from public_module.mb2pkg_test2pic import str_width, draw_image
 from .config import Config
 
@@ -20,6 +21,9 @@ match_twitter_const = on_command('const8', aliases={'const9', 'const10'}, priori
 match_wiki_const = on_command('定数表', priority=5)
 match_wiki_TC = on_command('tc表', priority=5)
 match_wiki_PM = on_command('pm表', priority=5)
+
+log = getlog()
+
 temp_absdir = nonebot.get_driver().config.temp_absdir
 data_absdir = nonebot.get_driver().config.data_absdir
 
@@ -66,7 +70,14 @@ async def twitter_const_handle(bot: Bot, event: MessageEvent):
 
 @match_wiki_TC.handle()
 async def wiki_tc_handle(bot: Bot, event: MessageEvent):
-    model = load_model_from_yaml(TCModel, 'tc.yaml', data_absdir)
+    try:
+        async with aiohttp.request('GET', 'https://wiki.arcaea.cn/index.php/TC%E9%9A%BE%E5%BA%A6%E8%A1%A8') as r:
+            model = tc_text_parse(await r.text())
+        save_model(model, 'tc.yaml', data_absdir)
+    except Exception as e:
+        model = load_model_from_yaml(TCModel, 'tc.yaml', data_absdir)
+        log.warn('向wiki解析TC难度表时发生错误，已改用缓存')
+        log.exception(e)
 
     head = [
         'Arcaea TC 难度表 (来自Arcaea中文维基)',
@@ -98,7 +109,14 @@ async def wiki_tc_handle(bot: Bot, event: MessageEvent):
 
 @match_wiki_PM.handle()
 async def wiki_pm_handle(bot: Bot, event: MessageEvent):
-    model = load_model_from_yaml(PMModel, 'pm.yaml', data_absdir)
+    try:
+        async with aiohttp.request('GET', 'https://wiki.arcaea.cn/index.php/PM%E9%9A%BE%E5%BA%A6%E8%A1%A8') as r:
+            model = pm_text_parse(await r.text())
+        save_model(model, 'pm.yaml', data_absdir)
+    except Exception as e:
+        model = load_model_from_yaml(PMModel, 'pm.yaml', data_absdir)
+        log.warn('向wiki解析PM难度表时发生错误，已改用缓存')
+        log.exception(e)
 
     head = [
         'Arcaea PM 难度表 (来自Arcaea中文维基)',
@@ -129,11 +147,17 @@ async def wiki_pm_handle(bot: Bot, event: MessageEvent):
 
 
 @match_wiki_const.handle()
-async def wiki_pm_handle(bot: Bot, event: MessageEvent):
+async def wiki_const_handle(bot: Bot, event: MessageEvent):
     order = str(event.get_message()).strip()
 
-    async with aiohttp.request('GET', 'https://wiki.arcaea.cn/index.php/%E5%AE%9A%E6%95%B0%E8%AF%A6%E8%A1%A8') as r:
-        model = const_text_parse(await r.text())
+    try:
+        async with aiohttp.request('GET', 'https://wiki.arcaea.cn/index.php/%E5%AE%9A%E6%95%B0%E8%AF%A6%E8%A1%A8') as r:
+            model = const_text_parse(await r.text())
+        save_model(model, 'const.yaml', data_absdir)
+    except Exception as e:
+        model = load_model_from_yaml(ConstModel, 'const.yaml', data_absdir)
+        log.warn('向wiki解析定数表时发生错误，已改用缓存')
+        log.exception(e)
 
     # 先对歌曲列表排序
 
@@ -190,7 +214,7 @@ async def wiki_pm_handle(bot: Bot, event: MessageEvent):
         last_index = index
 
     lines = head + ['', ''] + text + ['', ''] + end
-    savepath = os.path.join(temp_absdir, f'pm.jpg')
+    savepath = os.path.join(temp_absdir, f'const.jpg')
     await draw_image(lines, savepath)
 
     await bot.send(event, message=MessageSegment.image(file=f'file:///{savepath}'))
