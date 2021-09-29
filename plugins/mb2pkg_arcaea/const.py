@@ -1,5 +1,7 @@
 import json
 import os.path
+import re
+import string
 from typing import Optional
 
 import aiohttp
@@ -15,7 +17,7 @@ from public_module.mb2pkg_test2pic import str_width, draw_image
 from .config import Config
 
 match_twitter_const = on_command('const8', aliases={'const9', 'const10'}, priority=5)
-match_wiki_const = on_command('定数表', priority=5)  # TODO 使用arc中文维基的定数表
+match_wiki_const = on_command('定数表', priority=5)
 match_wiki_TC = on_command('tc表', priority=5)
 match_wiki_PM = on_command('pm表', priority=5)
 temp_absdir = nonebot.get_driver().config.temp_absdir
@@ -127,6 +129,74 @@ async def wiki_pm_handle(bot: Bot, event: MessageEvent):
     await bot.send(event, message=MessageSegment.image(file=f'file:///{savepath}'))
 
 
+@match_wiki_const.handle()
+async def wiki_pm_handle(bot: Bot, event: MessageEvent):
+    order = str(event.get_message()).strip()
+
+    async with aiohttp.request('GET', 'https://wiki.arcaea.cn/index.php/%E5%AE%9A%E6%95%B0%E8%AF%A6%E8%A1%A8') as r:
+        model = const_text_parse(await r.text())
+
+    # 先对歌曲列表排序
+
+    songs = model.songs
+    if order.lower() == 'ftr':
+        songs.sort(key=lambda _: _.const[0], reverse=True)
+        order_hint = '按FTR难度降序'
+    elif order.lower() == 'prs':
+        songs.sort(key=lambda _: _.const[1], reverse=True)
+        order_hint = '按PRS难度降序'
+    elif order.lower() == 'pst':
+        songs.sort(key=lambda _: _.const[2], reverse=True)
+        order_hint = '按PST难度降序'
+    elif order.lower() == 'byd':
+        # const列表长度为4时返回BYD难度，否则返回FTR难度的百分之一
+        songs.sort(key=lambda _: _.const[-1] if len(_.const) == 4 else _.const[0] * 0.01, reverse=True)
+        order_hint = '按BYD难度降序'
+    else:
+        songs.sort(key=lambda _: _.name.lower())
+        order_hint = '按歌曲名称升序'
+
+    text = [
+        '歌曲名                             FTR  PRS  PST  BYD',
+        '====================================================='
+    ]
+    head = [
+        'Arcaea 定数表 (来自Arcaea中文维基)',
+        f'排序方式：{order_hint}',
+    ]
+    end = [
+        '采用知识共享署名-非商业性使用-相同方式共享授权',
+        'creativecommons.org/licenses/by-nc-sa/3.0'
+    ]
+
+    last_index = ''
+    for song in songs:
+        # 为每行添加index
+        if song.name[0] in string.punctuation + string.digits:
+            index = '#'
+        elif song.name[0] in string.ascii_letters:
+            index = song.name[0].upper()
+        else:
+            index = 'α'  # 希腊字母，如αterlβus、γuarδina、ΟΔΥΣΣΕΙΑ、ω4
+
+        name = song.name if len(song.name) <= 30 else f'{song.name[:27]}...'
+        text.append(
+            '%s  %-30s  %4s' % (
+                index if last_index != index else ' ',
+                name,
+                ' '.join(['{:>4.1f}'.format(_) for _ in song.const])
+            )
+        )
+
+        last_index = index
+
+    lines = head + ['', ''] + text + ['', ''] + end
+    savepath = os.path.join(temp_absdir, f'pm.jpg')
+    await draw_image(lines, savepath)
+
+    await bot.send(event, message=MessageSegment.image(file=f'file:///{savepath}'))
+
+
 # ⚠️注意 部分歌曲无图片(icon_url = None)，所有歌曲无定数(const = None)，加载时需注意
 def tc_text_parse(text: str) -> Optional[TCModel]:
     bs = BeautifulSoup(text.replace('\n', ''), features='lxml')
@@ -180,14 +250,14 @@ def const_text_parse(text: str) -> ConstModel:
     bs = BeautifulSoup(text.replace('\n', ''), features='lxml')
     songs_list = []
     name = str('')
-    temp = []
+    const_list = []
     for item in list(bs.select_one('#mw-content-text > div > table > tbody').strings)[5:]:
-        if len(item) <= 4 and ('.' in item):
-            temp.append(float(item))
+        if re.search(r'^-?\d+\.?\d*$', item):  # is float
+            const_list.append(float(item))
         else:
-            if len(temp):
-                songs_list.append(SongModel(name=name, const=temp))
-                temp.clear()
+            if const_list:
+                songs_list.append(SongModel(name=name, const=const_list.copy()))
+                const_list.clear()
                 name = item
             else:
                 name = item
