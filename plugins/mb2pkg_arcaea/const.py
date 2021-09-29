@@ -280,6 +280,6 @@ def save_model(model: BaseModel, filename: str, absdir: str):
         f.write(yaml.dump(json.loads(model.json())))
 
 
-def load_model_from_yaml(model_type: type, filename: str, absdir: str) -> Optional[BaseModel]:
+def load_model_from_yaml(model_type: type, filename: str, absdir: str):
     with open(os.path.join(absdir, filename), 'r') as f:
         return model_type(**yaml.load(f, Loader=yaml.FullLoader))
