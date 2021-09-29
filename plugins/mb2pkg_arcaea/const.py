@@ -180,8 +180,8 @@ async def wiki_const_handle(bot: Bot, event: MessageEvent):
         order_hint = '按歌曲名称升序'
 
     text = [
-        '歌曲名                             FTR  PRS  PST  BYD',
-        '====================================================='
+        '歌曲名                        FTR  PRS  PST  BYD',
+        '================================================'
     ]
     head = [
         'Arcaea 定数表 (来自Arcaea中文维基)',
@@ -205,9 +205,9 @@ async def wiki_const_handle(bot: Bot, event: MessageEvent):
             else:
                 index = 'α'  # 希腊字母，如αterlβus、γuarδina、ΟΔΥΣΣΕΙΑ、ω4
 
-        name = song.name if len(song.name) <= 30 else f'{song.name[:27]}...'
+        name = song.name if len(song.name) <= 25 else f'{song.name[:22]}...'
         text.append(
-            '%s  %-30s  %4s' % (
+            '%s  %-25s  %4s' % (
                 index if last_index != index else ' ',
                 name,
                 ' '.join(['{:>4.1f}'.format(_) for _ in song.const])
