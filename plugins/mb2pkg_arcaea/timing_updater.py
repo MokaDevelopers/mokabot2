@@ -20,7 +20,7 @@ async def pm_update():
 
 async def const_update():
     async with aiohttp.request('GET', 'https://wiki.arcaea.cn/index.php/%E5%AE%9A%E6%95%B0%E8%AF%A6%E8%A1%A8') as resp:
-        save_model(tc_text_parse(await resp.text()), 'pm.yaml', data_absdir)
+        save_model(tc_text_parse(await resp.text()), 'const.yaml', data_absdir)
 
 
 scheduler.add_job(tc_update, hours=24, next_run_time=datetime.now())
