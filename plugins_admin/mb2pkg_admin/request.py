@@ -52,7 +52,9 @@ async def auto_approve_group_invite(bot: Bot, event: GroupRequestEvent):
     log.info(msg)
     usage = 'bot使用帮助：man\n' \
             '别名管理系统帮助：man alias\n' \
-            '插件管理系统帮助：man manager'
+            '插件管理系统帮助：man manager\n' \
+            '\n' \
+            '请管理员注意：bot目前已开启所有功能，请参考man指令，如需关闭插件，请使用man manager'
     await bot.send_group_msg(group_id=event.group_id, message=usage)
 
 
