@@ -19,9 +19,9 @@ headers = {'Accept': 'application/vnd.github.v3+json'}
 
 class UserModel(BaseModel):
     login: str
-    followers: int
-    following: int
-    public_repos: str
+    followers: int = None
+    following: int = None
+    public_repos: str = None
     email: Optional[str] = None
     bio: Optional[str] = None
     type: str
@@ -97,5 +97,6 @@ class GithubParse(BaseParse):
             repo_model = await get_repo_model(suburl)
             return f'''📦:{repo_model.full_name} 👤:{repo_model.owner.login}({repo_model.owner.type})\n
                             ⌨️:{repo_model.language} ⭐️:{repo_model.stargazers_count} forks:{repo_model.forks_count}\n
-                            🌐:{repo_model.html_url}
+                            🌐:{repo_model.html_url}\n
+                            🕰:{repo_model.updated_at}
                             '''
