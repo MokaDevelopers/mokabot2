@@ -89,14 +89,14 @@ class GithubParse(BaseParse):
     async def fetch(self, subtype: str, suburl: str) -> Union[str, Message, MessageSegment]:
         if subtype == 'user':
             user_model = await get_user_model(suburl)
-            return '👤:' + user_model.login + '(' + user_model.type + ')' \
-                   + (('📬:' + user_model.email + '\n') if user_model.email else '\n') \
+            return '👴:' + user_model.login + '(' + user_model.type + ')' \
+                   + (('📫:' + user_model.email + '\n') if user_model.email else '\n') \
                    + (('📝:' + user_model.bio + '\n') if user_model.bio else '') \
-                   + f'⭐️:{user_model.followers} 💗:{user_model.following}'
+                   + f'⭐:{user_model.followers} ❤:{user_model.following}'
         if subtype == 'repo':
             repo_model = await get_repo_model(suburl)
-            return f'''📦:{repo_model.full_name} 👤:{repo_model.owner.login}({repo_model.owner.type})\n
-                            ⌨️:{repo_model.language} ⭐️:{repo_model.stargazers_count} forks:{repo_model.forks_count}\n
-                            🌐:{repo_model.html_url}\n
-                            🕰:{repo_model.updated_at}
-                            '''
+            return f'📦:{repo_model.full_name}\n' \
+                   f'👴:{repo_model.owner.login}({repo_model.owner.type})\n' \
+                   f'⌨:{repo_model.language} ⭐:{repo_model.stargazers_count} 🍴:{repo_model.forks_count}\n' \
+                   f'🌎:{repo_model.html_url}\n' \
+                   f'⏰:{repo_model.updated_at}'
