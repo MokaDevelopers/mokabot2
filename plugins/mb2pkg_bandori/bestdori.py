@@ -32,7 +32,7 @@ FONTPATH = os.path.join(Config().font_absdir, 'NotoSansMonoCJKsc-Regular.otf')
 
 @match_bandori_track.handle()
 async def bandori_track_handle(bot: Bot, event: MessageEvent):
-    info = re.match(r'^(\d{1,3})(JP|EN|TW|CN|KR)(100|500|1000|2000|5000|10000)$', str(event.get_message()).strip())
+    info = re.match(r'^(\d{1,3})(JP|EN|TW|CN|KR)(50|100|300|500|1000|2000|5000|10000)$', str(event.get_message()).strip())
     evt = info.group(1)
     server = info.group(2)
     rank = info.group(3)
