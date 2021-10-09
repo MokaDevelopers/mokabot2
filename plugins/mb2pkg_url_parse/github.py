@@ -1,4 +1,7 @@
 import json
+import re
+import time
+from datetime import datetime
 from typing import Type, Optional, Union
 from urllib import parse
 
@@ -9,6 +12,7 @@ from nonebot.matcher import Matcher
 from pydantic import BaseModel
 
 from public_module.mb2pkg_mokalogger import getlog
+from public_module.mb2pkg_public_plugin import get_time, datediff
 from .base import BaseParse
 from .exceptions import StatusCodeError, NoSuchTypeError
 
@@ -28,13 +32,28 @@ class UserModel(BaseModel):
 
 
 class RepoModel(BaseModel):
-    full_name: str
+
+    class License(BaseModel):
+        key: str
+        name: str
+        spdx_id: str
+        url: str
+        node_id: str
+
+    name: str
     html_url: str
     owner: UserModel
     language: str
     forks_count: str
     stargazers_count: int  # star数
-    updated_at: str
+    open_issues_count: int
+    size: Union[int, float]
+    description: Optional[str]
+    license: Optional[License]
+    created_at: datetime
+    pushed_at: datetime
+    topics: list[str]
+    html_url: str
 
 
 async def get_user_model(username: str) -> UserModel:
@@ -62,6 +81,14 @@ async def get_repo_model(fullname: str) -> RepoModel:
         log.error(se.args[0])
     except Exception as e:
         log.exception(e)
+
+
+def format_time(_time: datetime) -> str:
+    utc_now_stamp = time.mktime(datetime.utcnow().timetuple())
+    publish_time_stamp = time.mktime(_time.timetuple())
+    local_time = get_time("%Y-%m-%d %H:%M:%S", publish_time_stamp + 8 * 60 * 60)  # 把时间转换为北京时间，加上8小时
+    time_delta = datediff(utc_now_stamp, publish_time_stamp)
+    return f'{local_time}（{time_delta}）'
 
 
 class GithubParse(BaseParse):
@@ -95,8 +122,40 @@ class GithubParse(BaseParse):
                    + f'⭐:{user_model.followers} ❤:{user_model.following}'
         if subtype == 'repo':
             repo_model = await get_repo_model(suburl)
-            return f'📦:{repo_model.full_name}\n' \
-                   f'👴:{repo_model.owner.login}({repo_model.owner.type})\n' \
-                   f'⌨:{repo_model.language} ⭐:{repo_model.stargazers_count} 🍴:{repo_model.forks_count}\n' \
-                   f'🌎:{repo_model.html_url}\n' \
-                   f'⏰:{repo_model.updated_at}'
+            if repo_model.owner.type == 'User':
+                owner = repo_model.owner.login
+            else:
+                owner = f'{repo_model.owner.login}（{repo_model.owner.type}）'
+            if repo_model.license is not None:
+                license_ = repo_model.license.name
+            else:
+                license_ = '无'
+            if repo_model.description is not None:
+                description = repo_model.description
+            else:
+                description = '无'
+            if repo_model.topics:
+                tags = ' '.join(repo_model.topics)
+            else:
+                tags = '无'
+
+            og_image_url = await get_og_image_url(repo_model.html_url)
+
+            msg = f'项目：{repo_model.name}\n' \
+                  f'作者：{owner}\n' \
+                  f'大小：{repo_model.size} KB\n' \
+                  f'语言：{repo_model.language}\n' \
+                  f'许可证：{license_}\n' \
+                  f'🐞:{repo_model.open_issues_count} ⭐:{repo_model.stargazers_count} 🍴:{repo_model.forks_count}\n' \
+                  f'创建时间：{format_time(repo_model.created_at)}\n' \
+                  f'上次提交：{format_time(repo_model.pushed_at)}\n' \
+                  f'描述：{description}\n' \
+                  f'标签：{tags}'
+
+            return MessageSegment.image(file=og_image_url) + msg
+
+
+async def get_og_image_url(url: str) -> str:
+    async with aiohttp.request('GET', url) as r:
+        text = await r.text()
+    return re.search(r'(https://opengraph\.githubassets\.com[^"]+)', text).groups()[0]
