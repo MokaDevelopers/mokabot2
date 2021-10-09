@@ -54,6 +54,11 @@ HELP = {
         '',
         '【RSS】ELF_RSS2相关功能指令',
         '    命令示范：man rss',
+        '',
+        '【WordCloud】云图相关功能指令',
+        '    命令示范：man wc',
+        '    命令示范：man fg',
+        '    命令示范：man fg2',
     ],
     'MOKA': [
         '模块组：mb2pkg_admin',
@@ -387,7 +392,14 @@ HELP = {
         '    我的日功能调用统计',
         '    我的周功能调用统计',
         '    我的月功能调用统计',
-    ]
+    ],
+    'WC': [
+        '模块组：FG2',
+        '用于统计该群内的讨论热点（词云）',
+        '命令示范：',
+        '    开启云图',
+        '    关闭云图',
+    ],
 }
 
 
@@ -447,6 +459,9 @@ async def moka_manual_handle(bot: Bot, event: MessageEvent):
     elif args in ['maimai', 'mm']:
         savepath = os.path.join(temp_absdir, 'help_maimai.jpg')
         await draw_image(HELP['MAIMAIDX'], savepath)
+    elif args in ['wc', 'fg', 'fg2']:
+        savepath = os.path.join(temp_absdir, 'help_wordcloud.jpg')
+        await draw_image(HELP['WC'], savepath)
     else:
         savepath = os.path.join(temp_absdir, 'help.jpg')
         await draw_image(HELP['INTRODUCTION'], savepath)
