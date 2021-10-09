@@ -22,7 +22,7 @@ default_cd = Config().default_cd
 
 
 async def arr(matcher: Matcher, bot: Bot, event: Event, state: T_State) -> None:
-    if isinstance(event, MessageEvent):
+    if isinstance(event, MessageEvent) and matcher.type != 'message':
         user_id = event.user_id
         raw_message = event.raw_message
 

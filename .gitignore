@@ -138,6 +138,7 @@ temp/
 other/
 bin/
 logs/
+assets/
 test*.py
 
 # config

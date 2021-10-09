@@ -41,5 +41,5 @@ async def log_after_bot_send(bot: Bot, exception: Optional[Exception], api: str,
 
 
 async def log_before_exec_command(matcher: Matcher, bot: Bot, event: Event, state: T_State):
-    if isinstance(event, MessageEvent):
+    if isinstance(event, MessageEvent) and matcher.type != 'message':
         log.info(f'Bot收到消息，meta={event}，命中了matcher={matcher}')
