@@ -123,7 +123,7 @@ def formatter_video(data: dict) -> Union[str, Message, MessageSegment]:
            f'时间：{publish_time}({publish_delta})\n' \
            f'频道：{video.channelTitle}\n' \
            f'描述：{video.description[:30]}{dotx3_description}\n' \
-           f'▶:{stat.viewCount} 👍:{stat.likeCount} 👎:{stat.dislikeCount} ⭐:{stat.favoriteCount} 💬:{stat.commentCount}'
+           f'▶:{stat.viewCount} 👍:{stat.likeCount} 👎:{stat.dislikeCount} 💬:{stat.commentCount}'
 
     if video.tags is not None:
         dotx3_tags = '...' if len(video.tags) > 12 else ''
