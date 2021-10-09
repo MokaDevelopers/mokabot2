@@ -172,3 +172,5 @@ from public_module.mb2pkg_public_plugin import ...
  - MIT  [MeetWq/nonebot-plugin-alias](https://github.com/MeetWq/nonebot-plugin-alias)  <br>
  - MIT  [nonepkg/nonebot-plugin-manager](https://github.com/nonepkg/nonebot-plugin-manager)  <br>
  - MIT  [HibiKier/nonebot_plugin_statistical](https://github.com/HibiKier/nonebot_plugin_statistical)  <br>
+ - Apache-2.0  [mgsky1/FG](https://github.com/mgsky1/FG)  <br>
+ 
