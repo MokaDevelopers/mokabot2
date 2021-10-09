@@ -12,7 +12,6 @@ from nonebot import permission as su
 from nonebot import require
 from nonebot.adapters.cqhttp import Bot, Event, GroupMessageEvent, permission
 from nonebot.adapters.cqhttp import MessageSegment, Message
-from nonebot.permission import SUPERUSER
 from nonebot.typing import T_State
 from wordcloud import WordCloud
 
@@ -37,7 +36,12 @@ on_group_msg = on_message(rule=is_group_message, priority=5)
 match_switch_wc = on_command('关闭云图',
                              aliases={'开启云图'},
                              priority=5,
+                             rule=is_group_message,
                              permission=su.SUPERUSER | permission.GROUP_ADMIN | permission.GROUP_OWNER,)
+match_show_wc_now = on_command('立即显示云图',
+                               priority=5,
+                               rule=is_group_message,
+                               permission=su.SUPERUSER | permission.GROUP_ADMIN | permission.GROUP_OWNER,)
 
 
 @match_switch_wc.handle()
@@ -53,9 +57,18 @@ async def match_switch_wc_handle(bot: Bot, event: GroupMessageEvent):
         mygroup.wc_flag = enable
 
         msg = f'已{event.raw_message}，群组<{group_id}>的云图设置已设为{enable}'
+        if enable == '1':
+            msg += '，将在每天23点准时发送该群云图，管理员可通过发送"立即显示云图"来提前查看云图'
         log.info(msg)
 
         await bot.send(event, msg)
+
+
+@match_show_wc_now.handle()
+async def match_show_wc_now_handle(bot: Bot, event: GroupMessageEvent):
+    clu = DailyConlusion(event.group_id)
+    report = clu.generateReport()
+    await bot.send(event, report)
 
 
 @on_group_msg.handle()
@@ -149,7 +162,7 @@ class DailyConlusion:
             return '今日因活跃度不足，无法生成词云'
         else:
             image, report = tempReport
-            msg = '本群的今日热词词云已生成，今日的热点关键词为：' + report + image
+            msg = '本群的今日热词词云已生成，今日的热点关键词为：\n' + report + image
             return msg
 
 
