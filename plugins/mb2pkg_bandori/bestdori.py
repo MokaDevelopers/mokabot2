@@ -145,7 +145,7 @@ async def list_event(server: str) -> str:
     """
 
     result = []
-    event_type_dict = {'story': '一般', 'challenge': 'ＣＰ', 'versus': '对邦', 'live_try': 'ＥＸ', 'mission_live': '任务', 'festival': 'FES'}
+    event_type_dict = {'story': '一般', 'challenge': 'ＣＰ', 'versus': '对邦', 'live_try': 'ＥＸ', 'mission_live': '任务', 'festival': '队邦', 'medley': '三连'}
     server_dict = {'JP': 0, 'EN': 1, 'TW': 2, 'CN': 3, 'KR': 4}
 
     # 从bestdori获取数据
@@ -184,7 +184,7 @@ async def list_track(event: int, server: str, rank: Union[str, int]) -> str:
     """
 
     result = []
-    event_type_dict = {'story': '一般', 'challenge': 'ＣＰ', 'versus': '对邦', 'live_try': 'ＥＸ', 'mission_live': '任务'}
+    event_type_dict = {'story': '一般', 'challenge': 'ＣＰ', 'versus': '对邦', 'live_try': 'ＥＸ', 'mission_live': '任务', 'festival': '队邦', 'medley': '三连'}
     server_dict = {'JP': 0, 'EN': 1, 'TW': 2, 'CN': 3, 'KR': 4}
 
     event_archives = await get_event_archives()
