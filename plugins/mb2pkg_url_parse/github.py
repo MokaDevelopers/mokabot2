@@ -43,7 +43,7 @@ class RepoModel(BaseModel):
     name: str
     html_url: str
     owner: UserModel
-    language: str
+    language: Optional[str]
     forks_count: str
     stargazers_count: int  # star数
     open_issues_count: int
@@ -126,25 +126,23 @@ class GithubParse(BaseParse):
                 owner = repo_model.owner.login
             else:
                 owner = f'{repo_model.owner.login}（{repo_model.owner.type}）'
-            if repo_model.license is not None:
-                license_ = repo_model.license.name
-            else:
-                license_ = '无'
-            if repo_model.description is not None:
-                description = repo_model.description
-            else:
-                description = '无'
             if repo_model.topics:
                 tags = ' '.join(repo_model.topics)
             else:
                 tags = '无'
+            if repo_model.license:
+                license_ = repo_model.license.name
+            else:
+                license_ = '无'
+            language = repo_model.language or '无'
+            description = repo_model.description or '无'
 
             og_image_url = await get_og_image_url(repo_model.html_url)
 
             msg = f'项目：{repo_model.name}\n' \
                   f'作者：{owner}\n' \
                   f'大小：{repo_model.size} KB\n' \
-                  f'语言：{repo_model.language}\n' \
+                  f'语言：{language}\n' \
                   f'许可证：{license_}\n' \
                   f'🐞:{repo_model.open_issues_count} ⭐:{repo_model.stargazers_count} 🍴:{repo_model.forks_count}\n' \
                   f'创建时间：{format_time(repo_model.created_at)}\n' \
