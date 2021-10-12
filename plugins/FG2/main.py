@@ -181,4 +181,4 @@ async def handleTimer():
                 pass
 
 _hours, _minutes = config.auto_send_time
-daily_wordcloud_job = scheduler.add_job(handleTimer, 'cron', hours=_hours, minutes=_minutes, id='daily_wordcloud_job')
+daily_wordcloud_job = scheduler.add_job(handleTimer, 'cron', hour=_hours, minute=_minutes, id='daily_wordcloud_job')
