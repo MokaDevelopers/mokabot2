@@ -411,9 +411,9 @@ async def event_prediction(event: int, server: str, rank: Union[str, int]) -> st
 
 async def make_chart_excel() -> str:
 
-    def return_real_release(_song_id: str, _is_jp: bool) -> date:
+    def return_real_release(_song_id: str, _is_jp: bool) -> Optional[date]:
         """返回SP谱面的实际发布时间"""
-        # 记录一些在event_archive找不到id，需手动添加的sp谱面
+        # 记录一些按照搜索算法无法正常找到发布时间的特殊谱面
         abnormal_sp_chart_jp = {
             '67': date(2020, 6, 30),  # only my railgun，其sp谱不是在CP活期间发布，而是直接发布
             '59': date(2021, 3, 15),  # ふわふわ時間，包含了特殊note的sp谱面，不是在CP活期间发布
@@ -426,11 +426,28 @@ async def make_chart_excel() -> str:
         }
         abnormal_sp_chart_cn = {
             '67': date(2021, 6, 22),  # only my railgun，其sp谱不是在CP活期间发布，而是直接发布
+            '146': None,  # 新宝島，日服具有SP难度，虽然国服已经发布了包含该谱面的CP活，但并不是SP谱
         }
 
         abnormal_sp_chart = abnormal_sp_chart_jp if _is_jp else abnormal_sp_chart_cn
         event_list_music = event_list_music_jp if _is_jp else event_list_music_cn
 
+        """
+        搜索算法：
+        当一个歌曲的谱面难度被确认为5个时，认为这个歌曲拥有SP难度谱面，接下来从所有的活动中筛选出目标服务
+        器的CP活以及对应的活动歌曲，然后从后往前找每个CP活的活动歌曲，看哪个CP活包含了目标歌曲，那么这个
+        CP活的结活时间便是这个歌曲的SP谱面的发布时间。
+        
+        请注意：只有在目标服务器是日服的情况下才能确信最后一次CP活的结活时间就是这个歌曲的SP谱面的发布时
+        间，否则在以下情形同时满足时将一定会发生错误：
+        1、该歌曲的谱面难度被确认为5个
+        2、该歌曲属于某个CP活的活动歌曲
+        3、该次CP活只发布了该歌曲的前4个难度
+        
+        如此一来将会把该次CP活的结活时间认为是这首歌的SP谱面发布时间（实际上并没有发布）
+        由于日服不可能同时满足条件1和3，故日服不可能发生此类错误，该错误只有可能发生在国服上，目前没有解
+        决办法。
+        """
         if _song_id in abnormal_sp_chart:
             return abnormal_sp_chart[_song_id]
         for _endAt, _musics in event_list_music:
@@ -438,6 +455,7 @@ async def make_chart_excel() -> str:
             _musics: list[int]  # 当期活动歌曲列表
             if int(_song_id) in _musics:
                 return _get_time(_endAt)
+            # for循环结束之后若仍然没有找到
 
     def return_sorted_event_list_music(_server: int) -> list[(int, list[int])]:
         """按服务器实际活动结束顺序（倒序），返回每期challenge活动歌曲列表"""
