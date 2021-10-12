@@ -32,7 +32,7 @@ def is_group_message(bot: Bot, event: Event, state: T_State) -> bool:
     return isinstance(event, GroupMessageEvent)
 
 
-on_group_msg = on_message(rule=is_group_message, priority=5)
+on_group_msg = on_message(rule=is_group_message, priority=101)  # 修改为100以下的值，使得arr和log4send模块不会处理此类消息
 match_switch_wc = on_command('关闭云图',
                              aliases={'开启云图'},
                              priority=5,
