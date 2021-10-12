@@ -180,4 +180,5 @@ async def handleTimer():
             with open(os.path.join(os.path.join(global_config.groupdata_absdir, str(group_id), 'chat.log')), 'w', encoding='utf-8'):  # 直接覆盖为空
                 pass
 
-daily_wordcloud_job = scheduler.add_job(handleTimer, 'interval', hours=23, id='daily_wordcloud_job')
+_hours, _minutes = config.auto_send_time
+daily_wordcloud_job = scheduler.add_job(handleTimer, 'cron', hours=_hours, minutes=_minutes, id='daily_wordcloud_job')

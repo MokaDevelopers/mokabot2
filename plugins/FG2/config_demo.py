@@ -6,6 +6,8 @@ from pydantic import BaseSettings
 class Config(BaseSettings):
     plugin_absdir: str = os.path.join(os.path.abspath('.'), os.path.dirname(__file__))
 
+    auto_send_time: tuple[int, int] = (23, 00)  # 自动发送云图的时间
+
     windowSize: int = 5  # 设置TextRank算法的窗口大小，默认为5
     keyWordLen: int = 3  # 小于此长度的词将不会被显示，默认为3
     keyWordNum: int = 50  # 热词数量，默认50
