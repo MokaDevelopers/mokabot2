@@ -170,15 +170,20 @@ async def handleTimer():
     global dictFlags
     bot: Bot = list(nonebot.get_bots().values())[0]
 
-    for group_id, flag in dictFlags.items():
-        if flag == '1':
-            clu = DailyConlusion(group_id)
-            report = clu.generateReport()
+    try:
+        for group_id, flag in dictFlags.items():
+            if flag == '1':
+                clu = DailyConlusion(group_id)
+                report = clu.generateReport()
 
-            await bot.send_group_msg(group_id=group_id, message=report)
+                await bot.send_group_msg(group_id=group_id, message=report)
 
-            with open(os.path.join(os.path.join(global_config.groupdata_absdir, str(group_id), 'chat.log')), 'w', encoding='utf-8'):  # 直接覆盖为空
-                pass
+                with open(os.path.join(os.path.join(global_config.groupdata_absdir, str(group_id), 'chat.log')), 'w', encoding='utf-8'):  # 直接覆盖为空
+                    pass
+    except Exception as e:
+        log.error(e)
+        log.exception(e)
+
 
 _hours, _minutes = config.auto_send_time
 daily_wordcloud_job = scheduler.add_job(handleTimer, 'cron', hour=_hours, minute=_minutes, id='daily_wordcloud_job')
