@@ -1,3 +1,4 @@
+import asyncio
 from typing import Union
 
 import nonebot
@@ -50,6 +51,8 @@ async def auto_approve_group_invite(bot: Bot, event: GroupRequestEvent):
     except nonebot.adapters.cqhttp.exception.ActionFailed:
         pass
     log.info(msg)
+
+    await asyncio.sleep(5)  # 等待5秒后再发送使用说明，以免发送失败
     usage = 'bot使用帮助：man\n' \
             '别名管理系统帮助：man alias\n' \
             '插件管理系统帮助：man manager\n' \
