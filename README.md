@@ -168,7 +168,6 @@ from public_module.mb2pkg_public_plugin import ...
  - GPLv3  [Quan666/ELF_RSS](https://github.com/Quan666/ELF_RSS) <br>
  - MIT  [Diving-Fish/mai-bot](https://github.com/Diving-Fish/mai-bot) <br>
  - MIT  [nonebot/plugin-apscheduler](https://github.com/nonebot/plugin-apscheduler)  <br>
- - GPLv3  [Hajimarino-HOPE/SakuraiSenrin](https://github.com/Hajimarino-HOPE/SakuraiSenrin)  <br>
  - MIT  [MeetWq/nonebot-plugin-alias](https://github.com/MeetWq/nonebot-plugin-alias)  <br>
  - MIT  [nonepkg/nonebot-plugin-manager](https://github.com/nonepkg/nonebot-plugin-manager)  <br>
  - MIT  [HibiKier/nonebot_plugin_statistical](https://github.com/HibiKier/nonebot_plugin_statistical)  <br>
