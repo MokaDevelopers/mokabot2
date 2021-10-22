@@ -104,8 +104,8 @@ class GithubParse(BaseParse):
             path_list = parse.urlparse(url).path.split('/')[1:]
             if len(path_list) == 1:
                 return 'user', path_list[0]
-            if len(path_list) == 2:
-                return 'repo', '/'.join(path_list)
+            if len(path_list) >= 2:
+                return 'repo', '/'.join(path_list[:2])
             raise NoSuchTypeError('不支持的类型:' + '/'.join(path_list))
 
         except NoSuchTypeError as ne:
