@@ -67,24 +67,30 @@ async def job_send_game_notice():
         ]:
             # 如果列表非空则发
             if notices:
+                # 构造消息序列
+                msg_list: list[dict] = []
+                for notice in notices:
+                    msg_list.append({
+                        'type': 'node',
+                        'data': {
+                            'name': '莫卡伯特',
+                            'uin': '2090065631',
+                            'content': f'{Xfu}服新公告\n'
+                                       f'标题：{notice["title"]}\n'
+                                       f'时间：{notice["time"]}\n' +
+                                       MessageSegment.image(file=f'file:///{notice["savepath"]}')
+                        }
+                    })
+                # 开始向每个群组发送公告
                 for group in groups:
                     group_id = group['group_id']
                     mygroup = Group(group_id)
                     if mygroup.__getattr__(news_xx) == '1':
-                        for notice in notices:
-                            msg = f'{Xfu}服新公告\n' \
-                                  f'标题：{notice["title"]}\n' \
-                                  f'时间：{notice["time"]}\n' + \
-                                  MessageSegment.image(file=f'file:///{notice["savepath"]}')
-                            try:  # 防止被禁言后无法继续发
-                                await bot.send_group_msg(group_id=group_id, message=msg)
-                            except Exception as senderror:
-                                log.error(f'发往<{group_id}>时发送失败，原因：{senderror}')
-                            await asyncio.sleep(1)
+                        try:
+                            await bot.send_group_forward_msg(group_id=group_id, messages=msg_list)
+                        except Exception as senderror:
+                            log.error(f'发往<{group_id}>时发送失败，原因：{senderror}')
                         await asyncio.sleep(10)
-                    # else:
-                    # 绕过log，因为群组太多
-                    #     log.warn(f'{group_id}设置{news_xx}参数为0或未设置，取消该群组发送{Xfu}服公告')
 
     except Exception as e:
         log.exception(e)
