@@ -91,7 +91,7 @@ async def arc_probe_handle(bot: Bot, event: MessageEvent):
         msg = f'好友码<{e}>查无此人'
         log.warn(msg)
     except NotBindError:
-        msg = f'{s.user_id}未绑定arcaea，请使用man arc指令查看如何绑定'
+        msg = f'{s.user_id}未绑定arcaea，请使用\narc绑定 <好友码>\n来绑定好友码，详情请使用man指令查看帮助'
     except SameRatioError as e:
         msg = str(e)
     except NoSuchScoreError as e:
@@ -116,20 +116,21 @@ async def arc_probe_handle(bot: Bot, event: MessageEvent):
         msg = f'estertion服务器端发生错误：{e}'
         log.error(msg)
     except NotFindFriendError as e:
-        close_str = f'你的实际好友名是{" ".join(e.close_name)}吗？' if e.close_name else ''
-        msg = f'在所有的查询用账号中都找不到该用户{e.friend_name}，请确认您的用户名输入正确（包括大小写），若不正确请使用"man arc"查看如何重新设置\n' \
+        close_str = f'你的实际好友名是{" ".join(e.close_name)}吗？\n' if e.close_name else ''
+        msg = f'在所有的查询用账号中都找不到该用户{e.friend_name}，请确认您的用户名输入正确（包括大小写）。\n' \
               f'如果确认正确则可能是开发者尚未添加你到查分器好友列表中，请等待开发者添加。\n' \
-              f'另外请确认你的好友码是{e.arc_friend_id}，如果该好友码和你的用户名不对应甚至查无此人，开发者将没有任何办法添加你为好友，若不正确也请使用"man arc"查看如何重新设置\n' \
-              f'{close_str}'
+              f'另外请确认你的好友码是{e.arc_friend_id}，如果该好友码和你的用户名不对应甚至查无此人，开发者将没有任何办法添加你为好友\n。' \
+              f'{close_str}' \
+              f'欲重新绑定好友名，请使用"arc绑定用户名"指令'
         log.error(msg)
     except NotBindFriendNameError:
-        msg = f'{s.user_id}未设置用于备用查分器的用户名（注意是用户名而非好友码），请使用"man arc"指令查看如何设置，设置后请等待开发者人工添加好友'
+        msg = f'{s.user_id}未设置用于备用查分器的用户名（注意是用户名而非好友码），请使用\narc绑定用户名 <用户名>\n来绑定你的用户名，设置后请等待开发者人工添加好友。详情请使用man指令查看帮助。'
     except AllProberUnavailableError:
         msg = '主查分器和全部的备用查分器已经失效'
     except WebapiProberLoginError as e:
         msg = f'查分器使用webapi登陆失败：{e}'
     except Exception as e:
-        msg = f'查询以异常状态结束（{e}），本次错误已经被记录，请重新查询。若反复出现此异常，可暂时先用查分器本体查询，或使用arc强制查询'
+        msg = f'查询以异常状态结束（{e}），本次错误已经被记录，请重新查询。若反复出现此异常，可暂时先用查分器本体查询'
         log.exception(e)
 
     await bot.send(event, msg)
