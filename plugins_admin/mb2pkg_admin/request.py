@@ -53,9 +53,9 @@ async def auto_approve_group_invite(bot: Bot, event: GroupRequestEvent):
     log.info(msg)
 
     await asyncio.sleep(5)  # 等待5秒后再发送使用说明，以免发送失败
-    usage = 'bot使用帮助：help或man(manual)\n' \
-            '请管理员注意：bot目前已开启所有功能，请通过使用帮助来查看如何开启或关闭功能。\n' \
-            '请参考该在线文档：\nhttps://github.com/MokaDevelopers/mokabot2/blob/master/MANUAL.md'
+    usage = 'bot使用帮助：help、man或manual\n' \
+            '请管理员注意：bot默认开启部分功能，请务必阅读该在线文档：\n' \
+            'https://github.com/MokaDevelopers/mokabot2/blob/master/MANUAL.md'
     await bot.send_group_msg(group_id=event.group_id, message=usage)
 
 
