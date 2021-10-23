@@ -14,7 +14,7 @@ b64 = re.compile(r'\[CQ:image,file=base64://\S+]')
 
 
 async def log_after_bot_send(bot: Bot, exception: Optional[Exception], api: str, data: Dict[str, Any], result: Any):
-    if api in ['send_msg', 'send_private_msg', 'send_group_msg']:
+    if api in ['send_msg', 'send_private_msg', 'send_group_msg', 'send_group_forward_msg']:
         # 因mai-bot会使用base64发送图片，导致整个图片base64被记入日志，因此在这里预处理
         fin_data = {}
         msg = []
