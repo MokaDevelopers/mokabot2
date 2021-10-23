@@ -93,7 +93,7 @@ def format_time(_time: datetime) -> str:
 
 class GithubParse(BaseParse):
     def __init__(self):
-        self._matcher = on_regex('(github.com/[A-Za-z0-9]+/[A-Za-z0-9]+)|(github.com/[A-Za-z0-9]+)')
+        self._matcher = on_regex(r'github\.com/.+')
 
     @property
     def matcher(self) -> Type[Matcher]:
@@ -101,7 +101,8 @@ class GithubParse(BaseParse):
 
     async def preprocesse(self, url: str) -> tuple[str, str]:
         try:
-            path_list = parse.urlparse(url).path.split('/')[1:]
+            real_url: str = re.findall(r'(github\.com/.+)', url)[0]  # github.com/user/repo/path/to/file
+            path_list = parse.urlparse(real_url).path.split('/')[1:]  # ['user', 'repo', 'path', 'to', 'file']
             if len(path_list) == 1:
                 return 'user', path_list[0]
             if len(path_list) >= 2:
