@@ -175,6 +175,8 @@ async def check_bind(qq: int) -> str:
 async def prober_self_check() -> str:
     result = []
     all_name_list: list[tuple[str, str]] = []  # 因为必须要利用此去重，所以不能使用dict来存储，因为dict不能存在两个相同的key
+    global all_name_dict
+    all_name_dict = {}  # 清空
 
     for _username, _password in WEBAPI_ACC_LIST:
         async with aiohttp.ClientSession() as session:
@@ -198,6 +200,7 @@ async def prober_self_check() -> str:
 
             # 去重环节
             for _item in friend_list:
+                all_name_dict[_item['name']] = _username
                 all_name_list.append(
                     (_item['name'], _username)  # 好友名，查分器名
                 )
