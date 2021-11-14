@@ -19,7 +19,7 @@ log = getlog()
 class BilibiliParse(BaseParse):
     """
     原项目地址：https://github.com/mengshouer/nonebot_plugin_analysis_bilibili
-    使用提交版本：d743ad49e0e84b1162294b856a6c85e1a7fab988
+    使用提交版本：6f2426862a9bf0470574fcf1d21da95837b0a25f
     主要改动：
      - 分离__init__
      - 重写bili_keyword函数为preprocesse方法
@@ -34,7 +34,7 @@ class BilibiliParse(BaseParse):
                                  r"(live.bilibili.com)|"
                                  r"(bilibili.com/(video|read|bangumi))|"
                                  r"(^(av|cv)(\d+))|"
-                                 r"(^BV([a-zA-Z0-9])+)|"
+                                 r"(^BV([a-zA-Z0-9]{10})+)|"
                                  r"(\[\[QQ小程序\]哔哩哔哩\])|"
                                  r"(QQ小程序&amp;#93;哔哩哔哩)|"
                                  r"(QQ小程序&#93;哔哩哔哩)",
@@ -106,7 +106,7 @@ async def b23_extract(text):
 
 async def extract(text: str):
     aid = re.compile(r'av\d+', re.I).search(text)
-    bvid = re.compile(r'BV([a-zA-Z0-9])+', re.I).search(text)
+    bvid = re.compile(r'BV([a-zA-Z0-9]{10})+', re.I).search(text)
     epid = re.compile(r'ep\d+', re.I).search(text)
     ssid = re.compile(r'ss\d+', re.I).search(text)
     mdid = re.compile(r'md\d+', re.I).search(text)
