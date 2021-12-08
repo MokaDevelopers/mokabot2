@@ -197,7 +197,7 @@ async def moe_draw_last(data):
     """
     通过给定的arcaea数据生成最近一次成绩图（moe样式）
 
-    :param dict data: 给定的arcaea数据，格式请参考plugins.arcaea.inquire.arc_probe_force
+    :param dict data: 给定的arcaea数据，格式请参考plugins.mb2pkg_arcaea.probe.arc_probe_force
     :return: 生成图片的路径
     """
 
@@ -365,7 +365,7 @@ async def guin_draw_last(data):
     """
     通过给定的arcaea数据生成最近一次成绩图（guin样式）
 
-    :param dict data: 给定的arcaea数据，格式请参考plugins.arcaea.inquire.arc_probe_force
+    :param dict data: 给定的arcaea数据，格式请参考plugins.mb2pkg_arcaea.probe.arc_probe_force
     :return: 生成图片的路径
     """
 
@@ -507,7 +507,7 @@ async def bandori_draw_last(data):
     """
     通过给定的arcaea数据生成最近一次成绩图（bandori样式）
 
-    :param dict data: 给定的arcaea数据，格式请参考plugins.arcaea.inquire.arc_probe_force
+    :param dict data: 给定的arcaea数据，格式请参考plugins.mb2pkg_arcaea.probe.arc_probe_force
     :return: 生成图片的路径
     """
 
@@ -689,7 +689,7 @@ async def draw_b30(arcaea_data, force=False):
     """
     通过给定的arcaea数据生成b30长图
 
-    :param arcaea_data: 给定的arcaea数据，格式请参考plugins.arcaea.inquire.arc_probe_force
+    :param arcaea_data: 给定的arcaea数据，格式请参考plugins.mb2pkg_arcaea.probe.arc_probe_force
     :param force: 本次查询是否属于强制查询
     :return: 生成图片的路径
     """
