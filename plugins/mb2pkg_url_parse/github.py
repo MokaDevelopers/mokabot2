@@ -37,7 +37,7 @@ class RepoModel(BaseModel):
         key: str
         name: str
         spdx_id: str
-        url: str
+        url: Optional[str]
         node_id: str
 
     name: str
