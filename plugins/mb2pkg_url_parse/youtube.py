@@ -123,7 +123,7 @@ def formatter_video(data: dict) -> Union[str, Message, MessageSegment]:
            f'时间：{publish_time}({publish_delta})\n' \
            f'频道：{video.channelTitle}\n' \
            f'描述：{video.description[:30]}{dotx3_description}\n' \
-           f'▶:{stat.viewCount} 👍:{stat.likeCount} 👎:{stat.dislikeCount} 💬:{stat.commentCount}'
+           f'▶:{stat.viewCount} 👍:{stat.likeCount} 💬:{stat.commentCount}'
 
     if video.tags is not None:
         dotx3_tags = '...' if len(video.tags) > 12 else ''
@@ -172,7 +172,6 @@ class YouTubeVideoListResponse(BaseModel):
         class Statistics(BaseModel):
             viewCount: Optional[str]
             likeCount: Optional[str]
-            dislikeCount: Optional[str]
             favoriteCount: Optional[str]
             commentCount: Optional[str]
 
