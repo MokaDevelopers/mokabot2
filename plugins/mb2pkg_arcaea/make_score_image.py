@@ -1,6 +1,7 @@
 import json
 import os
 import time
+from typing import Optional
 
 import nonebot
 from PIL import Image, ImageDraw, ImageFont, ImageOps
@@ -694,29 +695,46 @@ async def draw_b30(arcaea_data, force=False):
     :return: 生成图片的路径
     """
 
-    best30 = []
-    recent = []
+    log.info(arcaea_data)
+
+    def gen_score_info(_score: dict, _pos: Optional[int] = None) -> list[str]:
+        """自动按照格式生成歌曲成绩信息"""
+        ppure = _score['shiny_perfect_count']
+        _pure = _score['perfect_count']
+        _far = _score['near_count']
+        _lost = _score['miss_count']
+        _spf = round(1e7 / (_pure + _far + _lost) / 2)
+        # 在使用arc强制查询时，定数将不会出现在_score字典中，此时应当自行反向计算定数
+        _const = _score['constant'] if 'constant' in _score else calc_last_const(_score['score'], _score['rating'])
+        return [
+            '%2d  %s (%s)' % (_pos, songtitle[_score['song_id']]['en'], difficulty[_score['difficulty']]) if _pos
+            else '    %s (%s)' % (songtitle[_score['song_id']]['en'], difficulty[_score['difficulty']]),
+            '    %-37s(%d分每far)' % ('{:,}'.format(_score['score']) + ' (' + rank_score(_score['score']) + ' ' + clear_type[_score['clear_type']] + ')', _spf),
+            '    %-33sPURE %d(%d)' % ('谱面定数：' + '%.1f' % _score['constant'], _pure, ppure),
+            '    %-33sFAR  %d' % ('成绩评价：' + '%.5f' % _score['rating'], _far),
+            '    %-33sLOST %d' % ('取得时间：' + get_time("%Y-%m-%d %H:%M", _score['time_played'] / 1000), _lost),
+            '',
+        ]
+
+    # clear类型和难度映射
     clear_type = ['Track Lost', 'Normal Clear', 'Full Recall', 'Pure Memory', 'Easy Clear', 'Hard Clear']
     difficulty = ['PST', 'PRS', 'FTR', 'BYD']
-    global songtitle
 
-    if force:
-        head_from = '数据来源：mokabot Arcaea强制查询'
-    else:
-        head_from = '数据来源：Arcaea查分器（redive.estertion.win/arcaea/probe）'
-
+    # 准备原始数据
     userinfo = arcaea_data['userinfo']
     userid = userinfo['user_id']  # TODO 应为user_code，临时改为user_id
-    scores = sorted(arcaea_data['scores'], key=lambda d: d['rating'], reverse=True)
+    scores = sorted(arcaea_data['scores'], key=lambda _: _['rating'], reverse=True)
     now = time.time()
 
+    global songtitle
+
+    # STEP1: 描述用户信息，根据是否隐藏潜力值使用不同的格式，生成head
+    head_from = '数据来源：mokabot Arcaea强制查询' if force else '数据来源：Arcaea查分器（redive.estertion.win/arcaea/probe）'
     b30 = sum([r['rating'] for r in scores][:30]) / 30
     b10 = sum([r['rating'] for r in scores][:10]) / 10
     recent_score_time = userinfo['recent_score'][0]['time_played'] / 1000
     toplimit_ptt = 0.75 * b30 + 0.25 * b10
-
     if force and arcaea_data['userinfo']['ishidden']:
-        # 添加描述头
         head = ['Arcaea 用户档案  制图时间：%s' % now_datetime(),
                 head_from,
                 'POTENTIAL：**.**       ID:%s   UID:%d' % (userinfo['name'], userinfo['user_id']),
@@ -728,13 +746,9 @@ async def draw_b30(arcaea_data, force=False):
     else:
         # 计算玩家b30和r10的ptt
         ptt = userinfo['rating'] / 100
-        log.debug(f'该用户成绩总数量：{len(scores)}')
         t10_max = 4 * (ptt + 0.0099) - 3 * b30
         t10_min = 4 * (ptt - 0.0001) - 3 * b30
         t10 = (t10_max + t10_min) / 2
-        log.debug('ptt计算完毕，ptt:%.2f b30:%.2f t10:%.2f' % (ptt, b30, t10))
-
-        # 添加描述头
         head = ['Arcaea 用户档案  制图时间：%s' % now_datetime(),
                 head_from,
                 'POTENTIAL：%5.2f       ID:%s   UID:%d' % (ptt, userinfo['name'], userinfo['user_id']),
@@ -743,16 +757,11 @@ async def draw_b30(arcaea_data, force=False):
                 '以Best前10作为Top10时的潜力值：%.5f' % toplimit_ptt,
                 '考虑误差后估计Top10的上/下界：%.5f / %.5f' % (t10_max, t10_min),
                 ]
+    log.debug('用户信息（head）已正常生成')
 
-    # 整理上一次游玩
-    last_song_data = userinfo['recent_score'][0]
-    ppure = last_song_data['shiny_perfect_count']
-    pure = last_song_data['perfect_count']
-    far = last_song_data['near_count']
-    lost = last_song_data['miss_count']
+    # STEP2: 生成最近游玩数据，即recent_score_info和recent_description
 
-    # 当arcaea更新而moka这边尚未更新songlist.json时，用id临时取代歌名
-    # 该临时取代将会持续到本次mokabot关闭
+    # 当arcaea更新而moka这边尚未更新songlist.json时，用id临时取代歌名，该临时取代将会持续到本次mokabot关闭
     for _item in scores + userinfo['recent_score']:
         score_song_id: str = _item['song_id']
         if score_song_id not in songtitle:
@@ -762,66 +771,63 @@ async def draw_b30(arcaea_data, force=False):
                 'side': 0,
                 'remote_dl': False
             }
-            log.warn(f'{score_song_id}歌曲未找到')
+            log.warning(f'{score_song_id}歌曲未找到')
 
-    # 为保证独立性，上一次游玩歌曲的定数为主动反向计算
-    last_const = calc_last_const(last_song_data['score'], last_song_data['rating'])
-    spf = round(1e7 / (pure + far + lost) / 2)
-    # noinspection PyTypeChecker
-    recent.append('    %s (%s)' % (songtitle[last_song_data['song_id']]['en'], difficulty[last_song_data['difficulty']]))
-    recent.append('    %-37s(%d分每far)' % ('{:,}'.format(last_song_data['score']) + ' (' + rank_score(last_song_data['score']) + ' ' + clear_type[last_song_data['clear_type']] + ')', spf))
-    recent.append('    %-33sPURE %d(%d)' % ('谱面定数：' + last_const, pure, ppure))
-    recent.append('    %-33sFAR  %d' % ('成绩评价：' + '%.5f' % last_song_data['rating'], far))
-    recent.append('    %-33sLOST %d' % ('取得时间：' + get_time("%Y-%m-%d %H:%M", last_song_data['time_played'] / 1000), lost))
-    log.debug('上一次游玩的数据计算完毕')
+    # 准备最近一次游玩的数据
+    last_song_data = userinfo['recent_score'][0]
+    recent_score_info = gen_score_info(last_song_data)
+    log.debug('recent_score_info已正常生成')
 
     # 计算最近一次游玩在score中的位置，寻找方式为歌曲名+难度
     lastsong = songtitle[last_song_data['song_id']]['en'] + difficulty[last_song_data['difficulty']]
     score_pos = 0
-    for i, s in enumerate(scores):
-        if songtitle[s['song_id']]['en'] + difficulty[s['difficulty']] == lastsong:
-            log.debug(f'在score中发现了最近一次成绩！score{i + 1}:{s["score"]}')
-            score_pos = i + 1
+    for index, score in enumerate(scores):
+        if songtitle[score['song_id']]['en'] + difficulty[score['difficulty']] == lastsong:
+            score_pos = index + 1
             break
     # 成绩在best内
-    if userinfo['recent_score'][0]['score'] == scores[score_pos - 1]['score']:
+    if last_song_data['score'] == scores[score_pos - 1]['score']:
         if score_pos <= 30:
-            recent = ['', '', f'上次游玩：(恭喜你，最近一次的成绩位于best{score_pos})', ''] + recent
+            recent_description = ['', '', f'上次游玩：(恭喜你，最近一次的成绩位于best{score_pos})', '']
         else:
-            recent = ['', '', f'上次游玩：(最近一次的成绩位于best{score_pos})', ''] + recent
+            recent_description = ['', '', f'上次游玩：(最近一次的成绩位于best{score_pos})', '']
     # 成绩不在best内，但best中有相同难度和歌名的谱面
     elif score_pos != 0:
-        to_highscore = scores[score_pos - 1]['score'] - userinfo['recent_score'][0]['score']
+        to_highscore = scores[score_pos - 1]['score'] - last_song_data['score']
+        pure = last_song_data['perfect_count']
+        far = last_song_data['near_count']
+        lost = last_song_data['miss_count']
+        spf = round(1e7 / (pure + far + lost) / 2)
         to_far = int(to_highscore / int(spf) + 0.5)
-        recent = ['', '', f'上次游玩：（差最高分{to_highscore}分，约{to_far}个far）', ''] + recent
+        recent_description = ['', '', f'上次游玩：（差最高分{to_highscore}分，约{to_far}个far）', '']
     # 成绩不在best内，best中也没有相同难度和歌名的谱面
     else:
-        recent = ['', '', '上次游玩：（该谱面的定数在定数搜索范围之外，故无法在best列表中定位）', ''] + recent
+        recent_description = ['', '', '上次游玩：（该谱面的定数在定数搜索范围之外，故无法在best列表中定位）', '']
+    log.debug(f'recent_description已正常生成：{recent_description[2]}')
+
+    # STEP3: 生成Best30数据，即best30_scores_info和b30_description
 
     # 整理B30数据
-    for i in range(min(len(scores), 30)):
-        b30_song_data = scores[i]
-        r = []
-        ppure = b30_song_data['shiny_perfect_count']
-        pure = b30_song_data['perfect_count']
-        far = b30_song_data['near_count']
-        lost = b30_song_data['miss_count']
-        spf = round(1e7 / (pure + far + lost) / 2)
-        # noinspection PyTypeChecker
-        r.append('%2d  %s (%s)' % (i + 1, songtitle[b30_song_data['song_id']]['en'], difficulty[b30_song_data['difficulty']]))
-        r.append('    %-37s(%d分每far)' % ('{:,}'.format(b30_song_data['score']) + ' (' + rank_score(b30_song_data['score']) + ' ' + clear_type[b30_song_data['clear_type']] + ')', spf))
-        r.append('    %-33sPURE %d(%d)' % ('谱面定数：' + '%.1f' % b30_song_data['constant'], pure, ppure))
-        r.append('    %-33sFAR  %d' % ('成绩评价：' + '%.5f' % b30_song_data['rating'], far))
-        r.append('    %-33sLOST %d' % ('取得时间：' + get_time("%Y-%m-%d %H:%M", b30_song_data['time_played'] / 1000), lost))
-        r.append('')
-        best30.extend(r)
+    best30_scores_info = []
+    for index, score in enumerate(scores[:30], start=1):
+        best30_scores_info.extend(gen_score_info(score, index))
+    log.debug('b30已正常生成')
 
     floor = scores[0]['rating']
     ceiling = scores[min(29, len(scores) - 1)]['rating']
+    b30_description = ['', 'Best 30：（天花板：%.5f  地板：%.5f）' % (floor, ceiling), '']
+    log.debug('b30_description正常计算完毕，天花板：%.5f，地板：%.5f' % (floor, ceiling))
 
-    log.debug('b30计算完毕，天花板：%.5f，地板：%.5f' % (floor, ceiling))
+    # STEP4: 生成Best31至Best35的数据，即b31_split_line和b31Tob35_scores_info
 
-    result = head + recent + ['', 'Best 30：（天花板：%.5f  地板：%.5f）' % (floor, ceiling), ''] + best30
+    # 整理B31-B35的数据
+    b31Tob35_scores_info = []
+    for index, score in enumerate(scores[30:35], start=31):
+        b31Tob35_scores_info.extend(gen_score_info(score, index))
+    b31_split_line = ['  ==================== Best 31 ====================', ''] if b31Tob35_scores_info else []
+    log.debug('b31-b35已正常生成')
+
+    result = head + recent_description + recent_score_info + b30_description + best30_scores_info + b31_split_line + b31Tob35_scores_info
 
     savepath = os.path.join(temp_absdir, f'{userid}_b30.jpg')
     await draw_image(result, savepath)
