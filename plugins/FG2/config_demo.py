@@ -15,6 +15,7 @@ class Config(BaseSettings):
 
     # 用于生成词云的图片路径数组
     # 每个元素为使用图片，即真正用来生成词云的图片，要求除了主体之外，背景为白色，存放位置.assets/images文件夹下
-    wcImg: list[str] = [
-        'demo.jpg'
-    ]
+    wcImg: list[str] = os.listdir(os.path.join(plugin_absdir, 'assets/images'))
+    # wcImg: list[str] = [
+    #     'demo.jpg'
+    # ]
