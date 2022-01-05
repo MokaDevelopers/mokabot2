@@ -9,7 +9,7 @@ from .const import tc_text_parse, save_model, pm_text_parse, const_text_parse, u
 
 log = getlog()
 
-scheduler = require('scheduler')
+scheduler = require('nonebot_plugin_apscheduler').scheduler
 data_absdir = nonebot.get_driver().config.data_absdir
 
 
@@ -31,7 +31,7 @@ async def const_update():
     log.info('自动更新Arcaea中文维基定数表成功')
 
 
-scheduler.add_job(tc_update, hours=24, next_run_time=datetime.now())
-scheduler.add_job(pm_update, hours=24, next_run_time=datetime.now())
-scheduler.add_job(const_update, hours=24, next_run_time=datetime.now())
-scheduler.add_job(update_twitter_const_image, hours=12, next_run_time=datetime.now())
+scheduler.add_job(tc_update, 'interval', hours=24)
+scheduler.add_job(pm_update, 'interval', hours=24)
+scheduler.add_job(const_update, 'interval', hours=24)
+scheduler.add_job(update_twitter_const_image, 'interval', hours=12)
