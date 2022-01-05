@@ -1,5 +1,6 @@
 import asyncio
 import re
+import time
 import urllib.parse
 from datetime import datetime
 from typing import Union, Type
@@ -11,6 +12,7 @@ from nonebot.adapters.cqhttp import Message, MessageSegment
 from nonebot.matcher import Matcher
 
 from public_module.mb2pkg_mokalogger import getlog
+from public_module.mb2pkg_public_plugin import get_time, datediff
 from .base import BaseParse
 
 log = getlog()
@@ -96,6 +98,12 @@ class BilibiliParse(BaseParse):
         return self._msg
 
 
+def format_time(_time: Union[int, float]) -> str:
+    fmted_time = get_time('%Y-%m-%d %H:%M:%S', _time)
+    time_delta = datediff(time.time(), _time)
+    return f'{fmted_time}（{time_delta}）'
+
+
 async def b23_extract(text):
     b23 = re.compile(r'b23.tv/(\w+)|(bili(22|23|33|2233).cn)/(\w+)', re.I).search(text.replace("\\", ""))
     url = f'https://{b23[0]}'
@@ -160,6 +168,7 @@ async def video_detail(url):
     vurl = f"https://www.bilibili.com/video/av{res['aid']}\n"
     title = f"标题：{res['title']}\n"
     up = f"UP主：{res['owner']['name']}\n"
+    pubdate = f"发布时间：{format_time(res['pubdate'])}\n"
     desc = f"简介：{res['desc']}"
     desc_list = desc.split("\n")
     desc = ""
@@ -171,13 +180,14 @@ async def video_detail(url):
         desc = desc_list[0] + "\n" + desc_list[1] + "\n" + desc_list[2] + "……"
     # stat
     view: int = res['stat']['view']
+    danmaku: int = res['stat']['danmaku']
     reply: int = res['stat']['reply']
     favorite: int = res['stat']['favorite']
     coin: int = res['stat']['coin']
     share: int = res['stat']['share']
     like: int = res['stat']['like']
-    stat = f'▶:{view} 💬:{reply} ⭐:{favorite} 💰:{coin} ↗:{share} 👍:{like}\n'
-    msg = MessageSegment.image(file=pic) + '\n' + str(title) + str(up) + stat + str(desc.strip())
+    stat = f'▶:{view} 💬:{reply} 💭:{danmaku} ⭐:{favorite} 💰:{coin} ↗:{share} 👍:{like}\n'
+    msg = MessageSegment.image(file=pic) + '\n' + str(title) + str(up) + str(pubdate) + stat + str(desc.strip())
     return msg, vurl
 
 
