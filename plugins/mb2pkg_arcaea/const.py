@@ -4,6 +4,7 @@ import re
 import string
 from typing import Optional
 
+import aiofiles
 import aiohttp
 import nonebot
 import yaml
@@ -11,6 +12,7 @@ from bs4 import BeautifulSoup
 from nonebot import on_command
 from nonebot.adapters import Bot
 from nonebot.adapters.cqhttp import MessageSegment, MessageEvent
+from nonebot.permission import SUPERUSER
 from pydantic import BaseModel
 
 from public_module.mb2pkg_mokalogger import getlog
@@ -21,11 +23,13 @@ match_twitter_const = on_command('const8', aliases={'const9', 'const10'}, priori
 match_wiki_const = on_command('定数表', priority=5)
 match_wiki_TC = on_command('tc表', priority=5)
 match_wiki_PM = on_command('pm表', priority=5)
+match_update_twitter_const = on_command('手动更新推特定数表', priority=5, permission=SUPERUSER)
 
 log = getlog()
 
 temp_absdir = nonebot.get_driver().config.temp_absdir
 data_absdir = nonebot.get_driver().config.data_absdir
+twitter_bearer_token = Config().twitter_bearer_token
 
 
 class SongModel(BaseModel):
@@ -58,6 +62,13 @@ class PMDifficultyModel(BaseModel):
 class PMModel(BaseModel):
     authors: str
     difficulties_list: list[PMDifficultyModel]
+
+
+class Twitter:
+    headers = {
+        'Authorization': f'Bearer {twitter_bearer_token}',
+        'User-Agent': 'mokabot2, Twitter API v2, Python'
+    }
 
 
 @match_twitter_const.handle()
@@ -221,6 +232,89 @@ async def wiki_const_handle(bot: Bot, event: MessageEvent):
     await draw_image(lines, savepath)
 
     await bot.send(event, message=MessageSegment.image(file=f'file:///{savepath}'))
+
+
+@match_update_twitter_const.handle()
+async def match_update_twitter_const_handle(bot: Bot, event: MessageEvent):
+    msg = 'Arcaea推特定数表已更新至最新' if await update_twitter_const_image() else 'Arcaea推特定数表无需更新'
+    await bot.send(event, message=msg)
+
+
+async def get_arcaea_ig_pinned_tweet_id() -> str:
+    """获取Arcaea infographics pin的推文id"""
+    try:
+        async with aiohttp.request(
+                'GET',
+                'https://api.twitter.com/2/users/1189402618767888384?user.fields=pinned_tweet_id',
+                headers=Twitter.headers
+        ) as r:  # id: 1189402618767888384
+            tweet_id = (await r.json())['data']['pinned_tweet_id']
+            log.info(f'正在检查最新推特定数表，目前作者置顶推文的tweet_id为{tweet_id}')
+            return tweet_id
+    except Exception as e:
+        log.exception(e)
+
+
+async def get_tweet_image_url(tweet_id: str) -> Optional[dict[str, str]]:
+    """获取该推文里包含的图片的链接"""
+    try:
+        async with aiohttp.request(
+                'GET',
+                f'https://api.twitter.com/2/tweets?ids={tweet_id}&expansions=attachments.media_keys&media.fields=height,media_key,type,url,width',
+                headers=Twitter.headers
+        ) as r:
+            data = await r.json()
+        # 获取上一次检测时保存的置顶推文id
+        last_pinned_id_path = os.path.join(Config().twitter_const_absdir, 'last_pinned_id')
+        if os.path.isfile(last_pinned_id_path):
+            with open(last_pinned_id_path, 'r') as f:
+                last_pinned_id = f.read().strip()
+        else:
+            last_pinned_id = None
+        log.info(f'上一次检测时保存的置顶推文id为{last_pinned_id}')
+        # 检测该推文内容是否包含关键字，并且推文id不同于上一次保存的id
+        log.info(f'目前作者置顶推文文字内容为{data["data"][0]["text"]}')
+        if '新曲を追加しました' in data['data'][0]['text'] and last_pinned_id != tweet_id:
+            log.info('检测到需要更新')
+            # 更新保存的id
+            with open(last_pinned_id_path, 'w') as f:
+                f.write(tweet_id)
+                log.info(f'已将{tweet_id}作为最新置顶推文id写入last_pinned_id文件保存')
+            log.info(f'目前作者置顶推文媒体内容为{data["includes"]["media"]}')
+            return {
+                'const8': data['includes']['media'][1]['url'] + ':orig',  # 第二张图
+                'const9': data['includes']['media'][2]['url'] + ':orig',  # 第三张图
+                'const10': data['includes']['media'][3]['url'] + ':orig',  # 第四张图
+            }
+        else:
+            return None
+    except Exception as e:
+        log.exception(e)
+
+
+async def download_twitter_const_image(constX_dict: dict[str, str]):
+    async with aiohttp.ClientSession() as session:
+        for constX, url in constX_dict.items():
+            async with session.get(url) as r:
+                img = await r.read()
+                async with aiofiles.open(f'{Config().twitter_const_absdir}/{constX}.jpg', mode='wb') as f:
+                    await f.write(img)
+                    await f.close()
+                    log.info(f'已从 {url} 下载文件，并保存为 {constX}')
+
+
+async def update_twitter_const_image() -> bool:
+    try:
+        tweet_id = await get_arcaea_ig_pinned_tweet_id()
+        constX_dict = await get_tweet_image_url(tweet_id)
+        log.info(f'正在检查推特定数表更新，目前作者置顶推文为{tweet_id}')
+        if constX_dict:
+            await download_twitter_const_image(constX_dict)
+            log.info('Arcaea推特定数表已更新至最新')
+            return True
+        return False
+    except Exception as e:
+        log.exception(e)
 
 
 # ⚠️注意 部分歌曲无图片(icon_url = None)，所有歌曲无定数(const = None)，加载时需注意

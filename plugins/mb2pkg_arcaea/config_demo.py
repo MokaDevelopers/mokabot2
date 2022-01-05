@@ -36,5 +36,8 @@ class Config(BaseSettings):
         ('username', 'password')
     ]
 
+    # arcaea通过Twitter更新定数表时所用的Twitter Bearer Token
+    twitter_bearer_token: str = ''
+
     class Config:
         extra = 'ignore'

@@ -5,7 +5,7 @@ import nonebot
 from nonebot import require
 
 from public_module.mb2pkg_mokalogger import getlog
-from .const import tc_text_parse, save_model, pm_text_parse, const_text_parse
+from .const import tc_text_parse, save_model, pm_text_parse, const_text_parse, update_twitter_const_image
 
 log = getlog()
 
@@ -34,3 +34,4 @@ async def const_update():
 scheduler.add_job(tc_update, hours=24, next_run_time=datetime.now())
 scheduler.add_job(pm_update, hours=24, next_run_time=datetime.now())
 scheduler.add_job(const_update, hours=24, next_run_time=datetime.now())
+scheduler.add_job(update_twitter_const_image, hours=12, next_run_time=datetime.now())
