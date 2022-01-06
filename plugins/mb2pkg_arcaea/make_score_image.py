@@ -695,8 +695,6 @@ async def draw_b30(arcaea_data, force=False):
     :return: 生成图片的路径
     """
 
-    log.info(arcaea_data)
-
     def gen_score_info(_score: dict, _pos: Optional[int] = None) -> list[str]:
         """自动按照格式生成歌曲成绩信息"""
         ppure = _score['shiny_perfect_count']
