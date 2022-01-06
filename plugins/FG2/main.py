@@ -7,6 +7,8 @@ from typing import Optional, Union
 import nonebot
 import numpy as np
 from PIL import Image
+from matplotlib import pyplot as plt
+from matplotlib.font_manager import FontProperties
 from nonebot import on_message, on_command
 from nonebot import permission as su
 from nonebot import require
@@ -88,40 +90,40 @@ class DailyConlusion:
 
     def __init__(self, groupId) -> None:
         self.__groupId = groupId
-        # 确定使用哪个文件
-        # 结束时间即为运行这个程序的当前时间
-        self.__endTime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())  # 未使用
-        self.__beginTime = None  # 未使用
-        self.__chatlog = self.__cleaning()
+        self.__chatlog, self.__chatFreq = self.__cleaning()
 
     def __cleaning(self):
         """数据预处理"""
         chatlog = ''
+        chatFreq: list[int] = [0, 0, 0, 0,
+                               0, 0, 0, 0,
+                               0, 0, 0, 0,
+                               0, 0, 0, 0,
+                               0, 0, 0, 0,
+                               0, 0, 0, 0]  # 23~0时，注：23时是昨日的23时
         try:
             with open(os.path.join(os.path.join(global_config.groupdata_absdir, str(self.__groupId), 'chat.log')), 'r', encoding='utf-8') as f:
-                isFirst = True
                 for eachLine in f:
-                    # 获取聊天记录开始时间
-                    if isFirst:
-                        res = re.search(r'^\d{4}-\d{2}-\d{1,2} \d{1,2}:\d{2}:\d{2}', eachLine)
-                        pos = res.span()
-                        self.__beginTime = eachLine[pos[0]:pos[1]]
-                        isFirst = False
+                    if re.search(r'^\d{4}-\d{2}-\d{1,2} \d{1,2}:\d{2}:\d{2} \d{5,11}', eachLine) is None:
+                        # 正则非贪婪模式 过滤CQ码
+                        eachLine = re.sub(r'\[CQ:\w+,.+?]', '', eachLine)
+                        # 过滤URL
+                        eachLine = re.sub(r'(https?|ftp|file)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]', '', eachLine)
+                        # 特殊情况过滤
+                        eachLine = eachLine.replace('&#91;视频&#93;你的QQ暂不支持查看视频短片，请升级到最新版本后查看。', '')
+                        if eachLine == '\n':
+                            continue
+                        chatlog += eachLine
                     else:
-                        if re.search(r'^\d{4}-\d{2}-\d{1,2} \d{1,2}:\d{2}:\d{2} \d{5,11}', eachLine) is None:
-                            # 正则非贪婪模式 过滤CQ码
-                            eachLine = re.sub(r'\[CQ:\w+,.+?]', '', eachLine)
-                            # 过滤URL
-                            eachLine = re.sub(r'(https?|ftp|file)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]', '', eachLine)
-                            # 特殊情况过滤
-                            eachLine = eachLine.replace('&#91;视频&#93;你的QQ暂不支持查看视频短片，请升级到最新版本后查看。', '')
-                            if eachLine == '\n':
-                                continue
-                            chatlog += eachLine
+                        hr = int(re.match(r'^\d{4}-\d{2}-\d{1,2} (\d{1,2}):\d{2}:\d{2} \d{5,11}', eachLine).groups()[0])  # hr: 0 ~ 23
+                        hr = (hr + 1) % 24
+                        chatFreq[hr] = chatFreq[hr] + 1
+
         except Exception as e:
             log.error(e)
             log.exception(e)
-        return chatlog
+
+        return chatlog, chatFreq
 
     def __generateWC(self) -> Optional[tuple[MessageSegment, str]]:
         """返回一个MessageSegment图片和report元组，如果无法生成则返回None"""
@@ -155,14 +157,34 @@ class DailyConlusion:
             log.exception(e)
             return None
 
+    def __generateHistogram(self) -> MessageSegment:
+        font = FontProperties(fname=config.fontPath, size=14)
+        x_axis = '23 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22'.split()
+        y_axis = self.__chatFreq
+
+        figName = f'{self.__groupId}  {time.strftime("%Y年%m月%d日", time.localtime(time.time()))} 消息频率'
+        plt.bar(x_axis, y_axis, width=1, edgecolor='black')
+        plt.suptitle(figName, fontproperties=font)
+        plt.xlabel('时段（小时）', fontproperties=font)  # x轴标签
+        plt.ylabel('消息量', fontproperties=font)  # y轴标签
+
+        # 生成图片
+        savepath = os.path.join(global_config.temp_absdir, f'{figName}.jpg')
+        plt.savefig(savepath)
+        plt.clf()
+
+        return MessageSegment.image(file=f'file:///{savepath}')
+
     # 生成每日总结
     def generateReport(self) -> Union[Message, MessageSegment, str]:
-        tempReport = self.__generateWC()
-        if tempReport is None:
+        WCReport = self.__generateWC()
+        FreqReport = self.__generateHistogram()
+        if WCReport is None:
             return '今日因活跃度不足，无法生成词云'
         else:
-            image, report = tempReport
-            msg = '本群的今日热词词云已生成，今日的热点关键词为：\n' + report + image
+            wc_image, wc_report = WCReport
+            freq_image = FreqReport
+            msg = '本群的今日热词词云已生成，今日的热点关键词为：\n' + wc_report + wc_image + freq_image
             return msg
 
 
