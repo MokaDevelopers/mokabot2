@@ -460,7 +460,7 @@ async def arc_probe_webapi(friend_name: str, arc_friend_id: str, myqq: QQ) -> Pr
                         myqq.arc_uid = _item['user_id']
                         log.info(f'由于用户更换绑定，已将用户{friend_name}的uid更新为{myqq.arc_uid}')
                     return result
-                elif int(myqq.arc_uid) == _item['user_id']:  # uid相同，但用户名却不存在，则认为改名了，此时应当更新用户名
+                elif myqq.arc_uid is not None and int(myqq.arc_uid) == _item['user_id']:  # uid相同，但用户名却不存在，则认为改名了，此时应当更新用户名
                     result['userinfo'] = _item
                     log.debug(result)
                     myqq.arc_friend_name = _item['name']
