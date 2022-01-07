@@ -251,6 +251,7 @@ async def prober_self_check_detail() -> str:
     failed_prober = []
     global all_name_dict
     all_name_dict = {}  # 清空
+    all_uid_dict: dict[int, str] = {}
 
     # 构造all_name_dict
     for _username, _password in WEBAPI_ACC_LIST:
@@ -263,6 +264,7 @@ async def prober_self_check_detail() -> str:
             friend_list: list = user_me_json['value']['friends']
             for _item in friend_list:
                 all_name_dict[_item['name']] = _username
+                all_uid_dict[_item['user_id']] = _item['name']
 
     def return_user_status_code(_qq: QQ) -> bin:
         code = 0b000
@@ -313,6 +315,10 @@ async def prober_self_check_detail() -> str:
                 break
         else:
             close_name = ''
+        myqq = QQ(int(user['qq']))
+        if myqq.arc_uid is not None:  # 即使更换用户名后，uid仍然不变，此时根据uid更新本地用户名，该用户视为正常用户
+            myqq.arc_friend_name = all_uid_dict[int(myqq.arc_uid)]
+            continue
         result.append(f'  {user["qq"]}  {user["friend_id"]}  {user["username"]}  {close_name}')
     result.append('')
 
