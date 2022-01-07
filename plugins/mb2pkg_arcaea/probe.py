@@ -418,12 +418,13 @@ async def arc_probe_force(friend_id: Union[str, int],
     return result
 
 
-async def arc_probe_webapi(friend_name: str, arc_friend_id: str) -> ProberResult:
+async def arc_probe_webapi(friend_name: str, arc_friend_id: str, myqq: QQ) -> ProberResult:
     """
     使用webapi查分方法查询玩家最近歌曲
 
     :param friend_name: 好友名，用于对比确认是所查询的好友
     :param arc_friend_id: 好友码，用于raise NotFindFriendError时带参数
+    :param myqq: 已实例化的class QQ，用于更新uid
     :return: 含userinfo和scores的字典
     """
 
@@ -452,6 +453,18 @@ async def arc_probe_webapi(friend_name: str, arc_friend_id: str) -> ProberResult
                 if friend_name == _item['name']:
                     result['userinfo'] = _item
                     log.debug(result)
+                    if myqq.arc_uid is None:  # 用户名存在，但是uid不存在，此时应当补充uid
+                        myqq.arc_uid = _item['user_id']
+                        log.info(f'由于数据库内没有uid，已将用户{friend_name}缺失的uid更新为{myqq.arc_uid}')
+                    elif int(myqq.arc_uid) != _item['user_id']:  # 用户名存在，但uid却不同，则认为换过绑定，此时此时应当更新uid
+                        myqq.arc_uid = _item['user_id']
+                        log.info(f'由于用户更换绑定，已将用户{friend_name}的uid更新为{myqq.arc_uid}')
+                    return result
+                elif int(myqq.arc_uid) == _item['user_id']:  # uid相同，但用户名却不存在，则认为改名了，此时应当更新用户名
+                    result['userinfo'] = _item
+                    log.debug(result)
+                    myqq.arc_friend_name = _item['name']
+                    log.info(f'已将用户{friend_name}（uid:{myqq.arc_uid}）的用户名更新为{_item["name"]}')
                     return result
                 elif Levenshtein.distance(friend_name, _item['name']) <= 2:
                     close_name_list.append(_item['name'])
@@ -599,7 +612,7 @@ async def make_arcaea_result(qq: int, userid: Union[str, int],
         elif enable_probe_webapi:
             if myqq.arc_friend_name is None:
                 raise NotBindFriendNameError
-            arcaea_data = await arc_probe_webapi(myqq.arc_friend_name, myqq.arc_friend_id)
+            arcaea_data = await arc_probe_webapi(myqq.arc_friend_name, myqq.arc_friend_id, myqq)
         else:
             raise AllProberUnavailableError
         # 当指定了song_index时，指定歌曲的成绩在scores里，此处需要转换到recent里，而scores列表必须清空
