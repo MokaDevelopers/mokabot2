@@ -149,3 +149,7 @@ geckodriver.exe
 
 # mai-bot
 plugins/mai_bot/src/static
+
+# Genshin_query
+res_honkai
+mys_cookies.db
