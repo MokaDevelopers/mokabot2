@@ -1,5 +1,3 @@
-from datetime import datetime
-
 import aiohttp
 import nonebot
 from nonebot import require

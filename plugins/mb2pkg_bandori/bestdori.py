@@ -303,7 +303,7 @@ async def event_prediction(event: int, server: str, rank: Union[str, int]) -> st
     history_track = []
     i = len(event_archives)
     while i > 0 and len(history_track) < 5:
-        i = i - 1
+        i -= 1
         ea = event_archives[i]
         # 如果查的是国服活动，这里就会跳过那些日服开了而国服还没开的活动，而不用依靠空列表检测浪费时间
         # noinspection PyTypeChecker

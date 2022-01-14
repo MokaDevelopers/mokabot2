@@ -142,7 +142,7 @@ async def wiki_pm_handle(bot: Bot, event: MessageEvent):
 
     for diff in model.difficulties_list:
         chart_list = diff.songs
-        diff.difficulty = diff.difficulty + (7 - str_width(diff.difficulty)) * ' '
+        diff.difficulty += (7 - str_width(diff.difficulty)) * ' '
         space = 7 * ' '
         for index, chart in enumerate(chart_list):
             if index == 0:

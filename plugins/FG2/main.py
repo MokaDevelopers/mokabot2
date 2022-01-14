@@ -117,7 +117,7 @@ class DailyConlusion:
                     else:
                         hr = int(re.match(r'^\d{4}-\d{2}-\d{1,2} (\d{1,2}):\d{2}:\d{2} \d{5,11}', eachLine).groups()[0])  # hr: 0 ~ 23
                         hr = (hr + 1) % 24
-                        chatFreq[hr] = chatFreq[hr] + 1
+                        chatFreq[hr] += 1
 
         except Exception as e:
             log.error(e)
