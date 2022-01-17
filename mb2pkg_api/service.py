@@ -18,7 +18,7 @@ driver = nonebot.get_driver()
 app = driver.server_app
 
 
-@app.get('/api/bandori/songs/all_charts.xlsx')
+@app.get('/mb2/bandori/songs/all_charts.xlsx')
 async def bandori_chart_excel(response: Response):
     result = FileResponse(path=await make_chart_excel())
 
@@ -29,7 +29,7 @@ async def bandori_chart_excel(response: Response):
         return {'msg': str(e)}
 
 
-@app.get('/api/bandori/track/{event}/{server}/{rank}')
+@app.get('/mb2/bandori/track/{event}/{server}/{rank}')
 async def track_api(event: int, server: str, rank: Union[str, int], response: Response):
     savepath = await list_track(int(event), server.upper(), rank)
     # pic = base64.b64encode(open(savepath, 'rb').read()).decode()  # 返回图片的base64
@@ -42,7 +42,7 @@ async def track_api(event: int, server: str, rank: Union[str, int], response: Re
         return {'msg': str(e)}
 
 
-@app.get('/api/bandori/prediction/{event}/{server}/{rank}')
+@app.get('/mb2/bandori/prediction/{event}/{server}/{rank}')
 async def prediction_api(event: int, server: str, rank: Union[str, int], response: Response):
     savepath = await event_prediction(int(event), server.upper(), rank)
     # pic = base64.b64encode(open(savepath, 'rb').read()).decode()  # 返回图片的base64
@@ -55,7 +55,7 @@ async def prediction_api(event: int, server: str, rank: Union[str, int], respons
         return {'msg': str(e)}
 
 
-@app.get('/api/pixiv/{api_method}')
+@app.get('/mb2/pixiv/{api_method}')
 async def pixiv_api(api_method: str, response: Response, request: Request):
     params = dict(request.query_params)
     result = await pixiv_mokabot_api(api_method=api_method, **params)
