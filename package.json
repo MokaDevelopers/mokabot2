@@ -1,0 +1,27 @@
+{
+  "name": "mokabot2_docs",
+  "version": "1.0.0",
+  "description": "多用途QQ群机器人，基于Python和nonebot2",
+  "main": "index.js",
+  "scripts": {
+    "docs:dev": "vuepress dev docs",
+    "docs:build": "vuepress build docs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MokaDevelopers/mokabot2.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/MokaDevelopers/mokabot2/issues"
+  },
+  "homepage": "https://github.com/MokaDevelopers/mokabot2#readme",
+  "devDependencies": {
+    "@vuepress/plugin-back-to-top": "^1.9.7",
+    "@vuepress/plugin-medium-zoom": "^1.9.7",
+    "vuepress": "^1.9.7",
+    "vuetify": "^2.6.2",
+    "wowjs": "^1.1.3"
+  }
+}
