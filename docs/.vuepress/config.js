@@ -2,7 +2,7 @@ module.exports = {
 	
 	// 站点配置
 	
-	base: '/',
+	base: '/mokabot2/',
 	lang: 'zh-CN',
     title: 'mokabot2',
     description: 'mokabot是一个多用途QQ群机器人。',

@@ -64,7 +64,7 @@
                   data-wow-duration="0.7s"
               >
                 <v-avatar color="transparent" size="36">
-                  <v-img src="/images/profile.jpg"></v-img>
+                  <v-img src="/mokabot2/images/profile.jpg"></v-img>
                 </v-avatar>
                 <div
                     class="message-box"
