@@ -4,6 +4,7 @@ from nonebot.message import run_postprocessor, event_postprocessor, event_prepro
 
 from public_module.mb2pkg_mokalogger import getlog
 from .arr import arr
+from .disable_temp_msg import disable_temp_msg
 from .log4send import log_after_bot_send, log_before_exec_command
 from .nonebot_plugin_alias.handler import run_alias
 from .nonebot_plugin_manager import check_plugin_permission
@@ -47,6 +48,7 @@ async def on_called_api(*args, **kwargs):
 @event_preprocessor
 async def before_event(*args, **kwargs):
     """这个钩子函数会在 Event 上报到 nonebot2 时运行"""
+    await disable_temp_msg(*args, **kwargs)
     await run_alias(*args, **kwargs)
 
 
