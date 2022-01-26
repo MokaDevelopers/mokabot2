@@ -547,9 +547,7 @@ def return_voiced_char_list(voiced: list) -> list:
         _cid = f'c{_item.cid}'
         _aid = f'{_item.aid}'
         _c_v_id = f'c{_item.cid}v{_item.id}'
-        print(_item)
         if _c_v_id in char2vn and _vid in vid and _cid in cid and _aid in aid:  # 仅添加已经收录的
-            print(_c_v_id, _vid, _cid, _aid)
             result.append({
                 'vid': _item.id,  # type: int
                 'vn_name': vid[_vid][0],  # type: str
