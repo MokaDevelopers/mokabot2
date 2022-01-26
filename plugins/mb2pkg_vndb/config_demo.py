@@ -16,6 +16,8 @@ class Config(BaseSettings):
     aid_csv: str = os.path.join(plugin_absdir, 'res/staff_alias')
     # vn id csv 路径
     vid_csv: str = os.path.join(plugin_absdir, 'res/vn')
+    # chars 到 vns 映射 路径
+    char2vn: str = os.path.join(plugin_absdir, 'res/chars_vns')
     # TIMESTAMP 路径
     TIMESTAMP: str = os.path.join(plugin_absdir, 'res/TIMESTAMP')
 

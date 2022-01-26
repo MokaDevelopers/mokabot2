@@ -25,33 +25,54 @@ vndb_username, vndb_password = Config().vndb_account
 vid_csv = Config().vid_csv
 cid_csv = Config().cid_csv
 aid_csv = Config().aid_csv
+char2vn_csv = Config().char2vn
 TIMESTAMP = Config().TIMESTAMP
 
 with open(TIMESTAMP, 'r', encoding='utf-8') as f_timestamp:
     local_vndb_timestamp = f_timestamp.read().strip()
-# 载入vid、cid和aid哈希表（内存占用约为30M，载入时间约为500ms）
-vid: dict[str, str] = {}  # key: v12345
-cid: dict[str, str] = {}  # key: c12345
-aid: dict[str, str] = {}  # key: str(int)
+
 csv.register_dialect('vndb', delimiter='\t', quoting=csv.QUOTE_ALL)
+
+# 载入vid表，使用vid指向一个gal的名称
+vid: dict[str, tuple[str, int]] = {}  # key: 'v12345', value: ('VNName', 5)  其中的5是长度标记，见return_vn_length函数
 with open(vid_csv, 'r', encoding='utf-8') as f_vid_csv:
     lines = csv.reader(f_vid_csv, dialect='vndb')
     for line in lines:
-        vid[line[0]] = line[9] or line[8]
+        vid[line[0]] = (line[9] or line[8], int(line[7]))
+
+# 载入cid表，使用cid指向一个角色名称
+cid: dict[str, str] = {}  # key: 'c12345', value: 'CharName'
 with open(cid_csv, 'r', encoding='utf-8') as f_cid_csv:
     lines = csv.reader(f_cid_csv, dialect='vndb')
     for line in lines:
         cid[line[0]] = line[17] or line[16]
+
+# 载入aid表，使用aid指向指定的马甲名称
+aid: dict[str, str] = {}  # key: '12345', value: 'AliasName'
 with open(aid_csv, 'r', encoding='utf-8') as f_aid_csv:
     lines = csv.reader(f_aid_csv, dialect='vndb')
     for line in lines:
         aid[line[1]] = line[3] or line[2]
+
+# 载入char2vn表，使用给定的cid和vid，指向该gal中该角色的身份
+char2vn: dict[str, str] = {}  # key: 'c123v123', value: 1  其中的1是角色身份标记，见return_role_by_index_in_vn函数
+with open(char2vn_csv, 'r', encoding='utf-8') as f_char2vn_csv:
+    lines = csv.reader(f_char2vn_csv, dialect='vndb')
+    for line in lines:
+        char2vn[f'{line[0]}{line[1]}'] = {
+            'main': 0,
+            'primary': 1,
+            'side': 2,
+            'appears': 3,
+        }[line[3]]  # 使用int取代str以减小内存消耗
+
 log.debug(f'本地vid、cid和aid已加载，版本{local_vndb_timestamp}')
-# 注：目前不更新vid、cid和aid不会影响插件主要功能正常使用，只会影响以下方面：
+# 注：目前不更新数据库不会影响插件主要功能正常使用，只会影响以下方面：
 # vid: 影响char指令时，找到的角色的相关作品
-# cid: 不影响任何东西
+# cid: 影响cv指令查询时，声优出场的作品对应的角色名称
 # aid: 影响char指令时，角色的相关作品所对应的CV；
 #      影响gal指令查询时，作品的人物列表所对应的CV；
+# char2vn: 影响cv指令查询时，声优出场的作品与数量
 
 
 @match_vndb.handle()
@@ -178,13 +199,7 @@ async def return_vn_details(info: dict) -> tuple[Optional[str], list[str]]:
         alias = vn.aliases.replace('\n', '、')
         result_details.append(f'别名： {alias}')
     if vn.length:
-        length = {
-            1: '很短 (2小时内)',
-            2: '短 (2~10小时)',
-            3: '中等 (10~30小时)',
-            4: '长 (30~50小时)',
-            5: '很长 (50小时以上)'
-        }[vn.length]
+        length = return_vn_length(vn.length)
         result_details.append(f'时长： {length}')
     result_details.append('')
 
@@ -296,9 +311,9 @@ async def return_char_details(info: dict) -> tuple[Optional[str], list[str]]:
     for _vn_id, _release_id, _spoiler_level, _role in char.vns:
         cv_id, cv_aid = return_char_cvid_in_vn(char.voiced, _vn_id)
         if cv_id and cv_aid:
-            result_details.append(f' [{return_role_in_vn(_role)}] ({_vn_id}) {vid[f"v{_vn_id}"]}  (CV: {aid[str(cv_aid)]} ({cv_aid}))')
+            result_details.append(f' [{return_role_in_vn(_role)}] ({_vn_id}) {vid[f"v{_vn_id}"][0]}  (CV: {aid[str(cv_aid)]} ({cv_aid}))')
         else:
-            result_details.append(f' [{return_role_in_vn(_role)}] ({_vn_id}) {vid[f"v{_vn_id}"]}')
+            result_details.append(f' [{return_role_in_vn(_role)}] ({_vn_id}) {vid[f"v{_vn_id}"][0]}')
 
     return result_pic, result_details
 
@@ -332,6 +347,16 @@ async def return_staff_details(info: dict) -> list[str]:
         # 将描述中的换行全部适配成为test2pic所用的换行形式
         result_details.append('描述(英)')
         result_details.extend(add_description(staff.description))
+    result_details.append('')
+
+    # 配音角色
+    if staff.voiced:
+        result_details.append(f'配音角色（合计约{len(staff.voiced)}个角色）')
+        voiced_char_list = return_voiced_char_list(staff.voiced)[:30]  # 只选取前30个角色
+        for char in voiced_char_list:
+            result_details.append(f'（{char["vid"]}）《{char["vn_name"]}》')
+            result_details.append(f'  饰 [{return_role_by_index_in_vn(char["role"])}] {char["char_name"]}（{char["cid"]}）（AS: {char["alias_name"]}）')
+    result_details.append('（只显示前30个）')
 
     return result_details
 
@@ -387,6 +412,27 @@ def return_role_in_vn(role: str) -> str:
         'side': '次要角色',
         'appears': '其他出场',
     }[role]
+
+
+def return_role_by_index_in_vn(role_index: int) -> str:
+    """返回角色身份的实际含义（使用int代替str）"""
+    return {
+        0: ' 主人公 ',
+        1: '主要角色',
+        2: '次要角色',
+        3: '其他出场',
+    }[role_index]
+
+
+def return_vn_length(length: int) -> str:
+    """返回length的实际意义"""
+    return {
+        1: '很短 (2小时内)',
+        2: '短 (2~10小时)',
+        3: '中等 (10~30小时)',
+        4: '长 (30~50小时)',
+        5: '很长 (50小时以上)'
+    }[length]
 
 
 def return_language(language: str) -> str:
@@ -491,6 +537,34 @@ async def return_all_chars_for_vn(vnid: int) -> list[dict]:
                 page += 1
 
     return char_list
+
+
+def return_voiced_char_list(voiced: list) -> list:
+    """返回某个声优的配音角色列表（按照角色身份为主排序关键字，vn长度为第二排序关键字）"""
+    result = []
+    for _item in voiced:
+        _vid = f'v{_item.id}'
+        _cid = f'c{_item.cid}'
+        _aid = f'{_item.aid}'
+        _c_v_id = f'c{_item.cid}v{_item.id}'
+        print(_item)
+        if _c_v_id in char2vn and _vid in vid and _cid in cid and _aid in aid:  # 仅添加已经收录的
+            print(_c_v_id, _vid, _cid, _aid)
+            result.append({
+                'vid': _item.id,  # type: int
+                'vn_name': vid[_vid][0],  # type: str
+                'cid': _item.cid,  # type: int
+                'char_name': cid[_cid],  # type: str
+                'aid': _item.aid,  # type: int
+                'alias_name': aid[_aid],  # type: str
+                'role': char2vn[_c_v_id],  # type: int
+                'length': vid[_vid][1],  # type: int
+            })
+
+    result = sorted(result, key=lambda _: _['length'], reverse=True)  # 5, 4, 3, 2, 1
+    result = sorted(result, key=lambda _: _['role'])  # 0, 1, 2, 3
+
+    return result
 
 
 def return_char_cvid_in_vn(voiced: Optional[list], vnid: int) -> tuple[Optional[int], Optional[int]]:
