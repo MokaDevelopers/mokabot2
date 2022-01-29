@@ -7,10 +7,12 @@ from typing import Optional, Any, Union
 import aiohttp
 import matplotlib.pyplot as plt
 import nonebot
+from aiohttp_retry import ExponentialRetry, RetryClient
 from matplotlib.font_manager import FontProperties
-from nonebot import on_command
+from nonebot import on_command, require
 from nonebot.adapters import Bot
 from nonebot.adapters.cqhttp import MessageSegment, MessageEvent
+from nonebot.permission import SUPERUSER
 from openpyxl import Workbook
 from tenacity import retry, stop_after_attempt
 
@@ -19,8 +21,11 @@ from public_module.mb2pkg_public_plugin import datediff, get_time, now_datetime
 from public_module.mb2pkg_test2pic import draw_image
 from .config import Config
 
+scheduler = require('nonebot_plugin_apscheduler').scheduler
+
 match_bandori_track = on_command('分数线', priority=5)
 match_bandori_event_list = on_command('活动列表', priority=5)
+match_make_chart_excel = on_command('生成歌曲列表', priority=5, permission=SUPERUSER)
 
 log = getlog()
 
@@ -54,6 +59,19 @@ async def bandori_event_list_handle(bot: Bot, event: MessageEvent):
     server = str(event.get_message()).strip() or 'JP'
     list_event_image_path = await list_event(server)
     msg = MessageSegment.image(file=f'file:///{list_event_image_path}')
+
+    await bot.send(event, msg)
+
+
+@match_make_chart_excel.handle()
+async def make_chart_excel_handle(bot: Bot, event: MessageEvent):
+    try:
+        await bot.send(event, '正在生成，请等待...')
+        await make_chart_excel()
+        msg = '已生成完毕！'
+    except Exception as e:
+        msg = f'生成时发生错误{e}，请前往服务端查看日志'
+        log.exception(e)
 
     await bot.send(event, msg)
 
@@ -409,85 +427,59 @@ async def event_prediction(event: int, server: str, rank: Union[str, int]) -> st
     return savepath
 
 
-async def make_chart_excel() -> str:
+class BandoriSongMeta:  # 原本打算用pydantic，但是发现bestdori居然把"1"、"2"等作为json的key，导致model类的属性不符合py变量命名规则
 
-    def return_real_release(_song_id: str, _is_jp: bool) -> Optional[date]:
-        """返回SP谱面的实际发布时间"""
-        # 记录一些按照搜索算法无法正常找到发布时间的特殊谱面
-        abnormal_sp_chart_jp = {
-            '67': date(2020, 6, 30),  # only my railgun，其sp谱不是在CP活期间发布，而是直接发布
-            '59': date(2021, 3, 15),  # ふわふわ時間，包含了特殊note的sp谱面，不是在CP活期间发布
-            '149': date(2021, 3, 20),  # R，同上
-            '166': date(2021, 3, 17),  # 回レ！雪月花
-            '247': date(2021, 3, 19),  # EXPOSE ‘Burn out!!!’，同上
-            '253': date(2021, 3, 15),  # ロキ，同上
-            '255': date(2021, 3, 18),  # Daylight -デイライト-，同上
-            '296': date(2021, 3, 21),  # セツナトリップ，同上
-            '77': date(2021, 9, 24),  # ロメオ，活动间发布，非活动曲，应该视为第二批发布的包含了特殊note的sp谱面
-            '109': date(2021, 9, 23),  # This game，同上
-            '140': date(2021, 9, 20),  # ロストワンの号哭，同上
-            '148': date(2021, 9, 25),  # ゼッタイ宣言～Recital～，同上
-            '158': date(2021, 9, 19),  # キズナミュージック♪，同上
-            '160': date(2021, 9, 22),  # R·I·O·T，同上
-            '257': date(2021, 9, 21),  # メリッサ，同上
-            '359': date(2021, 9, 19),  # HELL! or HELL?，同上
-            '254': date(2022, 1, 3),  # ゆく年くる年楽曲キャンペーン！4日目「POP TEAM EPIC」の難易度「SPECIAL」追加！（属于是第三批这种谱面来了）
-            '238': date(2022, 1, 4),  # ゆく年くる年楽曲キャンペーン！5日目「花ハ踊レヤいろはにほ」の難易度「SPECIAL」追加！
-            '8': date(2022, 1, 5),  # ゆく年くる年楽曲キャンペーン！6日目「空色デイズ」の難易度「SPECIAL」追加！
-            '263': date(2022, 1, 6),  # ゆく年くる年楽曲キャンペーン！7日目「ブルームブルーム」の難易度「SPECIAL」追加！
-            '105': date(2022, 1, 7),  # ゆく年くる年楽曲キャンペーン！8日目「Shangri-La」の難易度「SPECIAL」追加！
-            '222': date(2022, 1, 8),  # ゆく年くる年楽曲キャンペーン！9日目「Sasanqua」の難易度「SPECIAL」追加！
-            '224': date(2022, 1, 8),  # ゆく年くる年楽曲キャンペーン！最終日「激動」の難易度「SPECIAL」追加！
-        }
-        abnormal_sp_chart_cn = {
-            '67': date(2021, 6, 22),  # only my railgun，其sp谱不是在CP活期间发布，而是直接发布
-            '146': None,  # 新宝島，日服具有SP难度，虽然国服已经发布了包含该谱面的CP活，但并不是SP谱
-        }
+    def __init__(self,
+                 data: dict,
+                 song_id: int):
+        self.data = data
+        self.song_id = song_id
+        self.special = len(self.data['difficulty']) == 5
 
-        abnormal_sp_chart = abnormal_sp_chart_jp if _is_jp else abnormal_sp_chart_cn
-        event_list_music = event_list_music_jp if _is_jp else event_list_music_cn
+    def __getitem__(self, key):
+        return self.data[key]
 
-        """
-        搜索算法：
-        当一个歌曲的谱面难度被确认为5个时，认为这个歌曲拥有SP难度谱面，接下来从所有的活动中筛选出目标服务
-        器的CP活以及对应的活动歌曲，然后从后往前找每个CP活的活动歌曲，看哪个CP活包含了目标歌曲，那么这个
-        CP活的结活时间便是这个歌曲的SP谱面的发布时间。
-        
-        请注意：只有在目标服务器是日服的情况下才能确信最后一次CP活的结活时间就是这个歌曲的SP谱面的发布时
-        间，否则在以下情形同时满足时将一定会发生错误：
-        1、该歌曲的谱面难度被确认为5个
-        2、该歌曲属于某个CP活的活动歌曲
-        3、该次CP活只发布了该歌曲的前4个难度
-        
-        如此一来将会把该次CP活的结活时间认为是这首歌的SP谱面发布时间（实际上并没有发布）
-        由于日服不可能同时满足条件1和3，故日服不可能发生此类错误，该错误只有可能发生在国服上，目前没有解
-        决办法。
-        """
-        if _song_id in abnormal_sp_chart:
-            return abnormal_sp_chart[_song_id]
-        for _endAt, _musics in event_list_music:
-            _endAt: str  # unix时间戳，表示CP活结束的时间
-            _musics: list[int]  # 当期活动歌曲列表
-            if int(_song_id) in _musics:
-                return _get_time(_endAt)
-            # for循环结束之后若仍然没有找到
 
-    def return_sorted_event_list_music(_server: int) -> list[(int, list[int])]:
-        """按服务器实际活动结束顺序（倒序），返回每期challenge活动歌曲列表"""
-        result = []
-        for event_archive in list(event_list.values()):
-            if ('musics' in event_archive) and \
-               (event_archive['musics'][_server] is not None) and \
-               (event_archive['eventType'] == 'challenge'):
-                result.append((
-                    event_archive['endAt'][_server],
-                    [_item['musicId'] for _item in event_archive['musics'][_server]]
-                ))
-        return sorted(result, key=lambda x: x[0], reverse=True)
+class BandoriChartInfo:
 
-    def return_real_bpm(bpm_dict: dict, rating: int) -> str:
-        """返回乐曲的bpm，若为变bpm歌曲，则返回bpm区间"""
-        bpm_list = [k['bpm'] for k in bpm_dict[str(rating)]]
+    def __init__(self,
+                 bandori_song_meta: BandoriSongMeta,
+                 band_map: dict,
+                 difficulty: int):
+        self.mt = bandori_song_meta
+        self.bm = band_map
+        self.df = difficulty  # 注意：bestdori是用字符"1"来表示难度的，而不是数字1，因此需要大量str(self.df)
+
+        self.id: int = self.mt.song_id
+        self.chart_id: int = self._get_chart_id()  # 谱面编号，区别于歌曲编号，sp谱面的编号是id+10000，ex谱面的编号等于id
+        self.band: str = self._get_band_name()
+        self.tag: str = self._get_song_type()  # 乐曲类型
+        self.bpm: str = self._get_real_bpm()  # bpm值或范围）
+        self.release_jp: Optional[date] = self._get_release(0)
+        self.release_cn: Optional[date] = self._get_release(3)
+        self.note: int = self._get_note()  # 物量
+        self.title: str = self._get_title()
+        self.level: int = self._get_level()  # 难度（数字，例如25 26）
+        self.level_class: str = self._get_class()  # 难度（类型，例如ex sp）
+        self.lyricist: str = self._get_lyricist()
+        self.composer: str = self._get_composer()
+        self.arranger: str = self._get_arranger()
+
+    def _get_chart_id(self) -> int:
+        return self.mt.song_id + 10000 if self.df == 4 else self.mt.song_id
+
+    def _get_band_name(self) -> str:
+        return self.bm[str(self.mt['bandId'])]['bandName'][0]
+
+    def _get_song_type(self) -> str:
+        return {
+            'normal': 'Original',  # 原唱
+            'anime': 'Cover',  # 翻唱
+            'tie_up': 'Extra',  # 联动
+        }.get(self.mt['tag'], 'Unknown')
+
+    def _get_real_bpm(self) -> str:
+        bpm_list = [_['bpm'] for _ in self.mt['bpm'][str(self.df)]]
         max_bpm = max(bpm_list)
         min_bpm = min(bpm_list)
         if max_bpm == min_bpm:
@@ -496,40 +488,93 @@ async def make_chart_excel() -> str:
             result = f'{min_bpm}-{max_bpm}'
         return result
 
-    def clean_songs(value: list) -> bool:
-        """清理特殊歌曲"""
-        result = True
-        # 一个原曲，两个国际服特供曲
-        if value[0] in [273, 1000, 1001]:
-            result = False and result
-        # 筛选难度
-        if value[8] < level_filter:
-            result = False and result
+    def _get_release(self, server: int) -> Optional[date]:
+        # server: 0-JP, 1-EN, 2-TW, 3-CN, 4-KR
+        if self.df == 4:  # Special难度
+            if self.id == 359:  # TODO HELL! or HELL? ，bestdori没有标记其sp发布时间
+                if server == 0:
+                    result = date(2021, 9, 19)
+                else:
+                    result = None  # TODO 因为国服没出啦
+            else:
+                result = self._get_time(self.mt['difficulty']['4']['publishedAt'][server])
+        else:
+            result = self._get_time(self.mt['publishedAt'][server])
         return result
 
+    def _get_note(self) -> int:
+        return self.mt['notes'][str(self.df)]
+
+    def _get_title(self) -> str:
+        return self.mt['musicTitle'][0]
+
+    def _get_level(self) -> int:
+        return self.mt['difficulty'][str(self.df)]['playLevel']
+
+    def _get_class(self) -> str:
+        return {
+            0: 'Easy',
+            1: 'Normal',
+            2: 'Hard',
+            3: 'Expert',
+            4: 'Special',
+        }.get(self.df, 'Unknown')
+
+    def _get_lyricist(self) -> str:
+        return self.mt['lyricist'][0]
+
+    def _get_composer(self) -> str:
+        return self.mt['composer'][0]
+
+    def _get_arranger(self) -> str:
+        return self.mt['arranger'][0]
+
+    @staticmethod
     def _get_time(timestamp: str) -> Optional[date]:
         try:
             return date.fromtimestamp(int(timestamp[:-3]))
         except TypeError:
             pass  # 等价于 return None
 
-    level_filter = 0  # (这个值代表了允许入表的最低Level。凡凡说做一个全都有的表吧，这个过滤就暂时先不用了)
-    headline = ['Id',
-                'Band',
-                'Tag',
-                'BPM',
-                'Release(JP)',
-                'Release(CN)',
-                'Note',
-                'Title',
-                'Level',
-                'Class',
-                ]
-    tag_map = {
-        'normal': 'Original',  # 原唱
-        'anime': 'Cover',  # 翻唱
-        'tie_up': 'Extra',  # tie up
+
+@scheduler.scheduled_job('cron', hour='4')
+async def make_chart_excel() -> None:
+
+    # 一个原曲，两个国际服特供曲
+    exclude_song_id = [273, 1000, 1001]
+    headline = [
+        'Id',
+        'Band',
+        'Tag',
+        'BPM',
+        'Release(JP)',
+        'Release(CN)',
+        'Note',
+        'Title',
+        'Level',
+        'Class',
+        # 'Lyricist',
+        # 'Composer',
+        # 'Arranger',
+    ]
+    # 对应BandoriChartInfo类中的属性名，将使用__getattribute__来获取属性
+    column_to_write = {
+        1: 'chart_id',
+        2: 'band',
+        3: 'tag',
+        4: 'bpm',
+        5: 'release_jp',
+        6: 'release_cn',
+        7: 'note',
+        8: 'title',
+        9: 'level',
+        10: 'level_class',
+        # 11: 'lyricist',
+        # 12: 'composer',
+        # 13: 'arranger',
     }
+
+    start = time.time()
 
     book = Workbook()
     sheet_all = book.create_sheet(title='charts_all', index=0)
@@ -542,94 +587,52 @@ async def make_chart_excel() -> str:
         sheet_ex.cell(column=col, row=1, value=item)
         sheet_sp.cell(column=col, row=1, value=item)
 
-    # 从bestdori爬取活动、歌曲、乐队列表
-    band_list = await get_band_list()
-    song_list = await get_song_list()
-    event_list = await get_event_archives()
+    all_chart_list: list[BandoriChartInfo] = []
+    ex_chart_list: list[BandoriChartInfo] = []
+    sp_chart_list: list[BandoriChartInfo] = []
 
-    # 返回每期活动歌曲列表，以便按CP活动结束时间查找special谱面的发布时间
-    event_list_music_jp = return_sorted_event_list_music(0)
-    event_list_music_cn = return_sorted_event_list_music(3)
+    # 从bestdori爬取所需信息
+    retry_options = ExponentialRetry(attempts=5)
+    async with RetryClient(retry_options=retry_options) as client:
+        # 获取bestdori的歌曲meta列表，仅包含歌曲id，不包含其他任何信息，其json为 {"1":{},"2":{},"3":{}, ... }
+        async with client.get(url='https://bestdori.com/api/songs/all.0.json', timeout=5) as response:
+            simple_song_list = await response.json()
+            log.info('已获取到bestdori的歌曲meta列表')
+        # 获取bestdori的乐队名称
+        async with client.get(url='https://bestdori.com/api/bands/all.1.json', timeout=5) as response:
+            band_list = await response.json()
+            log.info('已获取到bestdori的乐队名称')
+        # 下载歌曲meta并格式化为谱面
+        for song_id in simple_song_list:  # song_id:: str
+            song_id: int = int(song_id)
+            if song_id in exclude_song_id:
+                continue
+            async with client.get(url=f'https://bestdori.com/api/songs/{song_id}.json', timeout=5) as response:
+                song_meta = BandoriSongMeta(await response.json(), song_id)
+                # 将歌曲meta（BandoriSongMeta）格式化为谱面（BandoriChartInfo）
+                ex_info = BandoriChartInfo(song_meta, band_list, 3)
+                ex_chart_list.append(ex_info)
+                all_chart_list.append(ex_info)
+                log.info(f'歌曲{ex_info.title}，谱面id={ex_info.chart_id}的信息已获取')
+                if song_meta.special:
+                    sp_info = BandoriChartInfo(song_meta, band_list, 4)
+                    sp_chart_list.append(sp_info)
+                    all_chart_list.append(sp_info)
+                    log.info(f'歌曲{sp_info.title}，谱面id={sp_info.chart_id}的信息（SP）已获取')
+                # 其实先放到all_chart_list然后用两个filter，也行，但是没必要再去写个循环了
 
-    # data_lines_all: list[list[str or int]]
-    # 每个元素是一个子列表，这个子列表中的每个元素按列逐个写入
-    data_lines_all = []
-    for row, (song_id, song_info) in enumerate(song_list.items(), start=2):
-        line = [
-            int(song_id),  # Id (int)
-            band_list[str(song_info['bandId'])]['bandName'][0],  # Band
-            tag_map[song_info['tag']],  # Tag
-            return_real_bpm(song_info['bpm'], 3),  # BPM
-            _get_time(song_info['publishedAt'][0]),  # Release(JP) (date)
-            _get_time(song_info['publishedAt'][3]),  # Release(CN) (date)
-            song_info['notes']['3'],  # Note (int)
-            song_info['musicTitle'][0],  # Title
-            song_info['difficulty']['3']['playLevel'],  # Level (int)
-            'Expert',  # Class
-        ]
-        data_lines_all.append(line)
+    # 把all、ex、sp列表分别写入三张表，注意row是行，col是列
+    for sheet, chart_list in [(sheet_ex, ex_chart_list), (sheet_sp, sp_chart_list)]:
+        for chart in chart_list:
+            for col, key in column_to_write.items():
+                sheet.cell(column=col, row=chart.id + 1, value=chart.__getattribute__(key))
 
-        # 处理sp谱面
-        if len(song_info['difficulty']) == 5:
-            line = [
-                int(song_id) + 10000,  # Id (int) sp的id为歌曲id加10000
-                band_list[str(song_info['bandId'])]['bandName'][0],  # Band
-                tag_map[song_info['tag']],  # Tag
-                return_real_bpm(song_info['bpm'], 4),  # BPM
-                return_real_release(song_id, True),  # Release(JP) (date)
-                return_real_release(song_id, False),  # Release(CN) (date)
-                song_info['notes']['4'],  # Note (int)
-                song_info['musicTitle'][0],  # Title
-                song_info['difficulty']['4']['playLevel'],  # Level (int)
-                'Special',  # Class
-            ]
-            data_lines_all.append(line)
-
-    # 筛选歌曲 (如果注释掉下面排序那行，则一定要转为list，否则filter返回的是个iter，再filter就会出问题)
-    data_lines_all = list(filter(clean_songs, data_lines_all))
-    # 按发布日期升序排序（注释掉则按照id排序）
-    # data_lines_all = sorted(data_lines_all, key=lambda j: _get_stamp(j[4], time_format), reverse=False)
-
-    # 将all中的歌曲分为ex和sp
-    data_lines_ex = list(filter(lambda j: j[9] == 'Expert', data_lines_all))
-    data_lines_sp = list(filter(lambda j: j[9] == 'Special', data_lines_all))
-
-    # 把all、ex、sp列表分别写入三张表
-    # rc3版本（现行）：不存在的谱面空行，但id一栏仍然填写，这包括sp和ex的不存在的谱面
-    for row, song_info in enumerate(data_lines_all, start=2):
-        for col, item in enumerate(song_info, start=1):
-            sheet_all.cell(column=col, row=row, value=item)
-    for row, song_info in enumerate(data_lines_ex, start=2):
-        for col, item in enumerate(song_info, start=1):
-            sheet_ex.cell(column=col, row=song_info[0] + 1, value=item)  # 算上标题行，所以行数加1
-    for row, song_info in enumerate(data_lines_sp, start=2):
-        for col, item in enumerate(song_info, start=1):
-            sheet_sp.cell(column=col, row=song_info[0] + 1 - 10000, value=item)  # sp谱面id为歌曲id加10000，所以减去10000
-    # 实际上是在rc2版本后追加一项补充工作，如下
-    total = data_lines_ex[-1][0]  # 以最后一个ex谱面id作为歌曲总数
-    for i in range(total):
-        sheet_ex.cell(column=1, row=i + 2, value=i + 1)
-        sheet_sp.cell(column=1, row=i + 2, value=i + 10001)
-
-    # rc2版本：不存在的歌曲空行
-    # for row, song_info in enumerate(data_lines_all, start=2):
-    #     for col, item in enumerate(song_info, start=1):
-    #         sheet_all.cell(column=col, row=row, value=item)
-    # for row, song_info in enumerate(data_lines_ex, start=2):
-    #     for col, item in enumerate(song_info, start=1):
-    #         sheet_ex.cell(column=col, row=song_info[0]+1, value=item)  # 算上标题行，所以行数加1
-    # for row, song_info in enumerate(data_lines_sp, start=2):
-    #     for col, item in enumerate(song_info, start=1):
-    #         sheet_sp.cell(column=col, row=song_info[0]+1-10000, value=item)  # sp谱面id为歌曲id加10000，所以减去10000
-
-    # rc1版本：按顺序写入，不空行
-    # for data_line, sheet in [(data_lines_all, sheet_all),
-    #                          (data_lines_ex, sheet_ex),
-    #                          (data_lines_sp, sheet_sp)]:
-    #     for row, line in enumerate(data_line, start=2):
-    #         for col, item in enumerate(line, start=1):
-    #             sheet.cell(column=col, row=row, value=item)
+    for row, chart in enumerate(all_chart_list, start=2):
+        for col, key in column_to_write.items():
+            sheet_all.cell(column=col, row=row, value=chart.__getattribute__(key))
 
     savepath = os.path.join(temp_absdir, 'all_charts.xlsx')
     book.save(savepath)
-    return savepath
+
+    log.info(f'乐曲列表已生成完毕，保存于{savepath}')
+    log.info('定时任务已处理完成 耗时%.3fs' % (time.time() - start))

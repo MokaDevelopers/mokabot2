@@ -1,3 +1,4 @@
+import os
 from typing import Union
 
 import nonebot
@@ -15,12 +16,13 @@ pixiv_mokabot_api = require_mb2pkg_pixiv.pixiv_mokabot_api
 
 
 driver = nonebot.get_driver()
+temp_absdir = nonebot.get_driver().config.temp_absdir
 app = driver.server_app
 
 
 @app.get('/mb2/bandori/songs/all_charts.xlsx')
 async def bandori_chart_excel(response: Response):
-    result = FileResponse(path=await make_chart_excel())
+    result = FileResponse(path=os.path.join(temp_absdir, 'all_charts.xlsx'))
 
     try:
         return result
