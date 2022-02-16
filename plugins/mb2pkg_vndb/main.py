@@ -367,11 +367,11 @@ async def return_staff_details(info: dict) -> list[str]:
     # 配音角色
     if staff.voiced:
         result_details.append(f'配音角色（合计约{len(staff.voiced)}个角色）')
-        voiced_char_list = return_voiced_char_list(staff.voiced)[:30]  # 只选取前30个角色
+        voiced_char_list = return_voiced_char_list(staff.voiced)[:50]  # 只选取前50个角色
         for char in voiced_char_list:
             result_details.append(f'（{char["vid"]}）《{char["vn_name"]}》')
             result_details.append(f'  饰 [{return_role_by_index_in_vn(char["role"])}] {char["char_name"]}（{char["cid"]}）（AS: {char["alias_name"]}）')
-    result_details.append('（只显示前30个）')
+    result_details.append('（只显示前50个）')
 
     return result_details
 
