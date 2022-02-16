@@ -355,7 +355,7 @@ async def return_staff_details(info: dict) -> list[str]:
     result_details.append('马甲 ：')
     for _aid, _alias in alias_dict.items():
         if _aid == staff.main_alias:
-            result_details.append(f' {_alias}  <常用>')
+            result_details.append(f' {_alias}  <本名>')
         else:
             result_details.append(f' {_alias}')
     result_details.append('')
