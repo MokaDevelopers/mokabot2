@@ -107,68 +107,83 @@ async def vndb_probe(stype: str, cmd: str, info: str) -> Union[str, MessageSegme
     :return: 返回从vndb发来的数据
     """
 
-    result = ''
-
     if stype not in ['gal', 'char', 'cv']:
         raise ParamError(f'第二个参数必须是"gal"、"char"或"cv"，bot以此确定查询的类别，而你输入而了"{stype}"')
 
-    fin_stype = return_fin_stype(stype)
-    fin_flags = return_fin_flags(stype)
+    fin_stype = return_fin_stype(stype)  # 将stype转换为vndb专有词汇
+    fin_flags = return_fin_flags(stype)  # 生成通过id查询时所需的flags
 
     if cmd == 'id':  # bot进入查询状态，通过id查询精确信息，将会以两个MessageSegment.image返回
-        if not info.isdigit():
-            raise ParamError(f'所查询的id的值只能是数字，而你输入了"{info}"')
-
-        id_result_raw = await get_vndb(fin_stype, fin_flags, f'(id={info})')
-        id_result = SearchResult(**id_result_raw).items
-
-        if not id_result:
-            raise NoResultError(f'在{stype}中没有id={info}的项目')
-        elif stype == 'gal':
-            pic, details = await return_vn_details(id_result[0])
-        elif stype == 'char':
-            pic, details = await return_char_details(id_result[0])
-        elif stype == 'cv':
-            pic = None
-            details = await return_staff_details(id_result[0])
-        else:
-            raise ParamError
-
-        details_savepath = os.path.join(temp_absdir, f'{stype}{info}.jpg')
-        await draw_image(details, details_savepath, max_width=60)
-        if pic:
-            result = MessageSegment.image(file=pic) + MessageSegment.image(file=f'file:///{details_savepath}')
-        else:
-            result = MessageSegment.image(file=f'file:///{details_savepath}')
-
+        result = await vndb_probe_id(stype, fin_stype, fin_flags, info)
     elif cmd == 'search':  # bot进入搜索状态，通过搜索返回可能的id，将会以纯str返回
-        search_result_raw = await get_vndb(fin_stype, 'basic', f'(search~"{info}")', {'results': 20})
-        search_result = SearchResult(**search_result_raw)
+        result = await vndb_probe_search(stype, fin_stype, fin_flags, info)
+    else:  # 用户第一个参数既不是id也不是search，则抛出
+        raise ParamError(f'第一个参数必须是"id"或者"search"，bot以此确定是进行查询还是搜索，而你输入而了"{cmd}"')
 
-        if not search_result.items:
-            if stype in ['char', 'cv']:
-                raise NoResultError('搜索无结果，请注意有可能需要在姓和名之间添加空格')
-            elif stype in ['gal']:
-                raise NoResultError('搜索无结果，请注意当作品名带符号时，不要忽略夹杂在文字中间的符号，或者可以考虑输入在第一个符号之前出现的文字')
-            raise NoResultError('搜索无结果')
-        elif stype == 'gal':
-            for _item in search_result.items:
-                vn = VNItemsBasic(**_item)
-                result += f'({vn.id}) {vn.original or vn.title}\n'
-        elif stype == 'char':
-            for _item in search_result.items:
-                char = CharItemsBasic(**_item)
-                result += f'({char.id}) {char.original or char.name}\n'
-        elif stype == 'cv':
-            for _item in search_result.items:
-                staff = StaffItemsBasic(**_item)
-                result += f'({staff.id}) {staff.original or staff.name}\n'
+    return result
 
+
+async def vndb_probe_search(stype: str, fin_stype: str, fin_flags: str, info: str) -> Union[str, MessageSegment]:
+    result = ''
+
+    search_result_raw = await get_vndb(fin_stype, 'basic', f'(search~"{info}")', {'results': 20})
+    search_result = SearchResult(**search_result_raw)
+
+    if not search_result.items:
+        if stype in ['char', 'cv']:
+            raise NoResultError('搜索无结果，请注意有可能需要在姓和名之间添加空格')
+        elif stype in ['gal']:
+            raise NoResultError('搜索无结果，请注意当作品名带符号时，不要忽略夹杂在文字中间的符号，或者可以考虑输入在第一个符号之前出现的文字')
+        raise NoResultError('搜索无结果')
+    elif stype == 'gal':
+        for _item in search_result.items:
+            vn = VNItemsBasic(**_item)
+            result += f'({vn.id}) {vn.original or vn.title}\n'
+    elif stype == 'char':
+        for _item in search_result.items:
+            char = CharItemsBasic(**_item)
+            result += f'({char.id}) {char.original or char.name}\n'
+    elif stype == 'cv':
+        for _item in search_result.items:
+            staff = StaffItemsBasic(**_item)
+            result += f'({staff.id}) {staff.original or staff.name}\n'
+
+    if search_result.num == 1:
+        only_id: int = search_result.items[0]['id']
+        result += '这是唯一的结果，因此已直接显示。。\n'
+        result += await vndb_probe_id(stype, fin_stype, fin_flags, str(only_id))
+    else:
         result += f'本页共{search_result.num}个结果，'
         result += '更多的结果已经被忽略' if search_result.more else '这是全部的结果'
 
-    else:  # 用户第一个参数既不是id也不是search，则抛出
-        raise ParamError(f'第一个参数必须是"id"或者"search"，bot以此确定是进行查询还是搜索，而你输入而了"{cmd}"')
+    return result
+
+
+async def vndb_probe_id(stype: str, fin_stype: str, fin_flags: str, info: str) -> Union[str, MessageSegment]:
+    if not info.isdigit():
+        raise ParamError(f'所查询的id的值只能是数字，而你输入了"{info}"')
+
+    id_result_raw = await get_vndb(fin_stype, fin_flags, f'(id={info})')
+    id_result = SearchResult(**id_result_raw).items
+
+    if not id_result:
+        raise NoResultError(f'在{stype}中没有id={info}的项目')
+    elif stype == 'gal':
+        pic, details = await return_vn_details(id_result[0])
+    elif stype == 'char':
+        pic, details = await return_char_details(id_result[0])
+    elif stype == 'cv':
+        pic = None
+        details = await return_staff_details(id_result[0])
+    else:
+        raise ParamError
+
+    details_savepath = os.path.join(temp_absdir, f'{stype}{info}.jpg')
+    await draw_image(details, details_savepath, max_width=60)
+    if pic:
+        result = MessageSegment.image(file=pic) + MessageSegment.image(file=f'file:///{details_savepath}')
+    else:
+        result = MessageSegment.image(file=f'file:///{details_savepath}')
 
     return result
 
