@@ -93,6 +93,9 @@ async def vndb_handle(bot: Bot, event: MessageEvent):
         msg = f'参数使用错误：{e}'
     except NoResultError as e:
         msg = str(e)
+    except Exception as e:
+        msg = f'未知的错误发生：{e}'
+        log.exception(e)
 
     await bot.send(event, msg)
 
