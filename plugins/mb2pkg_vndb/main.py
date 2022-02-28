@@ -1,5 +1,6 @@
 import asyncio
 import csv
+import math
 import os
 import re
 from typing import Union, Optional
@@ -257,9 +258,11 @@ async def return_vn_details(info: dict) -> tuple[Optional[str], list[str]]:
         result_details.append('')
 
     # 评分
+    rating = round(vn.rating, 2)
+    popularity = round(math.log10(vn.popularity * 0.99 + 1) * 5, 2)  # vndb的popularity值是线性变化的(0~100)，变成对数值更加合理
     result_details.append('VNDB用户评价')
-    result_details.append(f' 评分(10 max)：{vn.rating}')
-    result_details.append(f' 热度(100 max)：{vn.popularity}')
+    result_details.append(f' 评分：{rating} / 10.00')
+    result_details.append(f' 热度：{popularity} / 10.00')
     result_details.append(f' 评分人数：{vn.votecount}')
 
     return result_pic, result_details

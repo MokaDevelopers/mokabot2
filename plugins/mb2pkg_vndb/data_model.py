@@ -81,8 +81,8 @@ class VNInfo(BaseModel):
     relations: list[Optional[Relations]]  # (Possibly empty) list of related visual novels.
 
     # stats
-    popularity: Union[int, float]  # Between 0 (unpopular) and 100 (most popular).
-    rating: Union[int, float]  # Bayesian rating, between 1 and 10.
+    popularity: float  # Between 0 (unpopular) and 100 (most popular).
+    rating: float  # Bayesian rating, between 1 and 10.
     votecount: int  # Number of votes.
 
 
