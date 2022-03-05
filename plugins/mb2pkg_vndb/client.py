@@ -13,7 +13,7 @@ __all__ = ['VNDB']
 
 class VNDB:
     """
-    Create an ssl session with api.vndb.org to process the command.
+    Create a ssl session with api.vndb.org to process the command.
     Author: AkibaArisa
     Version: 2.0.0
 

@@ -21,7 +21,7 @@ config.temp_absdir = os.path.abspath('temp')  # r'D:\Python\mokabot2\temp'
 # bot加载插件
 nonebot.load_plugins('plugins_admin')
 nonebot.load_plugins('plugins')
-nonebot.load_plugin('mb2pkg_api')
+# nonebot.load_plugin('mb2pkg_api')
 
 if __name__ == '__main__':
     nonebot.run()
