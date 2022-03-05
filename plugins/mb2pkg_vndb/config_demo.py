@@ -11,14 +11,16 @@ class Config(BaseSettings):
     res_absdir: str = os.path.join(plugin_absdir, 'res')
     # 登录vndb使用api时的用户名
     vndb_account: tuple[str, str] = ('username', 'password')
-    # character id csv 路径
-    cid_csv: str = os.path.join(res_absdir, 'db/chars')
-    # staff alias id csv 路径
-    aid_csv: str = os.path.join(res_absdir, 'db/staff_alias')
-    # vn id csv 路径
-    vid_csv: str = os.path.join(res_absdir, 'db/vn')
+    # chars 路径
+    chars_csv: str = os.path.join(res_absdir, 'db/chars')
+    # staff_alias 路径
+    staff_alias_csv: str = os.path.join(res_absdir, 'db/staff_alias')
+    # vn.titles 路径
+    vn_titles_csv: str = os.path.join(res_absdir, 'db/vn_titles')
+    # vn 路径
+    vn_csv: str = os.path.join(res_absdir, 'db/vn')
     # chars 到 vns 映射 路径
-    char2vn: str = os.path.join(res_absdir, 'db/chars_vns')
+    chars_vns_csv: str = os.path.join(res_absdir, 'db/chars_vns')
     # TIMESTAMP 路径
     TIMESTAMP: str = os.path.join(res_absdir, 'TIMESTAMP')
 

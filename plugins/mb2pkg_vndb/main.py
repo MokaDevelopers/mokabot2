@@ -23,42 +23,80 @@ log = getlog()
 
 temp_absdir = nonebot.get_driver().config.temp_absdir
 vndb_username, vndb_password = Config().vndb_account
-vid_csv = Config().vid_csv
-cid_csv = Config().cid_csv
-aid_csv = Config().aid_csv
-char2vn_csv = Config().char2vn
-TIMESTAMP = Config().TIMESTAMP
 
-with open(TIMESTAMP, 'r', encoding='utf-8') as f_timestamp:
+with open(Config().TIMESTAMP, 'r', encoding='utf-8') as f_timestamp:
     local_vndb_timestamp = f_timestamp.read().strip()
 
 csv.register_dialect('vndb', delimiter='\t', quoting=csv.QUOTE_ALL)
 
-# 载入vid表，使用vid指向一个gal的名称
-vid: dict[str, tuple[str, int]] = {}  # key: 'v12345', value: ('VNName', 5)  其中的5是长度标记，见return_vn_length函数
-with open(vid_csv, 'r', encoding='utf-8') as f_vid_csv:
-    lines = csv.reader(f_vid_csv, dialect='vndb')
+# 载入vn_titles表，以使用vid指向一个gal的名称
+vid: dict[str, str] = {}  # key: 'v12345', value: 'VNName'
+with open(Config().vn_titles_csv, 'r', encoding='utf-8') as f:
+    lines = csv.reader(f, dialect='vndb')
+    """
+    由于该csv内同一个vid会有多个lang对应的title，需要以下算法来实现筛选期待的title
+    筛选原则：对于同一个vid，如果lang有zh-Hans或zh，那么直接使用该title，
+    否则，如果lang有ja，那么直接使用该title，
+    否则，如果lang有en，那么直接使用该title，
+    否则，使用最后一个lang的title。
+    
+    vn_titles_csv 大概长这样（只选取有效部分）：
+    vid lang    title
+    ...
+    v6	en	Kira -snowdrop-
+    v6	ja	雪花 -きら-	Yukibana -Kira-
+    v7	ja	月姫	Tsukihime
+    v8	de	Nachklang eines Mittsommertags
+    v8	en	A Midsummer Day's Resonance
+    v8	es	La resonancia de un día de verano
+    v8	ja	夏の日のレザナンス	Natsu no Hi no Resonance
+    v8	ru	Летний Резонанс	Letnij Rezonans
+    v8	ta	Resonance sa Araw ng Tag-init
+    v9	en	Bible Black - The Game
+    v9	ja	Bible Black ～La noche de walpurgis～
+    v10	ja	narcissu
+    ...
+    """
+    last_vid, last_lang = '', ''
     for line in lines:
-        vid[line[0]] = (line[9] or line[8], int(line[7]))
+        this_vid, this_lang, this_title = line[0], line[1], line[2]
+        if (
+            this_vid != last_vid  # 新vid，直接存入字典
+            or this_vid == last_vid and (  # 和上一个一样的vid，此时应当筛选lang
+                this_lang in ['zh-Hans', 'zh']  # 遇见zh-Hans或zh，直接存入字典
+                or this_lang == 'ja' and last_lang not in ['zh-Hans', 'zh']  # 否则lang有ja的情况
+                or this_lang == 'en' and last_lang not in ['zh-Hans', 'zh', 'ja']  # 否则lang有en的情况
+            )
+        ):
+            vid[this_vid] = this_title
+            last_vid, last_lang = this_vid, this_lang
+        # 除此以外的其他情况一律不存入字典（else: continue）
 
-# 载入cid表，使用cid指向一个角色名称
+# 载入vn表，以使用vid指向一个gal的rating（网站显示评分为6.66时，表中的值将会是666，即乘以100）
+vid_rating: dict[str, int] = {}  # key: 'v12345', value: 666
+with open(Config().vn_csv, 'r', encoding='utf-8') as f:
+    lines = csv.reader(f, dialect='vndb')
+    for line in lines:
+        vid_rating[line[0]] = int(line[6]) if line[6].isdigit() else 0
+
+# 载入chars表，以使用cid指向一个角色名称
 cid: dict[str, str] = {}  # key: 'c12345', value: 'CharName'
-with open(cid_csv, 'r', encoding='utf-8') as f_cid_csv:
-    lines = csv.reader(f_cid_csv, dialect='vndb')
+with open(Config().chars_csv, 'r', encoding='utf-8') as f:
+    lines = csv.reader(f, dialect='vndb')
     for line in lines:
         cid[line[0]] = line[17] or line[16]
 
-# 载入aid表，使用aid指向指定的马甲名称
+# 载入staff_alias表，以使用aid指向指定的马甲名称
 aid: dict[str, str] = {}  # key: '12345', value: 'AliasName'
-with open(aid_csv, 'r', encoding='utf-8') as f_aid_csv:
-    lines = csv.reader(f_aid_csv, dialect='vndb')
+with open(Config().staff_alias_csv, 'r', encoding='utf-8') as f:
+    lines = csv.reader(f, dialect='vndb')
     for line in lines:
         aid[line[1]] = line[3] or line[2]
 
-# 载入char2vn表，使用给定的cid和vid，指向该gal中该角色的身份
+# 载入chars_vns表，以使用给定的cid和vid，指向该gal中该角色的身份
 char2vn: dict[str, str] = {}  # key: 'c123v123', value: 1  其中的1是角色身份标记，见return_role_by_index_in_vn函数
-with open(char2vn_csv, 'r', encoding='utf-8') as f_char2vn_csv:
-    lines = csv.reader(f_char2vn_csv, dialect='vndb')
+with open(Config().chars_vns_csv, 'r', encoding='utf-8') as f:
+    lines = csv.reader(f, dialect='vndb')
     for line in lines:
         char2vn[f'{line[0]}{line[1]}'] = {
             'main': 0,
@@ -326,9 +364,9 @@ async def return_char_details(info: dict) -> tuple[Optional[str], list[str]]:
     for _vn_id, _release_id, _spoiler_level, _role in char.vns:
         cv_id, cv_aid = return_char_cvid_in_vn(char.voiced, _vn_id)
         if cv_id and cv_aid:
-            result_details.append(f' [{return_role_in_vn(_role)}] ({_vn_id}) {vid[f"v{_vn_id}"][0]}  (CV: {aid[str(cv_aid)]} ({cv_aid}))')
+            result_details.append(f' [{return_role_in_vn(_role)}] ({_vn_id}) {vid[f"v{_vn_id}"]}  (CV: {aid[str(cv_aid)]} ({cv_aid}))')
         else:
-            result_details.append(f' [{return_role_in_vn(_role)}] ({_vn_id}) {vid[f"v{_vn_id}"][0]}')
+            result_details.append(f' [{return_role_in_vn(_role)}] ({_vn_id}) {vid[f"v{_vn_id}"]}')
 
     return result_pic, result_details
 
@@ -555,7 +593,7 @@ async def return_all_chars_for_vn(vnid: int) -> list[dict]:
 
 
 def return_voiced_char_list(voiced: list) -> list:
-    """返回某个声优的配音角色列表（按照角色身份为主排序关键字，vn长度为第二排序关键字）"""
+    """返回某个声优的配音角色列表（按照角色身份为主排序关键字，vn评分为第二排序关键字）"""
     result = []
     for _item in voiced:
         _vid = f'v{_item.id}'
@@ -565,16 +603,16 @@ def return_voiced_char_list(voiced: list) -> list:
         if _c_v_id in char2vn and _vid in vid and _cid in cid and _aid in aid:  # 仅添加已经收录的
             result.append({
                 'vid': _item.id,  # type: int
-                'vn_name': vid[_vid][0],  # type: str
+                'vn_name': vid[_vid],  # type: str
                 'cid': _item.cid,  # type: int
                 'char_name': cid[_cid],  # type: str
                 'aid': _item.aid,  # type: int
                 'alias_name': aid[_aid],  # type: str
                 'role': char2vn[_c_v_id],  # type: int
-                'length': vid[_vid][1],  # type: int
+                'rating': vid_rating[_vid],  # type: int
             })
 
-    result = sorted(result, key=lambda _: _['length'], reverse=True)  # 5, 4, 3, 2, 1
+    result = sorted(result, key=lambda _: _['rating'], reverse=True)  # 5, 4, 3, 2, 1
     result = sorted(result, key=lambda _: _['role'])  # 0, 1, 2, 3
 
     return result
