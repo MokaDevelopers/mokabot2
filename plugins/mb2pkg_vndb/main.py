@@ -612,7 +612,7 @@ def return_voiced_char_list(voiced: list) -> list:
                 'rating': vid_rating[_vid],  # type: int
             })
 
-    result = sorted(result, key=lambda _: _['rating'], reverse=True)  # 5, 4, 3, 2, 1
+    result = sorted(result, key=lambda _: _['rating'], reverse=True)  # 800, 700, 600, ...
     result = sorted(result, key=lambda _: _['role'])  # 0, 1, 2, 3
 
     return result
