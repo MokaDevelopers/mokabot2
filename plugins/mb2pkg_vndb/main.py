@@ -68,12 +68,6 @@ with open(char2vn_csv, 'r', encoding='utf-8') as f_char2vn_csv:
         }[line[3]]  # 使用int取代str以减小内存消耗
 
 log.debug(f'本地vid、cid和aid已加载，版本{local_vndb_timestamp}')
-# 注：目前不更新数据库不会影响插件主要功能正常使用，只会影响以下方面：
-# vid: 影响char指令时，找到的角色的相关作品
-# cid: 影响cv指令查询时，声优出场的作品对应的角色名称
-# aid: 影响char指令时，角色的相关作品所对应的CV；
-#      影响gal指令查询时，作品的人物列表所对应的CV；
-# char2vn: 影响cv指令查询时，声优出场的作品与数量
 
 
 @match_vndb.handle()
