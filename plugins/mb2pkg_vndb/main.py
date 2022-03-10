@@ -24,9 +24,6 @@ log = getlog()
 temp_absdir = nonebot.get_driver().config.temp_absdir
 vndb_username, vndb_password = Config().vndb_account
 
-with open(Config().TIMESTAMP, 'r', encoding='utf-8') as f_timestamp:
-    local_vndb_timestamp = f_timestamp.read().strip()
-
 csv.register_dialect('vndb', delimiter='\t', quoting=csv.QUOTE_ALL)
 
 # 载入vn_titles表，以使用vid指向一个gal的名称
@@ -104,8 +101,6 @@ with open(Config().chars_vns_csv, 'r', encoding='utf-8') as f:
             'side': 2,
             'appears': 3,
         }[line[3]]  # 使用int取代str以减小内存消耗
-
-log.debug(f'本地vid、cid和aid已加载，版本{local_vndb_timestamp}')
 
 
 @match_vndb.handle()
@@ -639,6 +634,12 @@ def return_staff_alias_dict(aliases: list[list[Union[int, str]]]) -> dict[str, s
     return result
 
 
+def return_local_vndb_timestamp() -> str:
+    with open(Config().TIMESTAMP, 'r', encoding='utf-8') as f_timestamp:
+        local_vndb_timestamp = f_timestamp.read().strip()
+    return local_vndb_timestamp
+
+
 def add_result_details(stype: str) -> list[str]:
     """返回一个被共用的图片头部"""
     return [
@@ -648,7 +649,7 @@ def add_result_details(stype: str) -> list[str]:
             'char': '角色',
             'cv': '声优'
         }[stype] + '查询',
-        f'本地数据库版本：{local_vndb_timestamp}',
+        f'本地数据库版本：{return_local_vndb_timestamp()}',
         ''
     ]
 
@@ -660,3 +661,6 @@ def add_description(description: str) -> list[str]:
     # 删除所有匹配的标签（除了剧透标签头[spoiler]）
     description = re.sub(r'\[/?(b|i|u|s|url[^]]*|quote|raw|code|/spoiler)]', '', description)
     return [_ for _ in description.split('\n') if _]
+
+
+log.debug(f'本地vid、cid和aid已加载，版本{return_local_vndb_timestamp()}')
