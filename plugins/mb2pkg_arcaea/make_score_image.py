@@ -96,7 +96,7 @@ def add_text1(image, font, text='text', pos=(0, 0), color=(255, 255, 255, 255), 
     """
     为图片添加文本（方式一）
 
-    :param Image image: 原始图像
+    :param Image.Image image: 原始图像
     :param ImageFont.FreeTypeFont font: 文本所使用的字体
     :param str text: 文本内容
     :param tuple[int] pos: 文本位置
@@ -120,7 +120,7 @@ def add_text2(image, class_text: Text, color=(255, 255, 255, 255),
     """
     为图片添加文本（方式二）
 
-    :param Image image: 原始图像
+    :param Image.Image image: 原始图像
     :param Text class_text: 以Text类描述的文本（已包含文本位置、内容、锚点、字体等）
     :param tuple[int] color: 字体颜色
     :param bool add_shadow: 是否添加阴影
