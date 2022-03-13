@@ -40,8 +40,8 @@ class Config(BaseSettings):
     twitter_bearer_token: str = ''
 
     # BotArcAPI所在的服务器和所需headers
-    baa_server = 'http://localhost:61658'
-    baa_headers = {}
+    botarcapi_server = 'http://localhost:61658'
+    botarcapi_headers = {}
 
     class Config:
         extra = 'ignore'
