@@ -275,11 +275,9 @@ async def arc_probe_force(friend_id: Union[str, int],
     async def get_score(song: str, rating_class: int) -> None:
         # 函数没有返回值，通过result['scores']往追加元素完成工作
 
-        # const_list: [('tempestissimo', 3, 22, 115), ('grievouslady', 2, 22, 113), ('fractureray', 2, 22, 112), ...]
-        song_chart_list = filter(lambda x: x[0] == song, const_list)
-        song_chart_list = sorted(song_chart_list, key=lambda j: j[1], reverse=False)
-        # song_chart_list: [('tempestissimo', 0, 12, 65), ('tempestissimo', 1, 18, 95), ('tempestissimo', 2, 20, 106), ...]
-        const: float = song_chart_list[rating_class][3] / 10
+        # const_list: [('sayonarahatsukoi', 15, 45, 70, -1), ('lostcivilization', 40, 70, 92, 98), ('goodtek', 40, 65, 93, 98), ...]
+        song_chart_list = list(filter(lambda x: x[0] == song, const_list))[0]  # ('lostcivilization', 40, 70, 92, 98)
+        const: float = song_chart_list[rating_class + 1] / 10
 
         single_chart_score_friends: list = (await quire_man.rank_friend(song, rating_class, 0, 2))['value']
         single_chart_score_target: dict = {}
@@ -334,10 +332,10 @@ async def arc_probe_force(friend_id: Union[str, int],
     # 载入歌曲定数列表
     conn = sqlite3.connect(SONGDB)
     cursor = conn.cursor()
-    exec_allcharts = 'SELECT * FROM `charts` ORDER BY `rating` DESC'
+    exec_allcharts = 'SELECT sid, rating_pst, rating_prs, rating_ftr, rating_byn FROM songs'
     cursor.execute(exec_allcharts)
-    const_list: list[(str, int, int, int)] = cursor.fetchall()
-    # [('tempestissimo', 3, 22, 115), ('grievouslady', 2, 22, 113), ('fractureray', 2, 22, 112), ...]
+    const_list: list[(str, int, int, int, int)] = cursor.fetchall()
+    # [('sayonarahatsukoi', 15, 45, 70, -1), ('lostcivilization', 40, 70, 92, 98), ('goodtek', 40, 65, 93, 98), ...]
 
     # 定数表生成结束
 
@@ -402,16 +400,18 @@ async def arc_probe_force(friend_id: Union[str, int],
             tasks = []
 
             # 生成任务加入队列
-            # const_list: [('tempestissimo', 3, 22, 115), ('grievouslady', 2, 22, 113), ('fractureray', 2, 22, 112), ...]
+            # const_list: [('sayonarahatsukoi', 15, 45, 70, -1), ('lostcivilization', 40, 70, 92, 98), ('goodtek', 40, 65, 93, 98), ...]
             for item in const_list:
                 # 只筛选定数大于ptt减3的谱面，减小查询时间
-                if item[3]/10 >= user_ptt - 3:
-                    task = scores_loop.create_task(get_score(song=item[0], rating_class=item[1]))
-                    await asyncio.sleep(0.1)
-                    tasks.append(task)
+                for song_id, *song_const_list in item:  # Unpack tuple.
+                    for difficulty, constx10 in enumerate(song_const_list):
+                        if constx10/10 >= user_ptt - 3:
+                            task = scores_loop.create_task(get_score(song=song_id, rating_class=difficulty))
+                            await asyncio.sleep(0.1)
+                            tasks.append(task)
 
-            # for task in tasks:
-            #     task.cancel()
+                            # for task in tasks:
+                            #     task.cancel()
 
         # scores生成结束
 
