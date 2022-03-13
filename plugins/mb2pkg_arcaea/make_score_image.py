@@ -351,12 +351,12 @@ async def moe_draw_last(data):
     im = add_text2(im, value_rating, stroke_offset=4, stroke_color=(51, 41, 41, 220))
 
     # 写生成详情
-    text_info = 'player {: } PICTURE PRODUCED BY MOKABOT'.format(int(userinfo['user_id']))  # TODO 应为user_code，临时改为user_id
+    text_info = 'player {: } PICTURE PRODUCED BY MOKABOT'.format(int(userinfo['user_id']))
     info = Text(75, 1580, 45, text_info, font_ExoMedium)
     im = add_text2(im, info, add_shadow=True, shadow_offset=(2, 1), stroke_offset=1)
 
     im = im.convert('RGB')
-    make_path = os.path.join(temp_absdir, f'{userinfo["user_id"]}_moe.jpg')  # TODO 应为user_code，临时改为user_id
+    make_path = os.path.join(temp_absdir, f'{userinfo["user_id"]}_moe.jpg')
     im.save(make_path)
 
     return make_path
@@ -460,7 +460,7 @@ async def guin_draw_last(data):
     # 写用户名、游玩日期、游玩时间、UID、PTT
     username = Text(210, 60, 95, userinfo['name'], font_ExoMedium)
     im = add_text2(im, username, add_shadow=True, stroke_offset=9, stroke_color=(36, 33, 38, 120))
-    usercode = Text(46, 195, 60, f'UID:{userinfo["user_id"]}', font_ExoRegular)  # TODO 应为user_code，临时改为user_id
+    usercode = Text(46, 195, 60, f'UID:{userinfo["user_id"]}', font_ExoRegular)
     im = add_text2(im, usercode, add_shadow=True, stroke_offset=1)
     play_date = Text(45, 266, 78, get_time("%y/%m/%d", last_score['time_played'] / 1000), font_ExoRegular)
     im = add_text2(im, play_date, add_shadow=True, stroke_offset=1)
@@ -498,7 +498,7 @@ async def guin_draw_last(data):
     im = add_text2(im, rating, add_shadow=True, stroke_offset=1)
 
     im = im.convert('RGB')
-    make_path = os.path.join(temp_absdir, f'{userinfo["user_id"]}_guin.jpg')  # TODO 应为user_code，临时改为user_id
+    make_path = os.path.join(temp_absdir, f'{userinfo["user_id"]}_guin.jpg')
     im.save(make_path)
 
     return make_path
@@ -680,7 +680,7 @@ async def bandori_draw_last(data):
             im.alpha_composite(new_record_img, (1652, 488))
 
     im = im.convert('RGB')
-    make_path = os.path.join(temp_absdir, f'{userinfo["user_id"]}_bandori.jpg')  # TODO 应为user_code，临时改为user_id
+    make_path = os.path.join(temp_absdir, f'{userinfo["user_id"]}_bandori.jpg')
     im.save(make_path)
 
     return make_path
@@ -720,7 +720,7 @@ async def draw_b30(arcaea_data, force=False):
 
     # 准备原始数据
     userinfo = arcaea_data['userinfo']
-    userid = userinfo['user_id']  # TODO 应为user_code，临时改为user_id
+    userid = userinfo['user_id']
     scores = sorted(arcaea_data['scores'], key=lambda _: _['rating'], reverse=True)
     now = time.time()
 
