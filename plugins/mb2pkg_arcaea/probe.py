@@ -9,6 +9,7 @@ from typing import Union, Tuple
 
 import Levenshtein
 import aiohttp
+import httpx
 from aiohttp.client_exceptions import ClientConnectionError
 from brotli import decompress
 from nonebot import on_command
@@ -19,6 +20,7 @@ from public_module.mb2pkg_database import QQ
 from public_module.mb2pkg_mokalogger import getlog
 from .arcaea_lib import APP_VERSION, Arcaea
 from .bind import return_this_prober_user_me
+from .botarcapi import BotArcAPIClient
 from .config import Config
 from .exceptions import *
 from .make_score_image import moe_draw_last, guin_draw_last, bandori_draw_last, draw_b30, song_list
@@ -35,6 +37,8 @@ QUIRE_PWD = Config().prober_password
 SONGDB = Config().arcsong_db_abspath
 WEBAPI_ACC_LIST = Config().webapi_prober_account
 ARC_RESULT_LIST = ['bandori', 'guin', 'moe']
+botarcapi_server = Config().botarcapi_server
+botarcapi_headers = Config().botarcapi_headers
 
 ProberResult = dict[str, Union[list[dict[str, dict]], dict[str, dict]]]
 # 这里采用固定的返回格式，以此作为查分器响应的基础格式，这个格式最初由estertion的查分器所使用
@@ -42,6 +46,7 @@ ProberResult = dict[str, Union[list[dict[str, dict]], dict[str, dict]]]
 
 enable_probe_force = False
 enable_probe_webapi = True
+enable_probe_botarcapi = True
 webapi_user2acc_map = {}  # 用来存储用户名到查询用账号的映射
 
 
@@ -129,6 +134,10 @@ async def arc_probe_handle(bot: Bot, event: MessageEvent):
         msg = '主查分器和全部的备用查分器已经失效'
     except WebapiProberLoginError as e:
         msg = f'查分器使用webapi登陆失败：{e}'
+    except BotArcAPITimeoutError:
+        msg = '第二备用查分器连接超时'
+    except ProberUnavailableError as e:
+        msg = f'查分器不可用：{e}'
     except Exception as e:
         msg = f'查询以异常状态结束（{e}），本次错误已经被记录，请重新查询。若反复出现此异常，可暂时先用查分器本体查询'
         log.exception(e)
@@ -473,6 +482,59 @@ async def arc_probe_webapi(friend_name: str, arc_friend_id: str, myqq: QQ) -> Pr
     raise NotFindFriendError(friend_name, close_name_list, arc_friend_id)
 
 
+async def arc_probe_botarcapi(friend_id: Union[str, int],
+                              is_last: bool = False, is_highscore: bool = False,
+                              specific_index: int = 0, single_rating_class: int = 2) -> ProberResult:
+    """
+    使用BotArcAPI查询玩家b30和ptt（如果可能）
+
+    :param single_rating_class: 指定只查询某首歌成绩时，指定的难度等级(0~3: pst, prs, ftr, byd)
+    :param specific_index: 若填写，则说明只查询这首歌的成绩
+    :param is_last: 是否只查询上一次成绩，默认False
+    :param is_highscore: 是否需要查询last歌曲所对应的最高分，并放入scores列表中（必须先使is_last=True才可用）
+    :param friend_id: 好友码（固定9位）
+    :return: 含userinfo和scores的字典
+    """
+
+    result = {'userinfo': {},
+              'scores': []}
+
+    baa = BotArcAPIClient(botarcapi_server, botarcapi_headers)
+
+    try:
+        user_info_response: dict = (await baa.user_info(usercode=friend_id))['content']
+        # TODO 注：BotArcAPI响应中使用code表示好友码，而不是estertion响应的user_code
+        result['userinfo'] = user_info_response['account_info']
+        # 此处重新整理响应结构，以适配原先的响应
+        recent_score: dict = user_info_response['recent_score'][0]
+        result['userinfo']['recent_score'] = [recent_score]
+
+        # 如果指定了只返回最近一次成绩，那么在这里结束
+        # 因此scores键对应的值将会是一个空列表
+        if is_last:
+            # 如果指定了需要查询last歌曲所对应的最高分，那么还会把该歌曲的最高分写入scores
+            if is_highscore:
+                user_best_response = (await baa.user_best(usercode=friend_id, songid=recent_score['song_id'], difficulty=recent_score['difficulty']))['content']
+                result['scores'].append(user_best_response['record'])
+
+        # 如果指定了只查某一首歌的成绩，那么在这里结束
+        elif specific_index:
+            song_id = song_list[specific_index]['id']
+            user_best_response = (await baa.user_best(usercode=friend_id, songid=song_id, difficulty=single_rating_class))['content']
+            result['scores'].append(user_best_response['record'])
+
+        # 否则是查b30/b35
+        else:
+            user_best30_response = (await baa.user_best30(usercode=friend_id, overflow=5))['content']
+            result['scores'].extend(user_best30_response['best30_list'])
+            result['scores'].extend(user_best30_response['best30_overflow'])
+
+    except httpx.ReadTimeout:
+        raise BotArcAPITimeoutError
+
+    return result
+
+
 def qq_to_userid(qq: int) -> str:
     myqq = QQ(qq)
     arc_friend_id = myqq.arc_friend_id
@@ -581,13 +643,26 @@ def return_song_alias() -> dict[str, str]:
 
 async def make_full_info(userid: Union[str, int], force: bool) -> str:
     if force:
-        arcaea_data = await arc_probe_force(userid)
-        # if arcaea_data['userinfo']['ishidden']:
-        #     raise PotentialHiddenError
+        if enable_probe_force:
+            arcaea_data = await arc_probe_force(userid)
+            # if arcaea_data['userinfo']['ishidden']:
+            #     raise PotentialHiddenError
+            data_from = 'force'
+        else:
+            raise ProberUnavailableError('本地查分器已被开发者关闭')
+    elif enable_probe_botarcapi:
+        # BotArcAPI容易超时，超时时自动使用estertion重查
+        try:
+            arcaea_data = await arc_probe_botarcapi(userid)
+            data_from = 'baa'
+        except BotArcAPITimeoutError:
+            arcaea_data = await arc_probe_estertion(userid)
+            data_from = 'est'
     else:
         arcaea_data = await arc_probe_estertion(userid)
+        data_from = 'est'
 
-    savepath = await draw_b30(arcaea_data, force)
+    savepath = await draw_b30(arcaea_data, data_from)
 
     return savepath
 
@@ -609,6 +684,8 @@ async def make_arcaea_result(qq: int, userid: Union[str, int],
     try:
         if enable_probe_force:
             arcaea_data = await arc_probe_force(userid, is_last=is_last, is_highscore=is_highscore, specific_index=song_index, single_rating_class=single_rating_class)
+        elif enable_probe_botarcapi:
+            arcaea_data = await arc_probe_botarcapi(userid, is_last=is_last, is_highscore=is_highscore, specific_index=song_index, single_rating_class=single_rating_class)
         elif enable_probe_webapi:
             if myqq.arc_friend_name is None:
                 raise NotBindFriendNameError

@@ -686,12 +686,12 @@ async def bandori_draw_last(data):
     return make_path
 
 
-async def draw_b30(arcaea_data, force=False):
+async def draw_b30(arcaea_data, data_from='est'):
     """
     通过给定的arcaea数据生成b30长图
 
     :param arcaea_data: 给定的arcaea数据，格式请参考plugins.mb2pkg_arcaea.probe.arc_probe_force
-    :param force: 本次查询是否属于强制查询
+    :param data_from: 本次查询的数据来源 in ['est', 'force', 'baa']
     :return: 生成图片的路径
     """
 
@@ -708,7 +708,7 @@ async def draw_b30(arcaea_data, force=False):
             '%2d  %s (%s)' % (_pos, songtitle[_score['song_id']]['en'], difficulty[_score['difficulty']]) if _pos
             else '    %s (%s)' % (songtitle[_score['song_id']]['en'], difficulty[_score['difficulty']]),
             '    %-37s(%d分每far)' % ('{:,}'.format(_score['score']) + ' (' + rank_score(_score['score']) + ' ' + clear_type[_score['clear_type']] + ')', _spf),
-            '    %-33sPURE %d(%d)' % ('谱面定数：' + '%.1f' % _score['constant'], _pure, ppure),
+            '    %-33sPURE %d(%d)' % ('谱面定数：' + _const, _pure, ppure),
             '    %-33sFAR  %d' % ('成绩评价：' + '%.5f' % _score['rating'], _far),
             '    %-33sLOST %d' % ('取得时间：' + get_time("%Y-%m-%d %H:%M", _score['time_played'] / 1000), _lost),
             '',
@@ -727,12 +727,16 @@ async def draw_b30(arcaea_data, force=False):
     global songtitle
 
     # STEP1: 描述用户信息，根据是否隐藏潜力值使用不同的格式，生成head
-    head_from = '数据来源：mokabot Arcaea强制查询' if force else '数据来源：Arcaea查分器（redive.estertion.win/arcaea/probe）'
+    head_from = {
+        'est': '数据来源：Arcaea查分器（redive.estertion.win/arcaea/probe）',
+        'force': '数据来源：mokabot Arcaea强制查询',
+        'baa': '数据来源：mokabot 第二备用查分器',
+    }.get(data_from)
     b30 = sum([r['rating'] for r in scores][:30]) / 30
     b10 = sum([r['rating'] for r in scores][:10]) / 10
     recent_score_time = userinfo['recent_score'][0]['time_played'] / 1000
     toplimit_ptt = 0.75 * b30 + 0.25 * b10
-    if force and arcaea_data['userinfo']['ishidden']:
+    if data_from == 'force' and arcaea_data['userinfo']['ishidden']:
         head = ['Arcaea 用户档案  制图时间：%s' % now_datetime(),
                 head_from,
                 'POTENTIAL：**.**       ID:%s   UID:%d' % (userinfo['name'], userinfo['user_id']),

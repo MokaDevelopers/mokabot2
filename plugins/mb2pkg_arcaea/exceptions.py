@@ -83,9 +83,17 @@ class WebapiProberLoginError(RuntimeError):
     """(webapi)查分器无法登录"""
 
 
+class ProberUnavailableError(RuntimeError):
+    """指定的查分器不可用"""
+
+
 class AllProberUnavailableError(RuntimeError):
     """全部的查分途径都挂了，字面意思"""
 
 
 class NotInMapError(RuntimeError):
     """玩家不在地图内"""
+
+
+class BotArcAPITimeoutError(RuntimeError):
+    """BotArcAPI服务器连接超时"""
