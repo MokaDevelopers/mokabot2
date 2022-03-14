@@ -708,7 +708,7 @@ async def draw_b30(arcaea_data, data_from='est'):
             '%2d  %s (%s)' % (_pos, songtitle[_score['song_id']]['en'], difficulty[_score['difficulty']]) if _pos
             else '    %s (%s)' % (songtitle[_score['song_id']]['en'], difficulty[_score['difficulty']]),
             '    %-37s(%d分每far)' % ('{:,}'.format(_score['score']) + ' (' + rank_score(_score['score']) + ' ' + clear_type[_score['clear_type']] + ')', _spf),
-            '    %-33sPURE %d(%d)' % ('谱面定数：' + _const, _pure, ppure),
+            '    %-33sPURE %d(%d)' % (f'谱面定数：{_const}', _pure, ppure),
             '    %-33sFAR  %d' % ('成绩评价：' + '%.5f' % _score['rating'], _far),
             '    %-33sLOST %d' % ('取得时间：' + get_time("%Y-%m-%d %H:%M", _score['time_played'] / 1000), _lost),
             '',
