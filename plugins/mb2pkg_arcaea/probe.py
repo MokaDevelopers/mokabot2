@@ -502,30 +502,30 @@ async def arc_probe_botarcapi(friend_id: Union[str, int],
     baa = BotArcAPIClient(botarcapi_server, botarcapi_headers)
 
     try:
-        user_info_response: dict = (await baa.user_info(usercode=friend_id))['content']
-        # TODO 注：BotArcAPI响应中使用code表示好友码，而不是estertion响应的user_code
-        result['userinfo'] = user_info_response['account_info']
-        # 此处重新整理响应结构，以适配原先的响应
-        recent_score: dict = user_info_response['recent_score'][0]
-        result['userinfo']['recent_score'] = [recent_score]
-
-        # 如果指定了只返回最近一次成绩，那么在这里结束
-        # 因此scores键对应的值将会是一个空列表
+        # 查询最近成绩
         if is_last:
+            user_info_response: dict = (await baa.user_info(usercode=friend_id))['content']
+            recent_score: dict = user_info_response['recent_score'][0]
+            # TODO 注：BotArcAPI响应中使用code表示好友码，而不是estertion响应的user_code
+            result['userinfo'] = user_info_response['account_info']
+            result['userinfo']['recent_score'] = [recent_score]
+
             # 如果指定了需要查询last歌曲所对应的最高分，那么还会把该歌曲的最高分写入scores
             if is_highscore:
-                user_best_response = (await baa.user_best(usercode=friend_id, songid=recent_score['song_id'], difficulty=recent_score['difficulty']))['content']
+                user_best_response: dict = (await baa.user_best(usercode=friend_id, songid=recent_score['song_id'], difficulty=recent_score['difficulty']))['content']
                 result['scores'].append(user_best_response['record'])
 
-        # 如果指定了只查某一首歌的成绩，那么在这里结束
+        # 查询指定成绩
         elif specific_index:
             song_id = song_list[specific_index]['id']
             user_best_response = (await baa.user_best(usercode=friend_id, songid=song_id, difficulty=single_rating_class))['content']
+            result['userinfo'] = user_best_response['account_info']
             result['scores'].append(user_best_response['record'])
 
         # 否则是查b30/b35
         else:
             user_best30_response = (await baa.user_best30(usercode=friend_id, overflow=5, withrecent=True))['content']
+            result['userinfo'] = user_best30_response['account_info']
             result['scores'].extend(user_best30_response['best30_list'])
             result['scores'].extend(user_best30_response['best30_overflow'])
 
