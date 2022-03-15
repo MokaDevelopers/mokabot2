@@ -176,6 +176,7 @@ class BotArcAPIClient:
             user: Optional[str] = None,
             usercode: Optional[str] = None,
             overflow: Optional[int] = None,
+            withrecent: Optional[bool] = None,
             withsonginfo: Optional[bool] = None,
     ) -> dict:
         """
@@ -184,6 +185,7 @@ class BotArcAPIClient:
         :param user: Username or 9-digit user code.
         :param usercode: 9-digit user code.
         :param overflow: (Optional) The number of the overflow records below the best30 minimum. range: 0~10
+        :param withrecent: (Optional) If true, will reply with recent_score.
         :param withsonginfo: (Optional) If true, will reply with song info.
         """
 
@@ -198,6 +200,7 @@ class BotArcAPIClient:
             user=user,
             usercode=usercode,
             overflow=overflow,
+            withrecent=withrecent,
             withsonginfo=withsonginfo,
         )
         return await self._baa_request('GET', BotArcAPIEndpoint.User.best30, user_best30_params)

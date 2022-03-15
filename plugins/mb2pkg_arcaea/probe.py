@@ -525,7 +525,7 @@ async def arc_probe_botarcapi(friend_id: Union[str, int],
 
         # 否则是查b30/b35
         else:
-            user_best30_response = (await baa.user_best30(usercode=friend_id, overflow=5))['content']
+            user_best30_response = (await baa.user_best30(usercode=friend_id, overflow=5, withrecent=True))['content']
             result['scores'].extend(user_best30_response['best30_list'])
             result['scores'].extend(user_best30_response['best30_overflow'])
 
