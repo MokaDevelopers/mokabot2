@@ -555,13 +555,17 @@ async def arc_probe_botarcapi(friend_id: Union[str, int],
         elif specific_index:
             song_id = song_list[specific_index]['id']
             user_best_response = (await baa.user_best(usercode=friend_id, songid=song_id, difficulty=single_rating_class))['content']
+            recent_score: dict = user_best_response['recent_score']
             result['userinfo'] = user_best_response['account_info']
+            result['userinfo']['recent_score'] = [recent_score]
             result['scores'].append(user_best_response['record'])
 
         # 否则是查b30/b35
         else:
             user_best30_response = (await baa.user_best30(usercode=friend_id, overflow=5, withrecent=True))['content']
+            recent_score: dict = user_best30_response['recent_score']
             result['userinfo'] = user_best30_response['account_info']
+            result['userinfo']['recent_score'] = [recent_score]
             result['scores'].extend(user_best30_response['best30_list'])
             result['scores'].extend(user_best30_response['best30_overflow'])
 
