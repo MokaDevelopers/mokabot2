@@ -15,6 +15,7 @@ from brotli import decompress
 from nonebot import on_command
 from nonebot.adapters import Bot
 from nonebot.adapters.cqhttp import MessageSegment, MessageEvent
+from nonebot.permission import SUPERUSER
 
 from public_module.mb2pkg_database import QQ
 from public_module.mb2pkg_mokalogger import getlog
@@ -29,6 +30,7 @@ from .make_score_image import moe_draw_last, guin_draw_last, bandori_draw_last, 
 
 match_arc_probe = on_command('arc查询', aliases={'ARC查询', 'av查询', '查询arc', '查询ARC', 'arc强制查询', 'arc最近', 'arc最近查询', 'arc查询最近'}, priority=5)
 match_arc_result_setting = on_command('arc查分样式', priority=5)
+match_arc_switch_probe = on_command('开启查分器', aliases={'关闭查分器'}, priority=5, permission=SUPERUSER)
 
 log = getlog()
 
@@ -47,6 +49,7 @@ ProberResult = dict[str, Union[list[dict[str, dict]], dict[str, dict]]]
 enable_probe_force = False
 enable_probe_webapi = True
 enable_probe_botarcapi = True
+enable_probe_estertion = True
 webapi_user2acc_map = {}  # 用来存储用户名到查询用账号的映射
 
 
@@ -130,8 +133,8 @@ async def arc_probe_handle(bot: Bot, event: MessageEvent):
         log.error(msg)
     except NotBindFriendNameError:
         msg = f'{s.user_id}未设置用于备用查分器的用户名（注意是用户名而非好友码），请使用\narc绑定用户名 <用户名>\n来绑定你的用户名，设置后请等待开发者人工添加好友。详情请使用man指令查看帮助。'
-    except AllProberUnavailableError:
-        msg = '主查分器和全部的备用查分器已经失效'
+    except AllProberUnavailableError as e:
+        msg = str(e)
     except WebapiProberLoginError as e:
         msg = f'查分器使用webapi登陆失败：{e}'
     except BotArcAPITimeoutError:
@@ -158,6 +161,39 @@ async def arc_result_setting_handle(bot: Bot, event: MessageEvent):
         log.warn(msg)
 
     await bot.send(event, msg)
+
+
+@match_arc_switch_probe.handle()
+async def arc_switch_probe_handle(bot: Bot, event: MessageEvent):
+    global enable_probe_botarcapi, enable_probe_force, enable_probe_webapi, enable_probe_estertion
+
+    if str(event.raw_message).startswith('开启'):
+        probe = True
+    elif str(event.raw_message).startswith('关闭'):
+        probe = False
+    else:
+        return
+
+    arg = str(event.get_message()).strip()
+    if arg.lower() in ['baa', 'botarcapi']:
+        enable_probe_botarcapi = probe
+    elif arg.lower() in ['local', 'force']:
+        enable_probe_force = probe
+    elif arg.lower() in ['webapi']:
+        enable_probe_webapi = probe
+    elif arg.lower() in ['est', 'estertion']:
+        enable_probe_estertion = probe
+    else:
+        return
+
+    msg = '当前查分器开关：\n'
+    msg += f'estertion（网页查分器，主查分器）：{enable_probe_estertion}\n' \
+           f'local（arcaea_lib，第一备用查分器）：{enable_probe_force}\n' \
+           f'BotArcAPI（第二备用查分器）：{enable_probe_botarcapi}\n' \
+           f'webapi（第三备用查分器）：{enable_probe_webapi}'
+
+    await bot.send(event, msg)
+
 
 
 async def arc_probe_estertion(userid: Union[str, int],
@@ -656,11 +692,16 @@ async def make_full_info(userid: Union[str, int], force: bool) -> str:
             arcaea_data = await arc_probe_botarcapi(userid)
             data_from = 'baa'
         except BotArcAPITimeoutError:
-            arcaea_data = await arc_probe_estertion(userid)
-            data_from = 'est'
-    else:
+            if enable_probe_estertion:
+                arcaea_data = await arc_probe_estertion(userid)
+                data_from = 'est'
+            else:
+                raise AllProberUnavailableError('所有适用于查询b30/b35的查分器已失效')
+    elif enable_probe_estertion:
         arcaea_data = await arc_probe_estertion(userid)
         data_from = 'est'
+    else:
+        raise AllProberUnavailableError('所有适用于查询b30/b35的查分器已失效')
 
     savepath = await draw_b30(arcaea_data, data_from)
 
@@ -691,7 +732,7 @@ async def make_arcaea_result(qq: int, userid: Union[str, int],
                 raise NotBindFriendNameError
             arcaea_data = await arc_probe_webapi(myqq.arc_friend_name, myqq.arc_friend_id, myqq)
         else:
-            raise AllProberUnavailableError
+            raise AllProberUnavailableError('所有适用于查询arc最近成绩的查分器已失效')
         # 当指定了song_index时，指定歌曲的成绩在scores里，此处需要转换到recent里，而scores列表必须清空
         if not is_last:
             arcaea_data['userinfo']['recent_score'] = arcaea_data['scores']
