@@ -7,6 +7,7 @@ import aiohttp
 import httpx
 
 from public_module.mb2pkg_mokalogger import getlog
+from .exceptions import BotArcAPIError
 
 log = getlog()
 
@@ -94,7 +95,7 @@ class BotArcAPIClient:
                   f'{json.dumps(response_json, indent=4)}')
 
         if response_json['status'] < 0:
-            raise RuntimeError(response_json['message'])
+            raise BotArcAPIError(response_json['status'])
 
         return response_json
 
@@ -136,6 +137,7 @@ class BotArcAPIClient:
             songname: Optional[str] = None,
             songid: Optional[str] = None,
             difficulty: Union[str, int] = 2,
+            withrecent: Optional[bool] = None,
             withsonginfo: Optional[bool] = None,
     ) -> dict:
         """
@@ -146,6 +148,7 @@ class BotArcAPIClient:
         :param songname: Any song name for fuzzy querying.
         :param songid: Sid in Arcaea songlist.
         :param difficulty: Accept format are 0/1/2/3 or pst/prs/ftr/byn or past/present/future/beyond.
+        :param withrecent: (Optional) If true, will reply with recent_score.
         :param withsonginfo: (Optional) If true, will reply with song info.
         """
 
@@ -167,6 +170,7 @@ class BotArcAPIClient:
             songname=songname,
             songid=songid,
             difficulty=difficulty,
+            withrecent=withrecent,
             withsonginfo=withsonginfo,
         )
         return await self._baa_request('GET', BotArcAPIEndpoint.User.best, user_best_params)
