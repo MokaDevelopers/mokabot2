@@ -97,3 +97,10 @@ class NotInMapError(RuntimeError):
 
 class BotArcAPITimeoutError(RuntimeError):
     """BotArcAPI服务器连接超时"""
+
+
+class BotArcAPIError(RuntimeError):
+    """BotArcAPI服务器执行请求时发生了错误"""
+    def __init__(self, status: int, message: str):
+        self.status = status
+        self.message = message

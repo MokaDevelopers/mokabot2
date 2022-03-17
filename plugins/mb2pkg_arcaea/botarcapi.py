@@ -95,7 +95,7 @@ class BotArcAPIClient:
                   f'{json.dumps(response_json, indent=4)}')
 
         if response_json['status'] < 0:
-            raise BotArcAPIError(response_json['status'])
+            raise BotArcAPIError(response_json['status'], response_json['message'])
 
         return response_json
 
