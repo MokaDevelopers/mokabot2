@@ -86,8 +86,11 @@ class BotArcAPIClient:
             kwargs = {}
 
         start_time = time.time()
-        async with httpx.AsyncClient(timeout=60) as client:
-            response_json = (await client.request(method, url=self.__base_url + endpoint, headers=self.__headers, **kwargs)).json()
+        try:
+            async with httpx.AsyncClient(timeout=120) as client:
+                response_json = (await client.request(method, url=self.__base_url + endpoint, headers=self.__headers, **kwargs)).json()
+        except httpx.ReadTimeout:
+            raise BotArcAPIError(-503, 'timeout')
 
         log.debug(f'{method} {endpoint} with '
                   f'{json.dumps(data, indent=4)}')
