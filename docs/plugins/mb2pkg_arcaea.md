@@ -1,37 +1,8 @@
 # Arcaea
 
-[[toc]]
-
-::: details 《对所有使用arc查分器用户的告知》（如果你什么都没有绑定可以先跳过）
-
-由于616的众所周知的措施，原查分途径已失效，moka现采用`estertion`+`webapi`双重查分方案，两个方案之间完全独立运行。
-如果你需要使用`estertion`查分方案，请使用`arc查询`指令，然后请耐心等待3~10分钟（实际时间取决于est那边排队时间，也有可能根本排不上）。
-如果你需要使用webapi查分方案，请使用`arc最近`指令，理论上是几秒之内就能返回。
-
-`webapi`查分基于其原理有两个必要条件： 
-
- - 你的账号在 [PArisa](../advanced/whats_webapi.html#PArisa) 的好友列表中（即PArisa已经加你为好友）。
- - mokabot能在PArisa返回的所有好友的成绩中识别出你的成绩（即mokabot认识你）。
-
-基于上述必要条件，用户必须先使用`arc绑定`绑定好友码，然后使用`arc绑定用户名`来绑定用户名，然后请等待开发者通过你绑定的好友码添加你到PArisa的好友列表中。
-2021年7月前已绑定过arc好友码的用户，我已经提前人工逐个添加你们为好友，故无需进行上述等待，但你们一样需要绑定用户名才能使用备用查分器。
-
-与此同时，旧版本的`arc最近 <好友码>`、`arc查询 <歌曲名>`、`arc强制查询`在当前环境下均不可用，请仅使用下述的`arc查询`和`arc最近`指令。
-
-::: warning 常见误区：
-
- - 绑定用户名后认为`arc查询`会变快（**并不会变快，而且两个方案是独立的**）。
- - 认为mokabot没有响应，频繁使用`arc查询`（**不是没响应，是在排队**）。
- - 绑了用户名却没绑好友码（**没好友码我没法加你为PArisa的好友**）
- - 绑了错误的好友码（**还是没法加你为好友**）
- - 绑定了错误的用户名（例如输入错误），**导致程序没法筛选出你的成绩**。
-
-:::
-
-
 ## 查询全部Arcaea成绩（`arc查询`）
 
-从 estertion 的 [查分器](https://redive.estertion.win/arcaea/probe/) 查询某一id的信息，信息格式与他的查分器基本一致。
+查询某一好友码的best35信息，信息格式与estertion的 [查分器](https://redive.estertion.win/arcaea/probe/) 基本一致。
 
 此外，还将包含：
 
@@ -40,11 +11,16 @@
  - 如果你的最近一次成绩刷新了你这个谱面的最高分，这个谱面在best列表中的位置将直接显示在recent信息中。
  - 在b30列表结束后，继续显示b31~b35。
 
+如果你已经通过`arc绑定`绑定过好友码，那你可以直接使用`arc查询`指令，而无需输入自己的好友码。
+
 ```
+arc查询
 arc查询 [好友码]
 ```
 
-不带任何参数时，mokabot将从数据库中查看你的QQ是否已绑定到某一好友码，从而免去你手动输入的麻烦。
+::: tip 提示
+如果你已经隐藏你的潜力值，你仍然可以通过`arc查询`指令查询你的best35信息，但是潜力值本身和估算的recent top 10将以`**.**`表示（因为无法计算）。
+:::
 
 ::: details 查看返回样例
 ![](./images/mb2pkg_arcaea/b30_example.jpg)
@@ -52,11 +28,7 @@ arc查询 [好友码]
 
 ## 查询最近的Arcaea成绩（`arc最近`）
 
-使用 [webapi](../advanced/whats_webapi.md) 查分方案查询你的最近一次成绩。该功能使用需要你**同时绑定好友码和用户名**，并且我已经将你的账号添加到PArisa的好友列表中。
-
-::: tip 提示
-什么是 [PArisa](../advanced/whats_webapi.html#PArisa) ？
-:::
+查询你的最近一次成绩。该功能**必须**先绑定好友码。
 
 ```
 arc最近
@@ -66,47 +38,13 @@ arc最近
 ![](./images/mb2pkg_arcaea/guin_example.jpg)
 :::
 
-## 绑定Arcaea用户名和好友码
+## 绑定Arcaea好友码和用户名
 
-如果你从不需要使用`arc最近`功能，那你没有必要绑定用户名，仅绑定好友码即可，否则请绑定好友码和用户名。
+你可以通过`arc绑定`指令绑定你的好友码和用户名，其中用户名是可选参数。
 
 ```
-arc绑定 <你的好友码>
-arc绑定用户名 <你的用户名>
+arc绑定 <好友码> <用户名>
 ```
-
-绑定用户名时，视以下两种情况：
-
-#### 你已经绑定过好友码，但未绑定用户名
-
-此类用户请直接使用`arc绑定用户名 你的用户名`。
-
-<ClientOnly>
-  <Messenger :messages="[
-    { position: 'right', msg: 'arc绑定用户名 FuLowiriCk' },
-    { position: 'left', msg: '...（大概意思是绑定好了）' },
-  ]"></Messenger>
-</ClientOnly>
-
-#### 你什么都没绑定
-
-此类用户请先使用`arc绑定 你的好友码`，然后使用`arc绑定用户名 你的用户名`，即比上述用户多一个绑定好友码的流程。 
-
-<ClientOnly>
-  <Messenger :messages="[
-    { position: 'right', msg: 'arc绑定 114514191' },
-    { position: 'left', msg: '...（大概意思是好友码绑定好了）' }, 
-    { position: 'right', msg: 'arc绑定用户名 FuLowiriCk' },
-    { position: 'left', msg: '...（大概意思是用户名绑定好了）' }
-  ,]"></Messenger>
-</ClientOnly>
-
-::: warning 请多看一眼吧
-
-为了让你可以舒适友好地使用Arcaea成绩查询功能，请 ***不要只绑定用户名*** ，至于为什么请阅读该小节头部的《对所有使用arc查分器用户的告知》。
-
-绑定完**用户名**后**请等待我人工**将你的账号添加到PArisa的好友列表中（快的话1分钟之内，慢的话1小时之内）。
-:::
 
 ## 改变查分样式
 
@@ -207,11 +145,9 @@ arc计算  b10.11    r11.5
 <ClientOnly>
   <Messenger :messages="[
     { position: 'right', msg: 'arc绑定 114514191' },
-    { position: 'left', msg: '关联完成！已将QQ 12345678 关联至Arc好友码 114514191' }, 
-    { position: 'right', msg: 'arc绑定用户名 FuLowiriCk' },
-    { position: 'left', msg: '关联完成！已将QQ 12345678 关联至Arc用户名 FuLowiriCk ，请等待管理员为查询用账号添加好友，并且请注意账号名称的大小写\n若您在2021年7月之前已经绑定过好友码，那您无需等待管理员添加您到查分器好友列表中\n绑定用户名之后请尽量使用 arc最近 而不是 arc查询 ，否则依旧需要相当长的时间排队\n注意：变更用户名后需要重新绑定用户名' },
+    { position: 'left', msg: '已将QQ:123456789成功绑定至Arcaea好友码:114514191\n用户名：Tadokoro (uid:114514)\n潜力值：12.85' }, 
     { position: 'right', msg: 'arc查询' },
-    { position: 'left', msg: '【12.80 ⭐⭐.jpg】' }, 
+    { position: 'left', msg: '【12.85 ⭐⭐.jpg】' }, 
     { position: 'right', msg: 'arc最近' },
     { position: 'left', msg: '【Tempestissimo (BYD 11) 10001540 FPM.jpg】' }, 
     { position: 'right', msg: 'arc查分样式 guin' },

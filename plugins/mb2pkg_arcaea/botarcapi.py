@@ -95,6 +95,9 @@ class BotArcAPIClient:
                   f'{json.dumps(response_json, indent=4)}')
 
         if response_json['status'] < 0:
+            log.error(f'{method} {endpoint} with '
+                      f'{json.dumps(data, indent=4)}')
+            log.error(response_json)
             raise BotArcAPIError(response_json['status'], response_json['message'])
 
         return response_json
