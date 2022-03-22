@@ -70,6 +70,7 @@ module.exports = {
 						'nonebot_plugin_statistical',
 						'mb2pkg_genshin',
 						'mb2pkg_choice',
+                        'mokabot_translation',
                     ]
                 }
             ],
