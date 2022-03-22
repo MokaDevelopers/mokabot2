@@ -46,6 +46,8 @@ async def _(bot: Bot, event: MessageEvent):
     except BotArcAPIError as e:
         msg = f'查询时发生错误：{e.message}'
         log.exception(e)
+    except NoBindError as e:
+        msg = f'{e}未绑定好友码，请使用\narc绑定 <你的好友码>\n进行绑定（无需加括号）'
     except Exception as e:
         msg = f'查询成绩时发生错误：{e}'
         log.exception(e)
@@ -64,6 +66,8 @@ async def _(bot: Bot, event: MessageEvent):
     except BotArcAPIError as e:
         msg = f'查询最近成绩时发生错误：{e.message}'
         log.exception(e)
+    except NoBindError as e:
+        msg = f'{e}未绑定好友码，请使用\narc绑定 <你的好友码>\n进行绑定（无需加括号）'
     except Exception as e:
         msg = f'查询最近成绩时发生错误：{e}'
         log.exception(e)
@@ -393,7 +397,7 @@ def get_qq_bind_arcaea(qq: int) -> ArcaeaBind:
     myQQ = QQ(qq)
     arc_friend_id: Optional[str] = myQQ.arc_friend_id
     if not arc_friend_id:
-        raise NotBindError
+        raise NotBindError(qq)
 
     return ArcaeaBind(
         arc_friend_id=arc_friend_id,
