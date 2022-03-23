@@ -36,11 +36,11 @@ async def _(bot: Bot, event: MessageEvent):
         # 根据参数使用不同的查询方案
         if arg:
             if arg.isdigit() and len(arg) == 9:  # arg为好友码，应当返回该好友码的b30图
-                pic_save_path = await make_arcaea_best35_result(qq=event.user_id)
+                pic_save_path = await make_arcaea_best35_result(qq=event.user_id, specific_friend_id=arg)
             else:  # arg为歌曲名，应当返回一个该QQ绑定的好友码的指定歌曲的单次成绩图
                 pic_save_path = await make_arcaea_specific_result(qq=event.user_id, chart=arg)
         else:  # 无arg，应当返回该QQ绑定的好友码的b30图
-            pic_save_path = await make_arcaea_best35_result(qq=event.user_id, specific_friend_id=arg)
+            pic_save_path = await make_arcaea_best35_result(qq=event.user_id)
 
         msg = MessageSegment.image(file=f'file:///{pic_save_path}')
     except BotArcAPIError as e:
