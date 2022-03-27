@@ -39,4 +39,4 @@ SetParse(YouTubeParse)
 SetParse(BilibiliParse)
 SetParse(TiebaParse)
 SetParse(GithubParse)
-SetParse(ZhihuParse)
+# SetParse(ZhihuParse)  因官方API变更而停用（大概3月不能用了？）

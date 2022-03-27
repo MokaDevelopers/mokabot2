@@ -12,15 +12,17 @@
 <br>
 <v-icon>fa-toggle-on</v-icon> 哔哩哔哩小程序
 <br>
-<v-icon>fa-toggle-on</v-icon> YouTube
+<v-icon>fa-toggle-on</v-icon> YouTube 视频
 <br>
-<v-icon>fa-toggle-on</v-icon> 知乎
+<v-icon>fa-toggle-on</v-icon> YouTube 频道
 <br>
 <v-icon>fa-toggle-on</v-icon> 百度贴吧
 <br>
 <v-icon>fa-toggle-on</v-icon> Github
 <br>
-<v-icon>fa-toggle-off</v-icon> 知乎小程序 （正在制作中）
+<v-icon>fa-toggle-off</v-icon> 知乎 （官方API变更，暂时无法使用）
+<br>
+<v-icon>fa-toggle-off</v-icon> 知乎小程序 （方API变更，暂时无法使用）
 <br>
 <v-icon>fa-toggle-off</v-icon> 百度贴吧小程序 （正在制作中）
 <br>
