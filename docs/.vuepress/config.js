@@ -68,7 +68,6 @@ module.exports = {
 						'mb2pkg_url_parse',
 						'mb2pkg_vndb',
 						'nonebot_plugin_statistical',
-						'mb2pkg_genshin',
 						'mb2pkg_choice',
                         'mokabot_translation',
                     ]
