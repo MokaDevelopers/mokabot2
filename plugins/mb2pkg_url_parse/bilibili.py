@@ -16,6 +16,7 @@ from pydantic import BaseModel
 from public_module.mb2pkg_mokalogger import getlog
 from public_module.mb2pkg_public_plugin import get_time, datediff
 from .base import BaseParse
+from .exceptions import NoSuchTypeError
 
 log = getlog()
 
@@ -64,7 +65,7 @@ class BilibiliParse(BaseParse):
                 if it.suburl:
                     return it.subtype, it.suburl
             else:
-                raise RuntimeError(f'bilibili解析器无法解析该url为任何类型，具体消息为{text}')
+                raise NoSuchTypeError(f'bilibili解析器无法解析该url为任何类型，具体消息为{text}')
 
         except Exception as e:
             log.exception(e)
@@ -92,7 +93,7 @@ def format_time(_time: Union[int, float, datetime]) -> str:
     return f'{fmted_time}（{time_delta}）'
 
 
-async def b23_extract(text):
+async def b23_extract(text: str) -> str:
     b23 = re.compile(r'b23.tv/(\w+)|(bili(22|23|33|2233).cn)/(\w+)', re.I).search(text.replace('\\', ''))
     url = f'https://{b23[0]}'
     async with aiohttp.request('GET', url, timeout=aiohttp.client.ClientTimeout(10)) as resp:
@@ -100,7 +101,7 @@ async def b23_extract(text):
     return r
 
 
-async def search_bili_by_title(title: str):
+async def search_bili_by_title(title: str) -> str:
     search_url = f'https://api.bilibili.com/x/web-interface/search/all/v2?keyword={urllib.parse.quote(title)}'
 
     async with aiohttp.request('GET', search_url, timeout=aiohttp.client.ClientTimeout(10)) as resp:
@@ -115,7 +116,7 @@ async def search_bili_by_title(title: str):
         return url
 
 
-async def video_detail(api_url):
+async def video_detail(api_url: str) -> Message:
     async with aiohttp.request('GET', api_url, timeout=aiohttp.client.ClientTimeout(10)) as resp:
         video = VideoResponse(**(await resp.json())['data'])
 
@@ -133,7 +134,7 @@ async def video_detail(api_url):
     return MessageSegment.image(video.pic) + text
 
 
-async def bangumi_detail(url):
+async def bangumi_detail(url: str) -> Message:
     async with aiohttp.request('GET', url, timeout=aiohttp.client.ClientTimeout(10)) as resp:
         bangumi = BangumiResponse(**(await resp.json())['result'])
 
@@ -153,7 +154,7 @@ async def bangumi_detail(url):
     evaluate = bangumi.evaluate
     evaluate_list = bangumi.evaluate.split('\n')
     if len(evaluate_list) >= 4:  # 超过3行，只取前三行，多出来的变成省略号
-        evaluate = '\n'.join(evaluate_list[0:3]) + '……'
+        evaluate = '\n'.join(evaluate_list[:3]) + '……'
 
     text = f'标题：{bangumi.title}\n' \
            f'{episode_title or bangumi.newest_ep.desc}\n' \
@@ -166,7 +167,7 @@ async def bangumi_detail(url):
     return MessageSegment.image(episode_pic or bangumi.cover) + text
 
 
-async def live_detail(url):
+async def live_detail(url: str) -> Message:
     async with aiohttp.request('GET', url, timeout=aiohttp.client.ClientTimeout(10)) as resp:
         live_json_response = await resp.json()
     if live_json_response['code'] in [-400, 19002000]:
@@ -188,18 +189,18 @@ async def live_detail(url):
     return MessageSegment.image(live.room_info.cover) + text
 
 
-async def article_detail(url):
+async def article_detail(url: str) -> Message:
     async with aiohttp.request('GET', url, timeout=aiohttp.client.ClientTimeout(10)) as resp:
         article = ArticleResponse(**(await resp.json())['data'])
 
     text = f'标题：{article.title}\n' \
            f'作者：{article.author_name}\n' \
-           f'▶:{article.stats.view} 👍:{article.stats.like} 👎：{article.stats.dislike} 💬:{article.stats.reply} ⭐:{article.stats.favorite} 💰:{article.stats.coin} ↗:{article.stats.share}'
+           f'👀:{article.stats.view} 👍:{article.stats.like} 👎:{article.stats.dislike} 💬:{article.stats.reply} ⭐:{article.stats.favorite} 💰:{article.stats.coin} ↗:{article.stats.share}'
 
     return MessageSegment.image(article.image_urls[0]) + text
 
 
-async def dynamic_detail(url):  # from mengshouer/nonebot_plugin_analysis_bilibili
+async def dynamic_detail(url: str) -> str:  # from mengshouer/nonebot_plugin_analysis_bilibili
     async with aiohttp.request('GET', url, timeout=aiohttp.client.ClientTimeout(10)) as resp:
         res = (await resp.json())['data']['card']
     card = DynamicCard(**json.loads(res['card']))
@@ -231,9 +232,8 @@ async def dynamic_detail(url):  # from mengshouer/nonebot_plugin_analysis_bilibi
 
     return user + content + stat
 
-# 各 ID 解析器基于 https://github.com/mengshouer/nonebot_plugin_analysis_bilibili 的 c79dbe9 提交版本
 
-
+# 各 ID 解析器的子类基于 https://github.com/mengshouer/nonebot_plugin_analysis_bilibili 的 c79dbe9 提交版本
 class BaseID(abc.ABC):
 
     def __init__(self, text: str):
