@@ -1,15 +1,17 @@
-import asyncio
+import abc
+import json
 import re
 import time
 import urllib.parse
 from datetime import datetime
-from typing import Union, Type
+from re import Match
+from typing import Union, Type, Optional
 
 import aiohttp
-import lxml.html
 from nonebot import on_regex
 from nonebot.adapters.cqhttp import Message, MessageSegment
 from nonebot.matcher import Matcher
+from pydantic import BaseModel
 
 from public_module.mb2pkg_mokalogger import getlog
 from public_module.mb2pkg_public_plugin import get_time, datediff
@@ -19,252 +21,453 @@ log = getlog()
 
 
 class BilibiliParse(BaseParse):
-    """
-    原项目地址：https://github.com/mengshouer/nonebot_plugin_analysis_bilibili
-    使用提交版本：6f2426862a9bf0470574fcf1d21da95837b0a25f
-    主要改动：
-     - 分离__init__
-     - 重写bili_keyword函数为preprocesse方法
-     - 去除*重复的*重复解析检测功能（因为main函数中已经自带重复解析检测）
-     - 去除子函数中所有try，只保留preprocesse方法中的try，这样在解析错误时不会发送解析错误的提示消息
-     - 修改msg格式（加了封面、加了emoji、去除了包含的所有url避免引发url风控）
-    """
 
     def __init__(self):
-        self._matcher = on_regex(r"(b23.tv)|"
-                                 r"(bili(22|23|33|2233).cn)|"
-                                 r"(live.bilibili.com)|"
-                                 r"(bilibili.com/(video|read|bangumi))|"
-                                 r"(^(av|cv)(\d+))|"
-                                 r"(^BV([a-zA-Z0-9]{10})+)|"
-                                 r"(\[\[QQ小程序\]哔哩哔哩\])|"
-                                 r"(QQ小程序&amp;#93;哔哩哔哩)|"
-                                 r"(QQ小程序&#93;哔哩哔哩)",
-                                 flags=re.I)
-        self._msg = ''
+        self._matcher = on_regex(
+            r'(b23.tv)|'
+            r'(bili(22|23|33|2233).cn)|'
+            r'(.bilibili.com)|'
+            r'(^(av|cv)(\d+))|'
+            r'(^BV([a-zA-Z0-9]{10})+)|'
+            r'(\[\[QQ小程序\]哔哩哔哩\])|'
+            r'(QQ小程序&amp;#93;哔哩哔哩)|'
+            r'(QQ小程序&#93;哔哩哔哩)',
+            flags=re.I
+        )
 
     @property
     def matcher(self) -> Type[Matcher]:
         return self._matcher
 
     async def preprocesse(self, text: str) -> tuple[str, str]:
-        # Override bili_keyword(group_id, text)
-        # 有四种类型：bangumi、live、article、video
-
         try:
-            if re.search(r"(b23.tv)|(bili(22|23|33|2233).cn)", text, re.I):
-                # 提前处理短链接，避免解析到其他的
+            # 预处理短链接  from mengshouer/nonebot_plugin_analysis_bilibili
+            if re.search(r'(b23.tv)|(bili(22|23|33|2233).cn)', text, re.I):
                 text = await b23_extract(text)
-            # 提取url
-            url = await extract(text)
-            # 如果是小程序就去搜索标题
-            if not url:
+            # 预处理小程序，如果是小程序就去搜索标题  from mengshouer/nonebot_plugin_analysis_bilibili
+            if '小程序' in text:
                 pattern = re.compile(r'"desc":".*?"')
                 desc = re.findall(pattern, text)
                 i = 0
                 while i < len(desc):
-                    title_dict = "{" + desc[i] + "}"
-                    title = eval(title_dict)
-                    vurl = await search_bili_by_title(title['desc'])
-                    if vurl:
-                        url = await extract(vurl)
-                        break
+                    title_dict = f'{{{desc[i]}}}'
+                    title = json.loads(title_dict)
                     i += 1
+                    if title['desc'] == '哔哩哔哩':
+                        continue
+                    text = await search_bili_by_title(title['desc'])
+                    if text:
+                        break
 
-            # 获取视频详细信息
-            # 由于原模块中的bangumi_detail等函数已将消息(msg)和关键字(vurl)一并返回，没有遵循该模块规范
-            # 这里将msg和vurl分别处理，以适配该模块规范
-            if "bangumi" in url:
-                self._msg, vurl = await bangumi_detail(url)
-                return 'bangumi', vurl
-            elif "live.bilibili.com" in url:
-                self._msg, vurl = await live_detail(url)
-                return 'live', vurl
-            elif "article" in url:
-                self._msg, vurl = await article_detail(url)
-                return 'article', vurl
+            for id_type in BaseID.__subclasses__():  # 使用每个 ID 解析器解析用户消息（或 url）
+                it = id_type(text)
+                if it.suburl:
+                    return it.subtype, it.suburl
             else:
-                self._msg, vurl = await video_detail(url)
-                return 'video', vurl
+                raise RuntimeError(f'bilibili解析器无法解析该url为任何类型，具体消息为{text}')
 
-        except AttributeError as e:
-            log.error(f'bilibili解析失败，消息为{text}')
-            log.exception(e)
         except Exception as e:
-            log.error(f'未知的错误{e}')
             log.exception(e)
 
-    async def fetch(self, *args, **kwargs) -> Union[str, Message, MessageSegment]:
-        return self._msg
+    async def fetch(self, subtype: str, suburl: str) -> Union[str, Message, MessageSegment]:
+        fetch_func = {
+            'video': video_detail,
+            'bangumi': bangumi_detail,
+            'live': live_detail,
+            'article': article_detail,
+            'dynamic': dynamic_detail,
+        }.get(subtype)
+
+        try:
+            return await fetch_func(suburl)
+        except Exception as e:
+            log.exception(e)
 
 
-def format_time(_time: Union[int, float]) -> str:
+def format_time(_time: Union[int, float, datetime]) -> str:
+    if isinstance(_time, datetime):
+        _time = time.mktime(_time.timetuple())
     fmted_time = get_time('%Y-%m-%d %H:%M:%S', _time)
     time_delta = datediff(time.time(), _time)
     return f'{fmted_time}（{time_delta}）'
 
 
 async def b23_extract(text):
-    b23 = re.compile(r'b23.tv/(\w+)|(bili(22|23|33|2233).cn)/(\w+)', re.I).search(text.replace("\\", ""))
+    b23 = re.compile(r'b23.tv/(\w+)|(bili(22|23|33|2233).cn)/(\w+)', re.I).search(text.replace('\\', ''))
     url = f'https://{b23[0]}'
     async with aiohttp.request('GET', url, timeout=aiohttp.client.ClientTimeout(10)) as resp:
         r = str(resp.url)
     return r
 
 
-async def extract(text: str):
-    aid = re.compile(r'av\d+', re.I).search(text)
-    bvid = re.compile(r'BV([a-zA-Z0-9]{10})+', re.I).search(text)
-    epid = re.compile(r'ep\d+', re.I).search(text)
-    ssid = re.compile(r'ss\d+', re.I).search(text)
-    mdid = re.compile(r'md\d+', re.I).search(text)
-    room_id = re.compile(r"live.bilibili.com/(blanc/|h5/)?(\d+)", re.I).search(text)
-    cvid = re.compile(r'(cv|/read/(mobile|native)(/|\?id=))(\d+)', re.I).search(text)
-    if bvid:
-        url = f'https://api.bilibili.com/x/web-interface/view?bvid={bvid[0]}'
-    elif aid:
-        url = f'https://api.bilibili.com/x/web-interface/view?aid={aid[0][2:]}'
-    elif epid:
-        url = f'https://bangumi.bilibili.com/view/web_api/season?ep_id={epid[0][2:]}'
-    elif ssid:
-        url = f'https://bangumi.bilibili.com/view/web_api/season?season_id={ssid[0][2:]}'
-    elif mdid:
-        url = f'https://bangumi.bilibili.com/view/web_api/season?media_id={mdid[0][2:]}'
-    elif room_id:
-        url = f'https://api.live.bilibili.com/xlive/web-room/v1/index/getInfoByRoom?room_id={room_id[2]}'
-    elif cvid:
-        url = f"https://api.bilibili.com/x/article/viewinfo?id={cvid[4]}&mobi_app=pc&from=web"
-    else:
-        raise RuntimeError(text)
-    return url
-
-
 async def search_bili_by_title(title: str):
-    brackets_pattern = re.compile(r'[()\[\]{}（）【】]')
-    title_without_brackets = brackets_pattern.sub(' ', title).strip()
-    search_url = f'https://search.bilibili.com/video?keyword={urllib.parse.quote(title_without_brackets)}'
+    search_url = f'https://api.bilibili.com/x/web-interface/search/all/v2?keyword={urllib.parse.quote(title)}'
 
-    try:
-        async with aiohttp.request('GET', search_url, timeout=aiohttp.client.ClientTimeout(10)) as resp:
-            text = await resp.text(encoding='utf8')
-            content: lxml.html.HtmlElement = lxml.html.fromstring(text)
-    except asyncio.TimeoutError:
-        return None
+    async with aiohttp.request('GET', search_url, timeout=aiohttp.client.ClientTimeout(10)) as resp:
+        r = await resp.json()
 
-    for video in content.xpath('//li[@class="video-item matrix"]/a[@class="img-anchor"]'):
-        if title == ''.join(video.xpath('./attribute::title')):
-            url = ''.join(video.xpath('./attribute::href'))
-            break
-    else:
-        url = None
-    return url
+    result = r['data']['result']
+    for item in result:
+        if item.get('result_type') != 'video':
+            continue
+        # 只返回第一个结果
+        url = item['data'][0].get('arcurl')
+        return url
 
 
-async def video_detail(url):
-    async with aiohttp.request('GET', url, timeout=aiohttp.client.ClientTimeout(10)) as resp:
-        res = await resp.json()
-        res = res['data']
-    pic: str = res['pic']  # url to pic
-    vurl = f"https://www.bilibili.com/video/av{res['aid']}\n"
-    title = f"标题：{res['title']}\n"
-    up = f"UP主：{res['owner']['name']}\n"
-    pubdate = f"发布时间：{format_time(res['pubdate'])}\n"
-    desc = f"简介：{res['desc']}"
-    desc_list = desc.split("\n")
-    desc = ""
-    for i in desc_list:
-        if i:
-            desc += i + "\n"
-    desc_list = desc.split("\n")
-    if len(desc_list) > 4:
-        desc = desc_list[0] + "\n" + desc_list[1] + "\n" + desc_list[2] + "……"
-    # stat
-    view: int = res['stat']['view']
-    danmaku: int = res['stat']['danmaku']
-    reply: int = res['stat']['reply']
-    favorite: int = res['stat']['favorite']
-    coin: int = res['stat']['coin']
-    share: int = res['stat']['share']
-    like: int = res['stat']['like']
-    stat = f'▶:{view} 💬:{reply} 💭:{danmaku} ⭐:{favorite} 💰:{coin} ↗:{share} 👍:{like}\n'
-    msg = MessageSegment.image(file=pic) + '\n' + str(title) + str(up) + str(pubdate) + stat + str(desc.strip())
-    return msg, vurl
+async def video_detail(api_url):
+    async with aiohttp.request('GET', api_url, timeout=aiohttp.client.ClientTimeout(10)) as resp:
+        video = VideoResponse(**(await resp.json())['data'])
+
+    desc = video.desc
+    desc_list = video.desc.split('\n')
+    if len(desc_list) >= 4:  # 超过3行，只取前三行，多出来的变成省略号
+        desc = '\n'.join(desc_list[0:3]) + '……'
+
+    text = f'标题：{video.title}\n' \
+           f'UP主：{video.owner.name}\n' \
+           f'发布时间：{format_time(video.pubdate)}\n' \
+           f'▶:{video.stat.view} 〰:{video.stat.danmaku} 💬:{video.stat.reply} ⭐:{video.stat.favorite} 💰:{video.stat.coin} ↗:{video.stat.share} 👍:{video.stat.like}\n' \
+           f'简介：{desc.strip()}'
+
+    return MessageSegment.image(video.pic) + text
 
 
 async def bangumi_detail(url):
     async with aiohttp.request('GET', url, timeout=aiohttp.client.ClientTimeout(10)) as resp:
-        res = await resp.json()
-        res = res['result']
-    if "season_id" in url:
-        vurl = f"https://www.bilibili.com/bangumi/play/ss{res['season_id']}\n"
-    elif "media_id" in url:
-        vurl = f"https://www.bilibili.com/bangumi/media/md{res['media_id']}\n"
-    else:
-        epid = re.compile(r'ep_id=\d+').search(url)
-        vurl = f"https://www.bilibili.com/bangumi/play/ep{epid[0][len('ep_id='):]}\n"
-    title = f"标题：{res['title']}\n"
-    desc = f"{res['newest_ep']['desc']}\n"
-    style = ""
-    for i in res['style']:
-        style += i + ","
-    style = f"类型：{style[:-1]}\n"
-    evaluate = f"简介：{res['evaluate']}"
-    pic: str = res['cover']  # url to pic
-    msg = MessageSegment.image(file=pic) + '\n' + str(title) + str(desc) + str(style) + str(evaluate)
-    return msg, vurl
+        bangumi = BangumiResponse(**(await resp.json())['result'])
+
+    # 当 url 里带 ep_id 时，说明这个 url 指向的是一部番剧的具体某一集
+    episode_pic = None
+    episode_title = None
+    episode_pub_time = None
+    if 'ep_id' in url:
+        epid: str = re.findall(r'ep_id=(\d+)', url)[0]
+        for episode in bangumi.episodes:
+            if str(episode.ep_id) == epid:
+                episode_pic = episode.cover
+                episode_title = f'第{episode.index}集 {episode.index_title}'
+                episode_pub_time = episode.pub_real_time
+                break
+
+    evaluate = bangumi.evaluate
+    evaluate_list = bangumi.evaluate.split('\n')
+    if len(evaluate_list) >= 4:  # 超过3行，只取前三行，多出来的变成省略号
+        evaluate = '\n'.join(evaluate_list[0:3]) + '……'
+
+    text = f'标题：{bangumi.title}\n' \
+           f'{episode_title or bangumi.newest_ep.desc}\n' \
+           f'发布时间：{format_time(episode_pub_time or bangumi.publish.pub_time)}\n' \
+           f'评分：{bangumi.rating.score}（{bangumi.rating.count}人）\n' \
+           f'▶: {bangumi.stat.views} 〰:{bangumi.stat.danmakus} 💰:{bangumi.stat.coins} \n' \
+           f'类型：{" ".join(bangumi.style)}\n' \
+           f'简介：{evaluate}'
+
+    return MessageSegment.image(episode_pic or bangumi.cover) + text
 
 
 async def live_detail(url):
     async with aiohttp.request('GET', url, timeout=aiohttp.client.ClientTimeout(10)) as resp:
-        res = await resp.json()
-    if res['code'] == -400 or res['code'] == 19002000:
-        msg = "直播间不存在"
-        return msg, None
-    uname = res['data']['anchor_info']['base_info']['uname']
-    room_id = res['data']['room_info']['room_id']
-    title = res['data']['room_info']['title']
-    live_status = res['data']['room_info']['live_status']
-    lock_status = res['data']['room_info']['lock_status']
-    parent_area_name = res['data']['room_info']['parent_area_name']
-    area_name = res['data']['room_info']['area_name']
-    online = res['data']['room_info']['online']
-    tags = res['data']['room_info']['tags']
-    pic: str = res['data']['room_info']['cover']  # url to pic
-    vurl = f"https://live.bilibili.com/{room_id}\n"
-    if lock_status:
-        lock_time = res['data']['room_info']['lock_time']
-        lock_time = datetime.fromtimestamp(lock_time).strftime("%Y-%m-%d %H:%M:%S")
-        title = f"(已封禁)直播间封禁至：{lock_time}\n"
-    elif live_status == 1:
-        title = f"(直播中)标题：{title}\n"
-    elif live_status == 2:
-        title = f"(轮播中)标题：{title}\n"
-    else:
-        title = f"(未开播)标题：{title}\n"
-    up = f"主播：{uname} 当前分区：{parent_area_name}-{area_name} 人气上一次刷新值：{online}\n"
-    if tags:
-        tags = f"标签：{tags}\n"
-    player = f"独立播放器：https://www.bilibili.com/blackboard/live/live-activity-player.html?enterTheRoom=0&cid={room_id}"
-    msg = MessageSegment.image(file=pic) + '\n' + str(title) + str(up) + str(tags) + str(player)
-    return msg, vurl
+        live_json_response = await resp.json()
+    if live_json_response['code'] in [-400, 19002000]:
+        raise RuntimeError('直播间不存在')
+    live = LiveResponse(**(await resp.json())['data'])
+
+    live_status = {
+        1: '直播中',
+        2: '轮播中',
+    }
+
+    text = f'标题：{live.room_info.title}\n' \
+           f'主播：{live.anchor_info.base_info.uname}\n' \
+           f'状态：{"已封禁" if live.room_info.lock_status else live_status.get(live.room_info.live_status, "未开播")}\n' \
+           f'分区：[{live.room_info.parent_area_name}] {live.room_info.area_name}\n' \
+           f'人气上一次刷新值：{live.room_info.online}\n' \
+           f'标签：{live.room_info.tags}'
+
+    return MessageSegment.image(live.room_info.cover) + text
 
 
 async def article_detail(url):
     async with aiohttp.request('GET', url, timeout=aiohttp.client.ClientTimeout(10)) as resp:
-        res = await resp.json()
-        res = res['data']
-    cvid = re.compile(r'id=(\d+)').search(url).group(1)
-    vurl = f"https://www.bilibili.com/read/cv{cvid}\n"
-    title = f"标题：{res['title']}\n"
-    up = f"作者：{res['author_name']}\n"
-    # stat
-    view: int = res['stats']['view']
-    like: int = res['stats']['like']
-    dislike: int = res['stats']['dislike']
-    favorite: int = res['stats']['favorite']
-    coin: int = res['stats']['coin']
-    share: int = res['stats']['share']
-    reply: int = res['stats']['reply']
-    stat = f'▶:{view} 👍:{like} 👎：{dislike} 💬:{reply} ⭐:{favorite} 💰:{coin} ↗:{share}'
-    msg = str(title) + str(up) + stat
-    return msg, vurl
+        article = ArticleResponse(**(await resp.json())['data'])
+
+    text = f'标题：{article.title}\n' \
+           f'作者：{article.author_name}\n' \
+           f'▶:{article.stats.view} 👍:{article.stats.like} 👎：{article.stats.dislike} 💬:{article.stats.reply} ⭐:{article.stats.favorite} 💰:{article.stats.coin} ↗:{article.stats.share}'
+
+    return MessageSegment.image(article.image_urls[0]) + text
+
+
+async def dynamic_detail(url):  # from mengshouer/nonebot_plugin_analysis_bilibili
+    async with aiohttp.request('GET', url, timeout=aiohttp.client.ClientTimeout(10)) as resp:
+        res = (await resp.json())['data']['card']
+    card = DynamicCard(**json.loads(res['card']))
+    desc = DynamicDesc(**res['desc'])
+
+    user = f'{desc.user_profile.info.uname}：\n'
+    stat = f'👀:{desc.view} ↗:{desc.repost} 💬:{desc.comment} 👍:{desc.like}\n'
+
+    item = card.item
+    if not item:
+        raise RuntimeError('动态不包含文字内容')
+    content = item.description
+    if not content:
+        content = item.content
+    content = content.replace('\r', '\n')
+    if len(content) > 250:
+        content = content[:250] + '……'
+    pics = item.pictures_count
+    if pics:
+        content += f'\n动态中包含{pics}张图片'
+    origin = card.origin
+    if origin:
+        jorigin = DynamicCardOrigin(**json.loads(origin))
+        short_link = jorigin.short_link
+        if short_link:
+            content += f'\n动态包含转发视频{short_link}'
+        else:
+            content += f'\n动态包含转发其他动态'
+
+    return user + content + stat
+
+# 各 ID 解析器基于 https://github.com/mengshouer/nonebot_plugin_analysis_bilibili 的 c79dbe9 提交版本
+
+
+class BaseID(abc.ABC):
+
+    def __init__(self, text: str):
+        search_result: Optional[Match[str]] = re.compile(self._get_pattern(), re.I).search(text)
+        self.subtype: str = self._get_sub_type()
+        self.suburl: Optional[str] = self._get_api_url(search_result) if search_result else None
+
+    @abc.abstractmethod
+    def _get_pattern(self) -> str:
+        """返回一个正则表达式，用于从用户消息中匹配出媒体id"""
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def _get_sub_type(self) -> str:
+        """返回该id的媒体类型（）"""
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def _get_api_url(self, search_result: Match[str]) -> str:
+        """根据search_result返回一个该媒体对应的api地址"""
+        raise NotImplementedError
+
+
+class BVID(BaseID):
+
+    def _get_pattern(self): return r'BV([A-Za-z0-9]{10})+'
+
+    def _get_sub_type(self): return 'video'
+
+    def _get_api_url(self, search_result): return f'https://api.bilibili.com/x/web-interface/view?bvid={search_result[0]}'
+
+
+class AID(BaseID):
+
+    def _get_pattern(self): return r'av\d+'
+
+    def _get_sub_type(self): return 'video'
+
+    def _get_api_url(self, search_result): return f'https://api.bilibili.com/x/web-interface/view?aid={search_result[0][2:]}'
+
+
+class EPID(BaseID):
+
+    def _get_pattern(self): return r'ep\d+'
+
+    def _get_sub_type(self): return 'bangumi'
+
+    def _get_api_url(self, search_result): return f'https://bangumi.bilibili.com/view/web_api/season?ep_id={search_result[0][2:]}'
+
+
+class SeasonID(BaseID):
+
+    def _get_pattern(self): return r'ss\d+'
+
+    def _get_sub_type(self): return 'bangumi'
+
+    def _get_api_url(self, search_result): return f'https://bangumi.bilibili.com/view/web_api/season?season_id={search_result[0][2:]}'
+
+
+class MediaID(BaseID):
+
+    def _get_pattern(self): return r'md\d+'
+
+    def _get_sub_type(self): return 'bangumi'
+
+    def _get_api_url(self, search_result): return f'https://bangumi.bilibili.com/view/web_api/season?media_id={search_result[0][2:]}'
+
+
+class RoomID(BaseID):
+
+    def _get_pattern(self): return r'live.bilibili.com/(blanc/|h5/)?(\d+)'
+
+    def _get_sub_type(self): return 'live'
+
+    def _get_api_url(self, search_result): return f'https://api.live.bilibili.com/xlive/web-room/v1/index/getInfoByRoom?room_id={search_result[2]}'
+
+
+class CVID(BaseID):
+
+    def _get_pattern(self): return r'(cv|/read/(mobile|native)(/|\?id=))(\d+)'
+
+    def _get_sub_type(self): return 'article'
+
+    def _get_api_url(self, search_result): return f'https://api.bilibili.com/x/article/viewinfo?id={search_result[4]}&mobi_app=pc&from=web'
+
+
+class Dynamic2ID(BaseID):
+
+    def _get_pattern(self): return r'([tm]).bilibili.com/(\d+)\?(.*?)(&|&amp;)type=2'
+
+    def _get_sub_type(self): return 'dynamic'
+
+    def _get_api_url(self, search_result): return f'https://api.vc.bilibili.com/dynamic_svr/v1/dynamic_svr/get_dynamic_detail?rid={search_result[2]}&type=2'
+
+
+class DynamicID(BaseID):
+
+    def _get_pattern(self): return r'([tm]).bilibili.com/(\d+)'
+
+    def _get_sub_type(self): return 'dynamic'
+
+    def _get_api_url(self, search_result): return f'https://api.vc.bilibili.com/dynamic_svr/v1/dynamic_svr/get_dynamic_detail?dynamic_id={search_result[2]}'
+
+
+class VideoResponse(BaseModel):
+
+    class Owner(BaseModel):
+        name: str
+
+    class Stat(BaseModel):
+        view: int
+        danmaku: int
+        reply: int
+        favorite: int
+        coin: int
+        share: int
+        like: int
+        dislike: int
+
+    pubdate: int
+    title: str
+    tname: str
+    owner: Owner
+    stat: Stat
+    desc: str
+    pic: str
+
+
+class BangumiResponse(BaseModel):
+
+    class NewestEp(BaseModel):
+        desc: str
+
+    class Episode(BaseModel):
+        index: str
+        ep_id: int
+        index_title: str
+        cover: str
+        pub_real_time: datetime  # str ?
+
+    class Rating(BaseModel):
+        count: int
+        score: float
+
+    class Stat(BaseModel):
+        coins: int
+        danmakus: int
+        views: int
+
+    class Publish(BaseModel):
+        pub_time: datetime  # ? str
+
+    cover: str
+    title: str
+    newest_ep: NewestEp
+    style: list[str]
+    evaluate: str
+    stat: Stat
+    season_id: Optional[int]
+    media_id: Optional[int]
+    episodes: list[Episode]
+    rating: Rating
+    publish: Publish
+
+
+class LiveResponse(BaseModel):
+
+    class AnchorInfo(BaseModel):
+
+        class BaseInfo(BaseModel):
+            uname: str
+
+        base_info: BaseInfo
+
+    class RoomInfo(BaseModel):
+        room_id: int
+        title: str
+        live_status: int
+        lock_status: int
+        lock_time: int
+        area_name: str
+        parent_area_name: str
+        online: int
+        tags: str
+        cover: str
+
+    anchor_info: AnchorInfo
+    room_info: RoomInfo
+
+
+class ArticleResponse(BaseModel):
+
+    class Stats(BaseModel):
+        view: int
+        like: int
+        dislike: int
+        favorite: int
+        coin: int
+        share: int
+        reply: int
+
+    stats: Stats
+    title: str
+    author_name: str
+    image_urls: list[str]
+
+
+class DynamicCard(BaseModel):
+
+    class Item(BaseModel):
+        description: Optional[str]
+        content: Optional[str]
+        pictures_count: Optional[int]
+
+    item: Optional[Item]
+    origin: Optional[str]
+
+
+class DynamicDesc(BaseModel):
+
+    class UserProfile(BaseModel):
+
+        class Info(BaseModel):
+            uname: str
+
+        info: Info
+
+    timestamp: int
+    view: int
+    repost: int
+    comment: int
+    like: int
+    user_profile: UserProfile
+
+
+class DynamicCardOrigin(BaseModel):
+    short_link: str
