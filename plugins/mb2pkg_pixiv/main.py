@@ -77,6 +77,6 @@ async def pixiv_mokabot_api(api_method, **kwargs):
     return result
 
 
-login_pixiv_job = scheduler.add_job(_init_pixiv, 'interval', minutes=relogin_time, id='login_pixiv_job')
-loop = asyncio.get_event_loop()
-loop.run_until_complete(_init_pixiv())
+# login_pixiv_job = scheduler.add_job(_init_pixiv, 'interval', minutes=relogin_time, id='login_pixiv_job')
+# loop = asyncio.get_event_loop()
+# loop.run_until_complete(_init_pixiv())
