@@ -104,6 +104,7 @@ class CommitModel(BaseModel):
 
     class Files(BaseModel):
         filename: str
+        status: str
         additions: int
         deletions: int
 
@@ -268,12 +269,12 @@ async def commit_details(suburl: str) -> Message:
     file_changes = []
 
     for file in commit.files:
-        file_changes.append(f'{file.filename} [+{file.additions} -{file.deletions}]')
+        file_changes.append(f'{file.status} {file.filename} [+{file.additions} -{file.deletions}]')
 
     text = f'标题：[{commit.sha[:7]}] {commit.commit.message}\n' \
            f'提交者：{final_name}\n' \
            f'提交时间：{format_time(commit.commit.committer.date)}\n' \
-           f'文件变更：（合计：+{commit.stats.additions} -{commit.stats.deletions}）\n'
+           f'文件变更：\n'
 
     return MessageSegment.image(file=await get_og_image_url(commit.html_url)) + text + '\n'.join(file_changes)
 
