@@ -219,11 +219,11 @@ async def issues_details(suburl: str) -> Message:
     issues = await get_issues_model(suburl)
 
     final_type = '' if issues.user.type == 'User' else ' (Organization)'
-    labels_list = [f'[{name}]' for name in issues.labels] if issues.labels else []
+    labels_list = [f'[{label.name}]' for label in issues.labels] if issues.labels else []
 
     text = f'标题：[{issues.state.title()}] {issues.title}\n' \
            f'发起者：{issues.user.login}{final_type}\n' \
-           f'标签：{" ".join(labels_list)}' \
+           f'标签：{" ".join(labels_list)}\n' \
            f'创建时间：{format_time(issues.created_at)}\n' \
            f'修改时间：{format_time(issues.updated_at)}'
 
