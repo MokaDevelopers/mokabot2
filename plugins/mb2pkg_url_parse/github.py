@@ -85,44 +85,62 @@ class IssuesModel(BaseModel):
     user: User
 
 
-async def get_user_model(username: str) -> UserModel:
-    try:
-        async with aiohttp.request('GET', f'https://api.github.com/users/{username}', headers=headers) as resp:
-            if resp.status != 200:
-                async with aiohttp.request('GET', f'https://api.github.com/orgs/{username}', headers=headers) as resp2:
-                    return UserModel(**(json.loads(await resp2.text(encoding='UTF-8'))))
-            return UserModel(**(json.loads(await resp.text(encoding='UTF-8'))))
+class CommitModel(BaseModel):
 
-    except StatusCodeError as se:
-        log.error(se.args[0])
-    except Exception as e:
-        log.exception(e)
+    class Commit(BaseModel):
+
+        class Committer(BaseModel):
+            name: str
+            email: Optional[str]
+            date: datetime
+
+        committer: Committer
+        message: str
+
+    class Stats(BaseModel):
+        total: int
+        additions: int
+        deletions: int
+
+    class Files(BaseModel):
+        filename: str
+        additions: int
+        deletions: int
+
+    sha: str
+    html_url: str
+    commit: Commit
+    stats: Stats
+    files: list[Files]
+
+
+async def get_user_model(username: str) -> UserModel:
+    async with aiohttp.request('GET', f'https://api.github.com/users/{username}', headers=headers) as resp:
+        if resp.status != 200:
+            async with aiohttp.request('GET', f'https://api.github.com/orgs/{username}', headers=headers) as resp2:
+                return UserModel(**(json.loads(await resp2.text(encoding='UTF-8'))))
+        return UserModel(**(json.loads(await resp.text(encoding='UTF-8'))))
 
 
 async def get_repo_model(fullname: str) -> RepoModel:
-    try:
-        async with aiohttp.request('GET', f'https://api.github.com/repos/{fullname}', headers=headers) as resp:
-            if resp.status != 200:
-                raise StatusCodeError(f'url:https://api.github.com/repos/{fullname} Status:{resp.status}')
-            return RepoModel(**(json.loads(await resp.text(encoding='UTF-8'))))
-
-    except StatusCodeError as se:
-        log.error(se.args[0])
-    except Exception as e:
-        log.exception(e)
+    async with aiohttp.request('GET', f'https://api.github.com/repos/{fullname}', headers=headers) as resp:
+        if resp.status != 200:
+            raise StatusCodeError(f'url:https://api.github.com/repos/{fullname} Status:{resp.status}')
+        return RepoModel(**(json.loads(await resp.text(encoding='UTF-8'))))
 
 
 async def get_issues_model(issues_url: str) -> IssuesModel:
-    try:
-        async with aiohttp.request('GET', f'https://api.github.com/repos/{issues_url}', headers=headers) as resp:
-            if resp.status != 200:
-                raise StatusCodeError(f'url:https://api.github.com/repos/{issues_url} Status:{resp.status}')
-            return IssuesModel(**(json.loads(await resp.text(encoding='UTF-8'))))
+    async with aiohttp.request('GET', f'https://api.github.com/repos/{issues_url}', headers=headers) as resp:
+        if resp.status != 200:
+            raise StatusCodeError(f'url:https://api.github.com/repos/{issues_url} Status:{resp.status}')
+        return IssuesModel(**(json.loads(await resp.text(encoding='UTF-8'))))
 
-    except StatusCodeError as se:
-        log.error(se.args[0])
-    except Exception as e:
-        log.exception(e)
+
+async def get_commit_model(commit_url: str) -> CommitModel:
+    async with aiohttp.request('GET', f'https://api.github.com/repos/{commit_url}', headers=headers) as resp:
+        if resp.status != 200:
+            raise StatusCodeError(f'url:https://api.github.com/repos/{commit_url} Status:{resp.status}')
+        return CommitModel(**(json.loads(await resp.text(encoding='UTF-8'))))
 
 
 def format_time(_time: datetime) -> str:
@@ -151,6 +169,9 @@ class GithubParse(BaseParse):
                 return 'repo', '/'.join(path_list[:2])
             elif len(path_list) == 4 and path_list[2] == 'issues':
                 return 'issues', '/'.join(path_list[:4])
+            elif len(path_list) == 4 and path_list[2] == 'commit':
+                path_list[2] = 'commits'  # 提交页面url为commit，而API地址为commits
+                return 'commit', '/'.join(path_list[:4])
             else:
                 raise NoSuchTypeError('不支持的类型:' + '/'.join(path_list))
 
@@ -160,12 +181,19 @@ class GithubParse(BaseParse):
             log.exception(e)
 
     async def fetch(self, subtype: str, suburl: str) -> Union[str, Message, MessageSegment]:
-        if subtype == 'user':
-            return await user_details(suburl)
-        if subtype == 'repo':
-            return await repo_details(suburl)
-        if subtype == 'issues':
-            return await issues_details(suburl)
+        fetch_func = {
+            'user': user_details,
+            'repo': repo_details,
+            'issues': issues_details,
+            'commit': commit_details,
+        }.get(subtype)
+
+        try:
+            return await fetch_func(suburl)
+        except StatusCodeError as se:
+            log.error(se.args[0])
+        except Exception as e:
+            log.exception(e)
 
 
 async def user_details(suburl: str) -> Message:
@@ -231,6 +259,23 @@ async def issues_details(suburl: str) -> Message:
         text += f'\n关闭时间：{format_time(issues.closed_at)}'
 
     return MessageSegment.image(file=await get_og_image_url(issues.html_url)) + text
+
+
+async def commit_details(suburl: str) -> Message:
+    commit = await get_commit_model(suburl)
+
+    final_name = f'{commit.commit.committer.name} ({commit.commit.committer.email})' if commit.commit.committer.email else commit.commit.committer.name
+    file_changes = []
+
+    for file in commit.files:
+        file_changes.append(f'{file.filename} [+{file.additions} -{file.deletions}]')
+
+    text = f'标题：[{commit.sha[:7]}] {commit.commit.message}\n' \
+           f'提交者：{final_name}\n' \
+           f'提交时间：{format_time(commit.commit.committer.date)}\n' \
+           f'文件变更：（合计：+{commit.stats.additions} -{commit.stats.deletions}）\n'
+
+    return MessageSegment.image(file=await get_og_image_url(commit.html_url)) + text + '\n'.join(file_changes)
 
 
 async def get_og_image_url(url: str) -> str:
