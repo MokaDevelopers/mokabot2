@@ -46,8 +46,10 @@ async def _(bot: Bot, event: MessageEvent):
     except BotArcAPIError as e:
         msg = f'查询时发生错误：{e.message}'
         log.exception(e)
-    except NoBindError as e:
+    except NotBindError as e:
         msg = f'{e}未绑定好友码，请使用\narc绑定 <你的好友码>\n进行绑定（无需加括号）'
+    except NoSuchScoreError as e:
+        msg = f'在歌曲名、歌曲id、歌曲别名中都找不到：{e}'
     except Exception as e:
         msg = f'查询成绩时发生错误：{e}'
         log.exception(e)
@@ -66,7 +68,7 @@ async def _(bot: Bot, event: MessageEvent):
     except BotArcAPIError as e:
         msg = f'查询最近成绩时发生错误：{e.message}'
         log.exception(e)
-    except NoBindError as e:
+    except NotBindError as e:
         msg = f'{e}未绑定好友码，请使用\narc绑定 <你的好友码>\n进行绑定（无需加括号）'
     except Exception as e:
         msg = f'查询最近成绩时发生错误：{e}'
