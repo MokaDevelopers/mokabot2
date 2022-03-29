@@ -330,7 +330,8 @@ def get_close_matches(
 
 def parse_song_name(song_name: str) -> str:
     """
-    传入一个近似的歌曲名或者近似的song_id，返回正确的song_id。
+    传入一个近似的歌曲名或者歌曲别名，返回正确的song_id。
+    注意：无法处理近似的歌曲别名或近似的歌曲id
 
     :param song_name: 近似的歌曲名或者近似的song_id
     :raise NoSuchScoreError: 找不到对应的歌曲（最大的相似度为0）
