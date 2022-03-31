@@ -157,3 +157,6 @@ mys_cookies.db
 # mokabot2 docs
 node_modules
 .temp
+
+# Arcaea Challenge Generator
+challenge_generator.py

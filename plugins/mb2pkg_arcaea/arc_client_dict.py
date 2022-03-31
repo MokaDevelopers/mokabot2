@@ -1,5 +1,5 @@
 __author__ = '秋葉亜里沙 https://github.com/zhanbao2000'
-__version__ = [3, 6, 4]
+__version__ = [3, 12, 4]
 
 client_error = {
     -7: '处理交易时发生了错误',
@@ -8,7 +8,7 @@ client_error = {
     -4: '您的账号已在别处登录',
     -3: '无法连接至服务器',
 
-    1: 'API使用错误',  # 一般是headers里少了东西，比如GET/POST少了DeviceId必定触发，POST少了X-Random-Challenge必定触发
+    1: 'API使用错误',  # 一般是headers里少了东西，比如GET/POST少了DeviceId必定触发，POST少了X-Random-Challenge必定触发，以及请求没带cert
 
     2: 'Arcaea服务器正在维护',
     5: '请更新Arcaea到最新版本',
@@ -76,7 +76,7 @@ character_name = [
     '红（Kou）',
     '萨菲亚（Sapphire）',
     '忘却（Lethe）',
-    '',  # 客户端解包，5号角色是一张黑图（未来角色？
+    '改写世界的少女（Taikari）',  # 通过逆向和计算解出（确信）
     '对立（Axium）',
     '对立（Grievous Lady）',
     '星（Stella）',
@@ -119,6 +119,13 @@ character_name = [
     '拉格兰',
     '白姬',
     '奈美',
+    '咲弥 & 伊丽莎白',
+    '莉莉',
+    '群愿（盛夏）',  # 50
+    '爱丽丝 & 坦尼尔（Minuet）',
+    '对立（Elegy）',
+    '玛莉嘉',
+    '维塔',
 ]
 
 scenery = {
@@ -127,7 +134,7 @@ scenery = {
     'scenery_chap3': '聚合的塔尖',
     'scenery_chap4': '沉眠的回声',
     'scenery_chap5': '无央的决裂',
-    'scenery_chap6': 'Forgotten Construct',
+    'scenery_chap6': '遗忘的构念',
 }
 
 core = {
@@ -139,4 +146,6 @@ core = {
     'core_ambivalent': '悖异核心',
     'core_scarlet': '绯红核心',
     'core_groove': '音炫核心',
+    'core_binary': '双生核心',
+    'core_colorful': '缤纷核心',
 }

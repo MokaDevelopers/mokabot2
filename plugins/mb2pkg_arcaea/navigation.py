@@ -22,9 +22,6 @@ match_arc_map = on_command('arc地图', aliases={'arc世界地图', 'arc世界',
 log = getlog()
 
 temp_absdir = nonebot.get_driver().config.temp_absdir
-QUIRE_ACT = Config().prober_username
-QUIRE_PWD = Config().prober_password
-SONGDB = Config().arcsong_db_abspath
 PACKLIST = Config().packlist_json_abspath
 
 
@@ -42,13 +39,13 @@ async def arc_world_map_cmd(bot: Bot, event: MessageEvent):
         msg = '未更新Arcaea版本，目前的版本是' + APP_VERSION
         log.error(msg)
     except NoBindError:
-        msg = '请先绑定账号和密码后再使用该功能，参考help config'
+        msg = '请先绑定账号和密码后再使用该功能，并且这是一个非常危险的功能，请私聊维护者获取帮助'
         log.error('该用户未绑定账号和密码')
     except NotInMapError:
         msg = '在导航之前，你必须进入一个有进度的地图'
         log.error(msg)
     except Exception as e:
-        msg = f'未知的失败原因：{e}'
+        msg = f'未知的失败原因'
         log.exception(e)
 
     await bot.send(event, msg)
@@ -91,10 +88,10 @@ async def arc_world_map(username: str, password: str) -> str:
         raise RuntimeError('未知的登陆错误：' + str(login_json))
 
     # ptt和角色用于估算step
-    user_chara: int = user_info_json['value'][0]['value']['character']
-    user_chara_index = sorted(user_info_json['value'][0]['value']['characters']).index(user_chara)
-    user_chara_info = user_info_json['value'][0]['value']['character_stats'][user_chara_index]
-    user_ptt = user_info_json['value'][0]['value']['rating'] / 100
+    user_chara: int = user_info_json['value']['character']
+    user_chara_index = sorted(user_info_json['value']['characters']).index(user_chara)
+    user_chara_info: dict = user_info_json['value']['character_stats'][user_chara_index]
+    user_ptt = user_info_json['value']['rating'] / 100
 
     # 估算单次STEP，基本STEP值=2.5+2.45*rating**0.5，最终STEP值=角色STEP/50*基础STEP
     rating = 0.4278 * user_ptt ** 2 - 8.7457 * user_ptt + 54.866
@@ -102,8 +99,12 @@ async def arc_world_map(username: str, password: str) -> str:
     prog: float = user_chara_info['prog']
     chara_step = prog / 50 * base_step
 
+    # 寻找角色的等级和名称
+    chara_name = character_name[user_chara]
+    chara_level = user_chara_info['level']
+
     # 找当前的mapid
-    map_id = user_info_json['value'][0]['value']['current_map']
+    map_id = user_info_json['value']['current_map']
     # 获取详细地图
     world_map = (await myArc.get_world_map_specific(map_id))['value']['maps'][0]
     steps = world_map['steps']
@@ -136,7 +137,7 @@ async def arc_world_map(username: str, password: str) -> str:
             if step['items'][0]['type'] == 'world_unlock':
                 calc_target(f'获得主界面背景{scenery[step["items"][0]["id"]]}', step['position'])
 
-    result.append(f'你当前搭档的STEP值为{round(prog, 2)}')
+    result.append(f'你当前搭档的STEP值为{round(prog, 2)} （Lv.{chara_level} 的 {chara_name}）')
     result.append(f'根据你的ptt估算，每次结算为{round(base_step, 2)}步，搭档加成后{round(chara_step, 2)}步')
     result.append('')
 

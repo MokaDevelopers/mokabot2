@@ -1,5 +1,4 @@
 import os
-import sys
 from typing import Tuple
 
 from pydantic import BaseSettings
@@ -19,13 +18,8 @@ class Config(BaseSettings):
     # arc_last生成资源文件夹
     arc_last_draw_res_absdir: str = os.path.join(plugin_absdir, 'res/arcaea_draw')
 
-    # arclib所使用的uuid(大写)
+    # arcaea_lib所使用的uuid(大写)
     arc_static_uuid: str = ''
-    # archash4all动态运行库所在路径
-    if sys.platform == 'win32':
-        archash4all: str = os.path.join(plugin_absdir, 'lib/libarchash4all.dll')
-    else:
-        archash4all: str = os.path.join(plugin_absdir, 'lib/libarchash4all.so')
 
     # arc强制查询所用查询账号用户名及密码
     prober_username: str = 'username'
@@ -40,8 +34,17 @@ class Config(BaseSettings):
     twitter_bearer_token: str = ''
 
     # BotArcAPI所在的服务器和所需headers
-    botarcapi_server = 'http://localhost:61658'
-    botarcapi_headers = {}
+    botarcapi_server: str = 'http://localhost:61658'
+    botarcapi_headers: dict[str, str] = {}
+
+    # 证书，crt、key和p12
+    cert_abspath: str = os.path.join(plugin_absdir, 'res/cert')
+    cert_name: str = ''
+    cert_password: str = ''
+
+    cert_crt = os.path.join(cert_abspath, cert_name + '.crt')
+    cert_key = os.path.join(cert_abspath, cert_name + '.key')
+    cert_p12 = os.path.join(cert_abspath, cert_name + '.p12')
 
     class Config:
         extra = 'ignore'
