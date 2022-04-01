@@ -49,7 +49,7 @@ async def free_stamina_handle(bot: Bot, event: MessageEvent):
         msg = '未更新Arcaea版本，目前的版本是' + APP_VERSION
         log.error(msg)
     except NoBindError:
-        msg = '请先绑定账号和密码后再使用该功能，并且这是一个非常危险的功能，请私聊维护者获取帮助'
+        msg = '这是一个非常危险的功能，请与维护者联系获取帮助'
         log.error('该用户未绑定账号和密码')
     except FirstUseError:
         msg = '你是第一次使用该功能的用户，请务必了解到这是一个非常危险的功能\n如有任何疑问请咨询维护者\n再次输入该指令以继续'
@@ -62,7 +62,7 @@ async def free_stamina_handle(bot: Bot, event: MessageEvent):
         msg = f'尚未到达下一次残片交换体力的允许时刻\n下一次可交换体力的时刻是{get_time("%Y-%m-%d %H:%M:%S", str(next_fragstam_ts))}'
         log.error(msg)
     except InvalidUsernameOrPassword:
-        msg = '用户名或密码错误，请检查并重新绑定'
+        msg = '无法登录，请检查并重新绑定'
         log.error(msg)
     except Exception as e:
         msg = f'未知的失败原因'

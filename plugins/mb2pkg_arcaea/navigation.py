@@ -39,7 +39,7 @@ async def arc_world_map_cmd(bot: Bot, event: MessageEvent):
         msg = '未更新Arcaea版本，目前的版本是' + APP_VERSION
         log.error(msg)
     except NoBindError:
-        msg = '请先绑定账号和密码后再使用该功能，并且这是一个非常危险的功能，请私聊维护者获取帮助'
+        msg = '这是一个非常危险的功能，请与维护者联系获取帮助'
         log.error('该用户未绑定账号和密码')
     except NotInMapError:
         msg = '在导航之前，你必须进入一个有进度的地图'
