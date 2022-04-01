@@ -38,7 +38,7 @@ ssl_ctx = ssl.create_default_context()
 ssl_ctx.load_cert_chain(Config().cert_crt, Config().cert_key, Config().cert_password)
 
 # APP_VERSION should be modified after each Arcaea update.
-APP_VERSION = '3.12.4'
+APP_VERSION = '3.12.6'
 # simple obfuscation to avoid being searched
 api_entry = base64.b64decode(b'L3llYXJzLzE5').decode('utf-8')
 host = base64.b64decode(b'YXJjYXBpLXYyLmxvd2lyby5jb20=').decode('utf-8')
