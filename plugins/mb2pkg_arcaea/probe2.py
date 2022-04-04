@@ -238,7 +238,7 @@ async def advanced_bind_botarcapi(
     real_rating = '已隐藏' if rating == -1 else round(rating / 100, 2)
     msg = f'已将QQ<{qq}>成功绑定至Arcaea好友码<{friend_id}>\n' \
           f'用户名：{name} (uid:{user_id})\n' \
-          f'潜力值：{real_rating}\n'
+          f'潜力值：{real_rating}'
 
     return msg
 

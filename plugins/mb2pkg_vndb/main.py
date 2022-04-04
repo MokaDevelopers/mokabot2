@@ -181,7 +181,7 @@ async def vndb_probe_search(stype: str, fin_stype: str, fin_flags: str, info: st
 
     if search_result.num == 1:
         only_id: int = search_result.items[0]['id']
-        result += '这是唯一的结果，因此已直接显示。。\n'
+        result += '这是唯一的结果，因此已直接显示。\n'
         result += await vndb_probe_id(stype, fin_stype, fin_flags, str(only_id))
     else:
         result += f'本页共{search_result.num}个结果，'
