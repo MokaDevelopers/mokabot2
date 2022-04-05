@@ -268,7 +268,7 @@ class Arcaea:
                          health: int, modifier: int, beyond_gauge: int, clear_type: int) -> dict:
         """
         To submit score online.
-        Only tested on self-service, not sure if available on official servers.
+        Only tested on server emulator, not sure if available on official servers.
 
         :param user_id: user id
         :param song_token: get it from get_world_token() or get_score_token()

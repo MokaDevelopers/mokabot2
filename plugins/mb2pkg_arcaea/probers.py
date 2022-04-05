@@ -31,7 +31,7 @@ class BaseProber(abc.ABC):
         """
         raise NotImplementedError
 
-    async def get_user_best(self, friend_id: str, song_id: str, difficulty: Union[str, int] = 2):
+    async def get_user_best(self, friend_id: str, song_id: str, difficulty: Union[str, int] = 2) -> UniversalProberResult:
         """
         返回用户指定歌曲的指定成绩
 
@@ -82,7 +82,7 @@ class BotArcAPIProber(BaseProber):
 
         return user_info
 
-    async def get_user_best(self, friend_id: str, song_id: str, difficulty: Union[str, int] = 2):
+    async def get_user_best(self, friend_id: str, song_id: str, difficulty: Union[str, int] = 2) -> UniversalProberResult:
         user_best_response = await self.baa.user_best(
             usercode=friend_id,
             songid=song_id,

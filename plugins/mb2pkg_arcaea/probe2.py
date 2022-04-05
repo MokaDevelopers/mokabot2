@@ -374,7 +374,7 @@ def parse_chart_spilt_name_difficulty(chart: str) -> tuple[str, int]:
         'pst': 0,
         'past': 0,
         'prs': 1,
-        'present': 2,
+        'present': 1,
         'ftr': 2,
         'future': 2,
         'byd': 3,
