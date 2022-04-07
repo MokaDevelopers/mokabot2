@@ -50,12 +50,6 @@ for item in song_list:
     songtitle[song_id] = song_info
 
 
-# 公共类。对于大量相同前缀的变量，将前缀作为实例名，将后缀作为实例的属性
-# 这样做可以在IDE自动补全的时候，减少显示的变量的个数，以便于阅读
-class Anything:
-    pass
-
-
 class Picture:
     def __init__(self, L, T, path):
         """
@@ -158,21 +152,21 @@ def rank_score(score):
 
 def rank_ptt(ptt):
     if ptt >= 1250:
-        bg = 'potential_6.png'
+        bg = 'rating_6.png'
     elif ptt >= 1200:
-        bg = 'potential_5.png'
+        bg = 'rating_5.png'
     elif ptt >= 1100:
-        bg = 'potential_4.png'
+        bg = 'rating_4.png'
     elif ptt >= 1000:
-        bg = 'potential_3.png'
+        bg = 'rating_3.png'
     elif ptt >= 700:
-        bg = 'potential_2.png'
+        bg = 'rating_2.png'
     elif ptt >= 350:
-        bg = 'potential_1.png'
+        bg = 'rating_1.png'
     elif ptt >= 0:
-        bg = 'potential_0.png'
+        bg = 'rating_0.png'
     else:
-        bg = 'potential_off.png'
+        bg = 'rating_off.png'
     return bg
 
 
@@ -273,8 +267,7 @@ async def moe_draw_recent(data: UniversalProberResult):
     im.alpha_composite(song_shadow, (1394, 83))
 
     # 画歌曲
-    str_dl = 'dl_' if _songtitle['remote_dl'] else ''
-    song_cover = Picture(1354, 43, os.path.join(ARCLASTDIR, 'songs', f'{str_dl}{recent_score.song_id}.jpg'))
+    song_cover = Picture(1354, 43, os.path.join(ARCLASTDIR, 'songs', f'{recent_score.song_id}.jpg'))
     try:
         song_cover_img = Image.open(song_cover.path).convert('RGBA').resize((990, 990))
     except FileNotFoundError:
@@ -383,8 +376,7 @@ async def guin_draw_recent(data: UniversalProberResult):
     im.alpha_composite(bg_img)
 
     # 画歌曲
-    str_dl = 'dl_' if _songtitle['remote_dl'] else ''
-    song_cover = Picture(1000, 43, os.path.join(ARCLASTDIR, 'songs', f'{str_dl}{recent_score.song_id}.jpg'))
+    song_cover = Picture(1000, 43, os.path.join(ARCLASTDIR, 'songs', f'{recent_score.song_id}.jpg'))
     try:
         song_cover_img = Image.open(song_cover.path).convert('RGBA').resize((853, 853))
     except FileNotFoundError:
@@ -597,24 +589,22 @@ async def bandori_draw_recent(data: UniversalProberResult):
     im = add_text2(im, song_name, color_dark)
 
     # 写PURE，FAR，LOST数值
-    PFL = Anything
-    PFL.font = ImageFont.truetype(font_AOTFShinGoProMedium2, 45)
-    PFL.R, PFL.S = 1700, 816
+    PFL_font = ImageFont.truetype(font_AOTFShinGoProMedium2, 45)
+    PFL_R, PFL_S = 1700, 816
     spacing_count = 66
-    im = add_text1(im, PFL.font, str(recent_score.shiny_perfect_count), (PFL.R, PFL.S), color_dark, 'rs')
-    im = add_text1(im, PFL.font, str(recent_score.perfect_count), (PFL.R, PFL.S+1*spacing_count), color_dark, 'rs')
-    im = add_text1(im, PFL.font, str(recent_score.near_count), (PFL.R, PFL.S+2*spacing_count), color_dark, 'rs')
-    im = add_text1(im, PFL.font, str(recent_score.miss_count), (PFL.R, PFL.S+3*spacing_count), color_dark, 'rs')
+    im = add_text1(im, PFL_font, str(recent_score.shiny_perfect_count), (PFL_R, PFL_S), color_dark, 'rs')
+    im = add_text1(im, PFL_font, str(recent_score.perfect_count), (PFL_R, PFL_S+1*spacing_count), color_dark, 'rs')
+    im = add_text1(im, PFL_font, str(recent_score.near_count), (PFL_R, PFL_S+2*spacing_count), color_dark, 'rs')
+    im = add_text1(im, PFL_font, str(recent_score.miss_count), (PFL_R, PFL_S+3*spacing_count), color_dark, 'rs')
 
     # 写PURE，FAR，LOST数值(向左补0)
-    PFL0 = Anything
-    PFL0.font = ImageFont.truetype(font_AOTFShinGoProMedium2, 45)
-    PFL0.R, PFL0.S = 1564, 816
+    PFL0_font = ImageFont.truetype(font_AOTFShinGoProMedium2, 45)
+    PFL0_R, PFL0_S = 1564, 816
     spacing_count = 66
-    im = add_text1(im, PFL0.font, zfilln(4, recent_score.shiny_perfect_count), (PFL0.R, PFL0.S), color_light, 'ls')
-    im = add_text1(im, PFL0.font, zfilln(4, recent_score.perfect_count), (PFL0.R, PFL0.S+1*spacing_count), color_light, 'ls')
-    im = add_text1(im, PFL0.font, zfilln(4, recent_score.near_count), (PFL0.R, PFL0.S+2*spacing_count), color_light, 'ls')
-    im = add_text1(im, PFL0.font, zfilln(4, recent_score.miss_count), (PFL0.R, PFL0.S+3*spacing_count), color_light, 'ls')
+    im = add_text1(im, PFL0_font, zfilln(4, recent_score.shiny_perfect_count), (PFL0_R, PFL0_S), color_light, 'ls')
+    im = add_text1(im, PFL0_font, zfilln(4, recent_score.perfect_count), (PFL0_R, PFL0_S+1*spacing_count), color_light, 'ls')
+    im = add_text1(im, PFL0_font, zfilln(4, recent_score.near_count), (PFL0_R, PFL0_S+2*spacing_count), color_light, 'ls')
+    im = add_text1(im, PFL0_font, zfilln(4, recent_score.miss_count), (PFL0_R, PFL0_S+3*spacing_count), color_light, 'ls')
 
     # 写rating
     rating = Text(1916, 947, 46, '{:.2f}'.format(recent_score.rating), font_AOTFShinGoProMedium2, anchor='mm')
@@ -789,3 +779,6 @@ async def draw_b30(data: UniversalProberResult):
     await draw_image(result, savepath)
 
     return savepath
+
+
+# andreal field

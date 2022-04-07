@@ -16,7 +16,7 @@ readonly json_value_version=".value.version"
 readonly local_version_file="/tmp/local_version"
 readonly temp_dir="/tmp/arcaea"
 readonly save_dir="/root/mokabot2/plugins/mb2pkg_arcaea/res/arcaea_draw"
-readonly keep_or_remove="keep"
+readonly keep_or_remove="remove"
 
 readonly green_font_prefix="\033[32m"
 readonly yellow_font_prefix="\033[33m"
