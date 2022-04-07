@@ -6,7 +6,6 @@
 #    It will be automatically **deleted** after the script is executed.
 # 2. modify $save_dir, this is the parent folder of the "songs" folder and the "char" folder.
 # 3. modify $local_version_file, this is a file to record the local version (Optional).
-# 4. modify $keep_or_remove, select how to parse the song cover filename (keep or remove "dl_").
 
 
 readonly webapi_url="https://webapi.lowiro.com/webapi/serve/static/bin/arcaea/apk"
@@ -16,7 +15,6 @@ readonly json_value_version=".value.version"
 readonly local_version_file="/tmp/local_version"
 readonly temp_dir="/tmp/arcaea"
 readonly save_dir="/root/mokabot2/plugins/mb2pkg_arcaea/res/arcaea_draw"
-readonly keep_or_remove="remove"
 
 readonly green_font_prefix="\033[32m"
 readonly yellow_font_prefix="\033[33m"
@@ -83,11 +81,10 @@ for song_name in $file_list; do
   if [[ "${song_name}" =~ (packlist|songlist|unlocks|pack) ]]; then
     continue
   fi
-  # select how to parse the song cover filename
-  if test "${keep_or_remove}" = "keep"; then  # keep "dl_" in filename (for mokabot)
-    mv -f "${temp_dir}/${remote_version}/assets/songs/${song_name}/base.jpg" "${save_dir}/songs/${song_name}.jpg"
-  elif test "${keep_or_remove}" = "remove"; then  # remove "dl_" in filename (for AUA)
-    mv -f "${temp_dir}/${remote_version}/assets/songs/${song_name}/base.jpg" "${save_dir}/songs/${song_name##*_}.jpg"
+  mv -f "${temp_dir}/${remote_version}/assets/songs/${song_name}/base.jpg" "${save_dir}/songs/${song_name##*_}.jpg"
+  # parse beyond cover
+  if [ -e "${temp_dir}/${remote_version}/assets/songs/${song_name}/3.jpg" ]; then
+    mv -f "${temp_dir}/${remote_version}/assets/songs/${song_name}/3.jpg" "${save_dir}/songs/${song_name##*_}_3.jpg"
   fi
 done
 echo -e "${info}Successfully moved song cover files."
