@@ -338,12 +338,12 @@ def moe_draw_recent(data: UniversalProberResult):
     im = add_text2(im, value_rating, stroke_offset=4, stroke_color=(51, 41, 41, 220))
 
     # 写生成详情
-    text_info = 'player {: } PICTURE PRODUCED BY MOKABOT'.format(int(user_info.user_id))
+    text_info = 'player {: } PICTURE PRODUCED BY MOKABOT'.format(int(user_info.code))
     info = Text(75, 1580, 45, text_info, font_ExoMedium)
     im = add_text2(im, info, add_shadow=True, shadow_offset=(2, 1), stroke_offset=1)
 
     im = im.convert('RGB')
-    make_path = os.path.join(temp_absdir, f'{user_info.user_id}_moe.jpg')
+    make_path = os.path.join(temp_absdir, f'{user_info.code}_moe.jpg')
     im.save(make_path)
 
     return make_path
@@ -439,7 +439,7 @@ def guin_draw_recent(data: UniversalProberResult):
     # 写用户名、游玩日期、游玩时间、UID、PTT
     username = Text(210, 60, 95, user_info.name, font_ExoMedium)
     im = add_text2(im, username, add_shadow=True, stroke_offset=9, stroke_color=(36, 33, 38, 120))
-    usercode = Text(46, 195, 60, f'UID:{user_info.user_id}', font_ExoRegular)
+    usercode = Text(46, 195, 60, f'UID:{user_info.code}', font_ExoRegular)
     im = add_text2(im, usercode, add_shadow=True, stroke_offset=1)
     play_date = Text(45, 266, 78, get_time("%y/%m/%d", recent_score.time_played / 1000), font_ExoRegular)
     im = add_text2(im, play_date, add_shadow=True, stroke_offset=1)
@@ -477,7 +477,7 @@ def guin_draw_recent(data: UniversalProberResult):
     im = add_text2(im, rating, add_shadow=True, stroke_offset=1)
 
     im = im.convert('RGB')
-    make_path = os.path.join(temp_absdir, f'{user_info.user_id}_guin.jpg')
+    make_path = os.path.join(temp_absdir, f'{user_info.code}_guin.jpg')
     im.save(make_path)
 
     return make_path
@@ -640,7 +640,7 @@ def bandori_draw_recent(data: UniversalProberResult):
             im.alpha_composite(new_record_img, (1652, 488))
 
     im = im.convert('RGB')
-    make_path = os.path.join(temp_absdir, f'{user_info.user_id}_bandori.jpg')
+    make_path = os.path.join(temp_absdir, f'{user_info.code}_bandori.jpg')
     im.save(make_path)
 
     return make_path
@@ -671,7 +671,7 @@ async def draw_b30(data: UniversalProberResult):
 
     # 准备原始数据
     user_info = data.user_info
-    user_id = user_info.user_id
+    user_code = user_info.code
     recent_score = data.recent_score[0]
     scores = sorted(data.scores, key=lambda _: _.rating, reverse=True)
     now = time.time()
@@ -685,7 +685,7 @@ async def draw_b30(data: UniversalProberResult):
     top_limit_ptt = 0.75 * b30 + 0.25 * b10
     if user_info.rating == -1:
         head = ['Arcaea 用户档案  制图时间：%s' % now_datetime(),
-                'POTENTIAL：**.**       ID:%s   UID:%d' % (user_info.name, user_info.user_id),
+                'POTENTIAL：**.**       ID:%s   UID:%s' % (user_info.name, user_code),
                 'Best 30  ：%8.5f    注册时间：%s（%s）' % (b30, get_time("%Y-%m-%d", user_info.join_date / 1000), datediff(now, user_info.join_date / 1000)),
                 'Top 10   ：**.**       上次游玩：%s（%s）' % (get_time("%Y-%m-%d %H:%M", recent_score_time), datediff(now, recent_score_time)),
                 '玩家已隐藏潜力值',
@@ -698,7 +698,7 @@ async def draw_b30(data: UniversalProberResult):
         t10_min = 4 * (ptt - 0.0001) - 3 * b30
         t10 = (t10_max + t10_min) / 2
         head = ['Arcaea 用户档案  制图时间：%s' % now_datetime(),
-                'POTENTIAL：%5.2f       ID:%s   UID:%d' % (ptt, user_info.name, user_info.user_id),
+                'POTENTIAL：%5.2f       ID:%s   UID:%s' % (ptt, user_info.name, user_info.code),
                 'Best 30  ：%8.5f    注册时间：%s（%s）' % (b30, get_time("%Y-%m-%d", user_info.join_date / 1000), datediff(now, user_info.join_date / 1000)),
                 'Top 10   ：%5.2f?      上次游玩：%s（%s）' % (t10, get_time("%Y-%m-%d %H:%M", recent_score_time), datediff(now, recent_score_time)),
                 '以Best前10作为Top10时的潜力值：%.5f' % top_limit_ptt,
@@ -775,7 +775,7 @@ async def draw_b30(data: UniversalProberResult):
 
     result = head + recent_description + recent_score_info + b30_description + best30_scores_info + b31_split_line + b31Tob35_scores_info
 
-    savepath = os.path.join(temp_absdir, f'{user_id}_b30.jpg')
+    savepath = os.path.join(temp_absdir, f'{user_code}_b30.jpg')
     await draw_image(result, savepath)
 
     return savepath
@@ -934,7 +934,7 @@ def andreal_v1_draw_recent(data: UniversalProberResult):
     img.paste(glass.resize((630, 721)), (810, 240), mask=glass.resize((630, 721)))
     draw = ImageDraw.Draw(img)
     draw.text((275, 100), account_info.name, font=Fonts.kazasawa_light_40, stroke_width=3, stroke_fill=(82, 82, 82))
-    draw.text((275, 160), f'ID {str(account_info.user_id)}', font=Fonts.kazasawa_light_32, stroke_width=3, stroke_fill=(82, 82, 82))
+    draw.text((275, 160), f'ID {str(account_info.code)}', font=Fonts.kazasawa_light_32, stroke_width=3, stroke_fill=(82, 82, 82))
     draw.text((385, 677), str(constant), font=Fonts.exo_36, stroke_width=2, stroke_fill=(0, 0, 0))
     draw.text((515, 370), formatted_score, font=Fonts.exo_64, stroke_width=3, stroke_fill=(25, 103, 125) if record.score >= 10000000 else (82, 82, 82))
     draw.text((105, 253), final_songname, font=Fonts.kazasawa_regulary_56, stroke_width=3, stroke_fill=(82, 82, 82))
@@ -945,7 +945,7 @@ def andreal_v1_draw_recent(data: UniversalProberResult):
     draw.text((378, 758), f'Played at {time_played}', font=Fonts.exo_40, stroke_width=3, stroke_fill=(82, 82, 82))
 
     # return
-    make_path = os.path.join(temp_absdir, f'{account_info.user_id}_andreal_v1.png')
+    make_path = os.path.join(temp_absdir, f'{account_info.code}_andreal_v1.png')
     img.save(make_path)
     return make_path
 
@@ -1031,7 +1031,7 @@ def andreal_v2_draw_recent(data: UniversalProberResult):
     shadow_draw.text((120, 260), state, font=Fonts.exo_44_2, stroke_width=3, stroke_fill=(1, 1, 1))
     shadow_draw.text((398, 354), "%.4f" % record.rating, font=Fonts.exo_36_2, stroke_width=3, stroke_fill=(1, 1, 1))
     shadow_draw.text((290, 60), account_info.name, font=Fonts.andrea_56_2, stroke_width=3, stroke_fill=(1, 1, 1))
-    shadow_draw.text((297, 150), f'ArcID: {account_info.user_id}', font=Fonts.andrea_28_2, stroke_width=3,
+    shadow_draw.text((297, 150), f'ArcID: {account_info.code}', font=Fonts.andrea_28_2, stroke_width=3,
                      stroke_fill=(1, 1, 1))
     shadow = shadow.filter(ImageFilter.GaussianBlur(0.8))
     img.paste(shadow, mask=shadow)
@@ -1050,10 +1050,10 @@ def andreal_v2_draw_recent(data: UniversalProberResult):
     draw.text((120, 260), state, font=Fonts.exo_44_2)
     draw.text((398, 354), "%.4f" % record.rating, font=Fonts.exo_36_2)
     draw.text((290, 60), account_info.name, font=Fonts.andrea_56_2)
-    draw.text((297, 150), f'ArcID: {account_info.user_id}', font=Fonts.andrea_28_2)
+    draw.text((297, 150), f'ArcID: {account_info.code}', font=Fonts.andrea_28_2)
 
     # return
-    make_path = os.path.join(temp_absdir, f'{account_info.user_id}_andreal_v2.png')
+    make_path = os.path.join(temp_absdir, f'{account_info.code}_andreal_v2.png')
     img.save(make_path)
     return make_path
 
@@ -1110,7 +1110,7 @@ def andreal_v3_draw_recent(data: UniversalProberResult):
 
     draw = ImageDraw.Draw(img)
     draw.text((340, 200), account_info.name, font=Fonts.andrea_36_2, fill=(1, 1, 1))
-    draw.text((340, 270), f'ArcID: {account_info.user_id}', font=Fonts.geosans_light_20_2, fill=(110, 110, 110))
+    draw.text((340, 270), f'ArcID: {account_info.code}', font=Fonts.geosans_light_20_2, fill=(110, 110, 110))
     pos = draw.textsize(text=f'{difficulty_list[record.difficulty]} | {constant}', font=Fonts.beatrice_24_2)[0]
     draw.text(((1000 - pos) / 2, 925), f'{difficulty_list[record.difficulty]} | {constant}', font=Fonts.beatrice_24_2,
               fill=color_list[record.difficulty])
@@ -1124,6 +1124,6 @@ def andreal_v3_draw_recent(data: UniversalProberResult):
     draw.text((730, 1375), f'{record.miss_count}', font=Fonts.exo_20_2, fill=(1, 1, 1))
 
     # return
-    make_path = os.path.join(temp_absdir, f'{account_info.user_id}_andreal_v3.png')
+    make_path = os.path.join(temp_absdir, f'{account_info.code}_andreal_v3.png')
     img.save(make_path)
     return make_path

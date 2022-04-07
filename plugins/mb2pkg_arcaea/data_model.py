@@ -36,6 +36,7 @@ class UserInfo(BaseModel):
     rating: int
     join_date: int
     character: int
+    code: Optional[str]  # some probers don't provide this
 
 
 class UniversalProberResult(BaseModel):
