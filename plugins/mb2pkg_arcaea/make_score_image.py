@@ -817,7 +817,7 @@ class Fonts:
     geosans_light_20_2 = ImageFont.truetype(os.path.join(ARCLASTDIR, 'fonts', 'GeosansLight.ttf'), 20 + 7)
 
 
-def rating_image(rating: int):
+def get_rating_image(rating: int):
     from PIL import Image, ImageDraw
     real_rating = str(rating).zfill(4)
     img = Image.new(mode="RGBA", size=(200, 200), color=(255, 255, 255, 0))
@@ -855,7 +855,7 @@ def rating_image(rating: int):
     return img
 
 
-def partner_image(partner: int, awaken: bool):
+def get_partner_image(partner: int, awaken: bool):
     from PIL import Image
     if awaken is True:
         path = os.path.join(ARCLASTDIR, 'char', f'{partner}u.png')
@@ -865,7 +865,7 @@ def partner_image(partner: int, awaken: bool):
     return img
 
 
-def partner_icon(partner: int, awaken: bool):
+def get_partner_icon(partner: int, awaken: bool):
     from PIL import Image
     if awaken is True:
         path = os.path.join(ARCLASTDIR, 'char', f'{partner}u_icon.png')
@@ -875,7 +875,7 @@ def partner_icon(partner: int, awaken: bool):
     return img
 
 
-def song_image(sid: str, difficulty: int):
+def get_song_image(sid: str, difficulty: int):
     from PIL import Image
     path = os.path.join(ARCLASTDIR, 'songs', f'{sid}.jpg')
     if difficulty == 3:
@@ -892,7 +892,7 @@ def andreal_v1_draw_recent(data: UniversalProberResult):
     songinfo = songtitle[record.song_id]
 
     # make background
-    song_img = song_image(record.song_id, difficulty=record.difficulty)[0].crop((0, 87, 512, 341)).resize((1440, 960))
+    song_img = get_song_image(record.song_id, difficulty=record.difficulty)[0].crop((0, 87, 512, 341)).resize((1440, 960))
     divider = Image.open(os.path.join(ARCLASTDIR, 'res_andreal', 'Divider.png'))
     mask = Image.open(os.path.join(ARCLASTDIR, 'res_andreal', 'Mask.png'))
     mask_tmp = song_img.crop((50, 50, 1390, 910))
@@ -911,8 +911,8 @@ def andreal_v1_draw_recent(data: UniversalProberResult):
     img = background
 
     # make result
-    song_img = song_image(record.song_id, record.difficulty)[0]
-    partner_img = partner_image(account_info.character, account_info.is_char_uncapped)
+    song_img = get_song_image(record.song_id, record.difficulty)[0]
+    partner_img = get_partner_image(account_info.character, account_info.is_char_uncapped)
     glass = Image.open(os.path.join(ARCLASTDIR, 'res_andreal', 'Glass.png'))
     os.path.join(ARCLASTDIR, 'res_andreal', f'end_{record.clear_type}.png')
     clear_type = Image.open(os.path.join(ARCLASTDIR, 'res_andreal', f'end_{record.clear_type}.png'))
@@ -925,7 +925,7 @@ def andreal_v1_draw_recent(data: UniversalProberResult):
         final_songname = songinfo["en"][0:23] + '...'
     else:
         final_songname = songinfo["en"]
-    rating = rating_image(account_info.rating)
+    rating = get_rating_image(account_info.rating)
     img.paste(rating, (87, 60), rating)
     img.paste(partner_img.resize((950, 950)), (770, 58), mask=partner_img.resize((950, 950)))
     img.paste(clear_type.resize((700, 700)), (-56, 224), mask=clear_type.resize((700, 700)))
@@ -959,7 +959,7 @@ def andreal_v2_draw_recent(data: UniversalProberResult):
 
     # make background
     background = Image.new(size=(1920, 1080), mode='RGBA')
-    song_img = song_image(record.song_id, difficulty=record.difficulty)[0]
+    song_img = get_song_image(record.song_id, difficulty=record.difficulty)[0]
     background.paste(song_img.filter(ImageFilter.GaussianBlur(10)).crop((0, 112, 512, 400)).resize((1920, 1080)))
     background.paste(song_img.filter(ImageFilter.GaussianBlur(4)).crop((0, 19, 512, 67)).resize((1920, 180)), (0, 740))
 
@@ -1007,9 +1007,9 @@ def andreal_v2_draw_recent(data: UniversalProberResult):
     str_score = str(record.score).zfill(8)
     formatted_score = f"{str_score[-8:-6]}'{str_score[-6:-3]}'{str_score[-3:]}"
     time_played = datetime.utcfromtimestamp(int(record.time_played / 1000)).strftime("%Y/%m/%d %H:%M:%S")
-    partner_img = partner_image(account_info.character, account_info.is_char_uncapped)
+    partner_img = get_partner_image(account_info.character, account_info.is_char_uncapped)
     img = background
-    rating = rating_image(account_info.rating)
+    rating = get_rating_image(account_info.rating)
     img.paste(rating, (79, 38), rating)
     img.paste(partner_img.resize((1400, 1400)), (850, 0), partner_img.resize((1400, 1400)))
 
@@ -1066,7 +1066,7 @@ def andreal_v3_draw_recent(data: UniversalProberResult):
     songinfo = songtitle[record.song_id]
 
     # make background
-    song_img = song_image(record.song_id, record.difficulty)[0]
+    song_img = get_song_image(record.song_id, record.difficulty)[0]
     background_mask = Image.open(os.path.join(ARCLASTDIR, 'res_andreal', f'RawV3Bg_{songinfo["side"]}.png'))
     fill = Image.new(mode='RGBA', size=(1000, 1444), color=(255, 255, 255, 100))
     if len(songinfo["en"]) > 30:  # To restrict the length of the songname
@@ -1098,8 +1098,8 @@ def andreal_v3_draw_recent(data: UniversalProberResult):
     formatted_score = f"{str_score[-8:-6]}'{str_score[-6:-3]}'{str_score[-3:]}"
     constant = calc_last_const(record.score, record.rating)
     time_played = datetime.utcfromtimestamp(int(record.time_played / 1000)).strftime("%Y/%m/%d %H:%M:%S")
-    partner = partner_icon(account_info.character, account_info.is_char_uncapped)
-    rating_img = rating_image(account_info.rating)
+    partner = get_partner_icon(account_info.character, account_info.is_char_uncapped)
+    rating_img = get_rating_image(account_info.rating)
     clear_type_img = Image.open(os.path.join(ARCLASTDIR, 'res_andreal', f'clear_{record.clear_type}.png'))
     img = background
 
