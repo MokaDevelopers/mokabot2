@@ -2,7 +2,7 @@ import difflib
 import random
 import sqlite3
 from heapq import nlargest
-from typing import Callable, Any, Coroutine
+from typing import Callable
 
 from nonebot import on_command
 from nonebot.adapters import Bot
@@ -14,7 +14,7 @@ from .config import Config
 from .data_model import UniversalProberResult, ArcaeaBind
 from .exceptions import *
 from .make_score_image import moe_draw_recent, guin_draw_recent, bandori_draw_recent, song_list, draw_b30, \
-    andreal_v1_draw_recent, andreal_v2_draw_recent, andreal_v3_draw_recent
+    andreal_v1_draw_recent, andreal_v2_draw_recent, andreal_v3_draw_recent, andreal_draw_b30
 from .probers import BotArcAPIProber, BaseProber
 
 match_arcaea_probe = on_command('arc查询', priority=5)
@@ -185,7 +185,10 @@ async def make_arcaea_best35_result(
         friend_id=specific_friend_id or bind_info.arc_friend_id
     )
 
-    return await draw_b30(arcaea_data)
+    if 'andreal' in bind_info.arc_result_type:
+        return await andreal_draw_b30(arcaea_data)
+    else:
+        return await draw_b30(arcaea_data)
 
 
 async def bind_arcaea_friend_id(
@@ -252,7 +255,7 @@ def select_available_prober(mode: str) -> type(BaseProber):
     :raise AllProberUnavailableError: 所有的查分器全部不可用
     """
 
-    if mode in ['b35', 'specific']:
+    if mode in ['b35', 'b30', 'specific']:
         if enable_arcaea_prober_botarcapi:
             return BotArcAPIProber
         else:
