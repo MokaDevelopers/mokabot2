@@ -4,8 +4,8 @@ import time
 from typing import Optional
 
 import nonebot
-from PIL import Image, ImageDraw, ImageFont, ImageOps
-
+from PIL import Image, ImageDraw, ImageFont, ImageOps, ImageFilter
+from datetime import datetime
 from public_module.mb2pkg_mokalogger import getlog
 from public_module.mb2pkg_public_plugin import get_time, now_datetime, datediff
 from public_module.mb2pkg_test2pic import str_width, draw_image
@@ -189,7 +189,7 @@ def calc_last_const(score, rating):
     return '{:.1f}'.format(const)
 
 
-async def moe_draw_recent(data: UniversalProberResult):
+def moe_draw_recent(data: UniversalProberResult):
     user_info = data.user_info
     recent_score = data.recent_score[0]
     try:
@@ -349,7 +349,7 @@ async def moe_draw_recent(data: UniversalProberResult):
     return make_path
 
 
-async def guin_draw_recent(data: UniversalProberResult):
+def guin_draw_recent(data: UniversalProberResult):
     user_info = data.user_info
     recent_score = data.recent_score[0]
     try:
@@ -483,7 +483,7 @@ async def guin_draw_recent(data: UniversalProberResult):
     return make_path
 
 
-async def bandori_draw_recent(data: UniversalProberResult):
+def bandori_draw_recent(data: UniversalProberResult):
 
     user_info = data.user_info
     recent_score = data.recent_score[0]
@@ -782,3 +782,348 @@ async def draw_b30(data: UniversalProberResult):
 
 
 # andreal field
+
+
+class Fonts:
+    os.path.join(ARCLASTDIR, 'fonts', 'Andrea.otf')
+    andrea_72_2 = ImageFont.truetype(os.path.join(ARCLASTDIR, 'fonts', 'Andrea.otf'), 72 + 24)
+    andrea_60_2 = ImageFont.truetype(os.path.join(ARCLASTDIR, 'fonts', 'Andrea.otf'), 60 + 20)
+    andrea_56_2 = ImageFont.truetype(os.path.join(ARCLASTDIR, 'fonts', 'Andrea.otf'), 56 + 17)
+    andrea_36_2 = ImageFont.truetype(os.path.join(ARCLASTDIR, 'fonts', 'Andrea.otf'), 36 + 12)
+    andrea_28_2 = ImageFont.truetype(os.path.join(ARCLASTDIR, 'fonts', 'Andrea.otf'), 28 + 9)
+    exo_64 = ImageFont.truetype(os.path.join(ARCLASTDIR, 'fonts', 'Exo-Medium.ttf'), 64)
+    exo_60 = ImageFont.truetype(os.path.join(ARCLASTDIR, 'fonts', 'Exo-Medium.ttf'), 60)
+    exo_44 = ImageFont.truetype(os.path.join(ARCLASTDIR, 'fonts', 'Exo-Medium.ttf'), 44)
+    exo_44_2 = ImageFont.truetype(os.path.join(ARCLASTDIR, 'fonts', 'Exo-Medium.ttf'), 44 + 14)
+    exo_40 = ImageFont.truetype(os.path.join(ARCLASTDIR, 'fonts', 'Exo-Medium.ttf'), 40)
+    exo_36 = ImageFont.truetype(os.path.join(ARCLASTDIR, 'fonts', 'Exo-Medium.ttf'), 36)
+    exo_36_2 = ImageFont.truetype(os.path.join(ARCLASTDIR, 'fonts', 'Exo-Medium.ttf'), 36 + 12)
+    exo_32 = ImageFont.truetype(os.path.join(ARCLASTDIR, 'fonts', 'Exo-Medium.ttf'), 32)
+    exo_32_2 = ImageFont.truetype(os.path.join(ARCLASTDIR, 'fonts', 'Exo-Medium.ttf'), 32 + 10)
+    exo_26_2 = ImageFont.truetype(os.path.join(ARCLASTDIR, 'fonts', 'Exo-Medium.ttf'), 26 + 9)
+    exo_24_2 = ImageFont.truetype(os.path.join(ARCLASTDIR, 'fonts', 'Exo-Medium.ttf'), 24 + 8)
+    exo_20_2 = ImageFont.truetype(os.path.join(ARCLASTDIR, 'fonts', 'Exo-Medium.ttf'), 20 + 6)
+    exolight_28 = ImageFont.truetype(os.path.join(ARCLASTDIR, 'fonts', 'Exo Andrea Light.otf'), 28 + 9)
+    beatrice_36 = ImageFont.truetype(os.path.join(ARCLASTDIR, 'fonts', 'Beatrice.otf'), 36)
+    beatrice_36_2 = ImageFont.truetype(os.path.join(ARCLASTDIR, 'fonts', 'Beatrice.otf'), 36 + 12)
+    beatrice_26_2 = ImageFont.truetype(os.path.join(ARCLASTDIR, 'fonts', 'Beatrice.otf'), 26 + 9)
+    beatrice_24_2 = ImageFont.truetype(os.path.join(ARCLASTDIR, 'fonts', 'Beatrice.otf'), 24 + 8)
+    beatrice_20 = ImageFont.truetype(os.path.join(ARCLASTDIR, 'fonts', 'Beatrice.otf'), 20 + 7)
+    kazasawa_light_40 = ImageFont.truetype(os.path.join(ARCLASTDIR, 'fonts', 'Kazesawa-Light.ttf'), 40)
+    kazasawa_light_32 = ImageFont.truetype(os.path.join(ARCLASTDIR, 'fonts', 'Kazesawa-Light.ttf'), 32)
+    kazasawa_light_24 = ImageFont.truetype(os.path.join(ARCLASTDIR, 'fonts', 'Kazesawa-Light.ttf'), 24)
+    kazasawa_regulary_56 = ImageFont.truetype(os.path.join(ARCLASTDIR, 'fonts', 'Kazesawa-Regular.ttf'), 56)
+    kazasawa_regulary_30_2 = ImageFont.truetype(os.path.join(ARCLASTDIR, 'fonts', 'Kazesawa-Regular.ttf'), 30 + 10)
+    geosans_light_20_2 = ImageFont.truetype(os.path.join(ARCLASTDIR, 'fonts', 'GeosansLight.ttf'), 20 + 7)
+
+
+def rating_image(rating: int):
+    from PIL import Image, ImageDraw
+    real_rating = str(rating).zfill(4)
+    img = Image.new(mode="RGBA", size=(200, 200), color=(255, 255, 255, 0))
+    if rating == -1:
+        rating_img = Image.open(os.path.join(ARCLASTDIR, 'potential', 'rating_off.png')).convert('RGBA').resize((158, 158))
+        img.paste(rating_img, (21, 21), rating_img)
+        return img
+    rating_img = Image.open(os.path.join(ARCLASTDIR, 'potential', rank_ptt(rating))).convert('RGBA').resize((158, 158))
+    img.paste(rating_img, (21, 21), rating_img)
+    draw = ImageDraw.Draw(img)
+    if rating < 0:
+        draw.text((65, 52), '--', (255, 255, 255), font=Fonts.exo_64, stroke_width=4, stroke_fill=(31, 30, 51))
+    elif 0 < rating < 1000:
+        left_x = 5 + (0 if real_rating[0] == '0' else (23 if real_rating[0] == '1' else 37)) + (
+            23 if real_rating[1] == '1' else (25 if real_rating[1] == '7' else 37))
+        right_x = 20 + (17 if real_rating[2] == '1' else 30) + (17 if real_rating[3] == '1' else 30)
+        pos_x = 98 - (left_x + right_x) / 2
+        draw.text((pos_x + 9, 56), real_rating[1], font=Fonts.exo_60, stroke_width=4, stroke_fill=(31, 30, 51),
+                  align='center')
+        draw.text((pos_x + left_x + 1, 73), '.', font=Fonts.exo_44, stroke_width=4, stroke_fill=(31, 30, 51),
+                  align='center')
+        draw.text((pos_x + left_x + 11, 73), f'{real_rating[2:4]}', font=Fonts.exo_44, stroke_width=4,
+                  stroke_fill=(31, 30, 51), align='center')
+    else:
+        left_x = 5 + (0 if real_rating[0] == '0' else (23 if real_rating[0] == '1' else 37)) + (
+            23 if real_rating[1] == '1' else (25 if real_rating[1] == '7' else 37))
+        right_x = 20 + (17 if real_rating[2] == '1' else 30) + (17 if real_rating[3] == '1' else 30)
+        pos_x = 98 - (left_x + right_x) / 2
+        draw.text((pos_x + 11, 56), real_rating[0:2], font=Fonts.exo_60, stroke_width=4, stroke_fill=(31, 30, 51),
+                  align='center')
+        draw.text((pos_x + left_x + 3, 73), '.', font=Fonts.exo_44, stroke_width=4, stroke_fill=(31, 30, 51),
+                  align='center')
+        draw.text((pos_x + left_x + 15, 73), f'{real_rating[2:4]}', font=Fonts.exo_44, stroke_width=4,
+                  stroke_fill=(31, 30, 51), align='center')
+    return img
+
+
+def partner_image(partner: int, awaken: bool):
+    from PIL import Image
+    if awaken is True:
+        path = os.path.join(ARCLASTDIR, 'char', f'{partner}u.png')
+    else:
+        path = os.path.join(ARCLASTDIR, 'char', f'{partner}.png')
+    img = Image.open(path).convert('RGBA')
+    return img
+
+
+def partner_icon(partner: int, awaken: bool):
+    from PIL import Image
+    if awaken is True:
+        path = os.path.join(ARCLASTDIR, 'char', f'{partner}u_icon.png')
+    else:
+        path = os.path.join(ARCLASTDIR, 'char', f'{partner}_icon.png')
+    img = Image.open(path).convert('RGBA').resize((255, 255))
+    return img
+
+
+def song_image(sid: str, difficulty: int):
+    from PIL import Image
+    path = os.path.join(ARCLASTDIR, 'songs', f'{sid}.jpg')
+    if difficulty == 3:
+        path = os.path.join(ARCLASTDIR, 'songs', f'{sid}_3.jpg')
+    avg_color = Image.open(path).resize((1, 1)).getpixel((0, 0))
+    return Image.open(path).resize((512, 512)), (
+        int(avg_color[0] / 1.5), int(avg_color[1] / 1.5), int(avg_color[2] / 1.5))
+
+
+def andreal_v1_draw_recent(data: UniversalProberResult):
+    # data preparation
+    account_info = data.user_info
+    record = data.recent_score[0]
+    songinfo = songtitle[record.song_id]
+
+    # make background
+    song_img = song_image(record.song_id, difficulty=record.difficulty)[0].crop((0, 87, 512, 341)).resize((1440, 960))
+    divider = Image.open(os.path.join(ARCLASTDIR, 'res_andreal', 'Divider.png'))
+    mask = Image.open(os.path.join(ARCLASTDIR, 'res_andreal', 'Mask.png'))
+    mask_tmp = song_img.crop((50, 50, 1390, 910))
+    slogan = 'Generated by Lagrange, Powered by Project Andreal'
+    background = Image.new(mode='RGBA', size=(1440, 960))
+    background.paste(song_img.filter(ImageFilter.GaussianBlur(20)), (0, 0))
+    background.paste(mask, mask=mask)
+    background.paste(mask_tmp.filter(ImageFilter.GaussianBlur(80)), (50, 50))
+    background.paste(divider.resize((1240, 33)), (100, 840), mask=divider.resize((1240, 33)))
+    draw = ImageDraw.Draw(background)
+    draw.text((518, 488), 'Pure', font=Fonts.exo_40, stroke_width=3, stroke_fill=(82, 82, 82))
+    draw.text((518, 553), 'Far', font=Fonts.exo_40, stroke_width=3, stroke_fill=(82, 82, 82))
+    draw.text((518, 618), 'Lost', font=Fonts.exo_40, stroke_width=3, stroke_fill=(82, 82, 82))
+    draw.text((518, 683), 'PTT', font=Fonts.exo_40, stroke_width=3, stroke_fill=(82, 82, 82))
+    draw.text((80, 865), slogan, font=Fonts.kazasawa_light_24, stroke_width=3, stroke_fill=(82, 82, 82))
+    img = background
+
+    # make result
+    song_img = song_image(record.song_id, record.difficulty)[0]
+    partner_img = partner_image(account_info.character, account_info.is_char_uncapped)
+    glass = Image.open(os.path.join(ARCLASTDIR, 'res_andreal', 'Glass.png'))
+    os.path.join(ARCLASTDIR, 'res_andreal', f'end_{record.clear_type}.png')
+    clear_type = Image.open(os.path.join(ARCLASTDIR, 'res_andreal', f'end_{record.clear_type}.png'))
+    difficulty = Image.open(os.path.join(ARCLASTDIR, 'res_andreal', f'con_{record.difficulty}.png'))
+    str_score = str(record.score).zfill(8)
+    formatted_score = f"{str_score[-8:-6]}'{str_score[-6:-3]}'{str_score[-3:]}"
+    constant = calc_last_const(record.score, record.rating)
+    time_played = datetime.utcfromtimestamp(int(record.time_played / 1000)).strftime("%Y/%m/%d %H:%M:%S")
+    if len(songinfo["en"]) > 23:  # To restrict the length of the songname
+        final_songname = songinfo["en"][0:23] + '...'
+    else:
+        final_songname = songinfo["en"]
+    rating = rating_image(account_info.rating)
+    img.paste(rating, (87, 60), rating)
+    img.paste(partner_img.resize((950, 950)), (770, 58), mask=partner_img.resize((950, 950)))
+    img.paste(clear_type.resize((700, 700)), (-56, 224), mask=clear_type.resize((700, 700)))
+    img.paste(song_img.resize((290, 290)), (150, 430))
+    img.paste(difficulty.resize((150, 44)), (333, 680), mask=difficulty.resize((150, 44)))
+    img.paste(glass.resize((630, 721)), (810, 240), mask=glass.resize((630, 721)))
+    draw = ImageDraw.Draw(img)
+    draw.text((275, 100), account_info.name, font=Fonts.kazasawa_light_40, stroke_width=3, stroke_fill=(82, 82, 82))
+    draw.text((275, 160), f'ID {str(account_info.user_id)}', font=Fonts.kazasawa_light_32, stroke_width=3, stroke_fill=(82, 82, 82))
+    draw.text((385, 677), str(constant), font=Fonts.exo_36, stroke_width=2, stroke_fill=(0, 0, 0))
+    draw.text((515, 370), formatted_score, font=Fonts.exo_64, stroke_width=3, stroke_fill=(25, 103, 125) if record.score >= 10000000 else (82, 82, 82))
+    draw.text((105, 253), final_songname, font=Fonts.kazasawa_regulary_56, stroke_width=3, stroke_fill=(82, 82, 82))
+    draw.text((638, 488), f'{record.perfect_count} (+{record.shiny_perfect_count})', font=Fonts.exo_40, stroke_width=3, stroke_fill=(82, 82, 82))
+    draw.text((638, 553), str(record.near_count), font=Fonts.exo_40, stroke_width=3, stroke_fill=(82, 82, 82))
+    draw.text((638, 618), str(record.miss_count), font=Fonts.exo_40, stroke_width=3, stroke_fill=(82, 82, 82))
+    draw.text((638, 683), "%.4f" % record.rating, font=Fonts.exo_40, stroke_width=3, stroke_fill=(82, 82, 82))
+    draw.text((378, 758), f'Played at {time_played}', font=Fonts.exo_40, stroke_width=3, stroke_fill=(82, 82, 82))
+
+    # return
+    make_path = os.path.join(temp_absdir, f'{account_info.user_id}_andreal_v1.png')
+    img.save(make_path)
+    return make_path
+
+
+def andreal_v2_draw_recent(data: UniversalProberResult):
+    # TODO slogan
+    # data preparation
+    account_info = data.user_info
+    record = data.recent_score[0]
+    songinfo = songtitle[record.song_id]
+
+    # make background
+    background = Image.new(size=(1920, 1080), mode='RGBA')
+    song_img = song_image(record.song_id, difficulty=record.difficulty)[0]
+    background.paste(song_img.filter(ImageFilter.GaussianBlur(10)).crop((0, 112, 512, 400)).resize((1920, 1080)))
+    background.paste(song_img.filter(ImageFilter.GaussianBlur(4)).crop((0, 19, 512, 67)).resize((1920, 180)), (0, 740))
+
+    color = (100, 200, 225, 150) if songinfo["side"] == 0 else (50, 20, 75, 150)  # Determine the color of the glow
+    glow = Image.new(size=(320, 320), mode='RGBA')  # To new a layer called glow
+    ImageDraw.Draw(glow).rectangle(xy=(0, 0, 320, 320), fill=color)
+    glow.putalpha(50)  # To add the alpha for the glow
+
+    if len(songinfo["en"]) > 50:  # To restrict the length of the songname
+        final_songname = songinfo["en"][0:50] + '...'
+    else:
+        final_songname = songinfo["en"]
+
+    shadow = Image.new(size=(1920, 1080), mode='RGBA')
+    shadow_draw = ImageDraw.Draw(shadow, mode='RGBA')
+    shadow_draw.text((123, 355), 'Play PTT', font=Fonts.exo_36_2, stroke_fill=(1, 1, 1), stroke_width=3)
+    shadow_draw.text((127, 455), 'Pure', font=Fonts.exo_32_2, stroke_fill=(1, 1, 1), stroke_width=3)
+    shadow_draw.text((127, 525), 'Far', font=Fonts.exo_32_2, stroke_fill=(1, 1, 1), stroke_width=3)
+    shadow_draw.text((410, 525), 'Lost', font=Fonts.exo_32_2, stroke_fill=(1, 1, 1), stroke_width=3)
+    shadow_draw.text((127, 595), 'Played at', font=Fonts.exo_32_2, stroke_fill=(1, 1, 1), stroke_width=3)
+    shadow_draw.text((510, 750), final_songname, font=Fonts.andrea_56_2, stroke_fill=(1, 1, 1), stroke_width=3)
+    shadow = shadow.filter(ImageFilter.GaussianBlur(0.8))
+    background.paste(shadow, mask=shadow)
+
+    draw = ImageDraw.Draw(background, mode='RGBA')
+    draw.line([(0, 740), (1920, 740)], width=3)
+    draw.line([(0, 920), (1920, 920)], width=3)
+    draw.line([(0, 705), (1920, 705)], width=1)
+    draw.line([(0, 955), (1920, 955)], width=1)
+    draw.text((123, 355), 'Play PTT', font=Fonts.exo_36_2)
+    draw.text((127, 455), 'Pure', font=Fonts.exo_32_2)
+    draw.text((127, 525), 'Far', font=Fonts.exo_32_2)
+    draw.text((410, 525), 'Lost', font=Fonts.exo_32_2)
+    draw.text((127, 595), 'Played at', font=Fonts.exo_32_2)
+    draw.text((510, 750), final_songname, font=Fonts.andrea_56_2)
+
+    background.paste(glow, (145, 685), glow)
+    background.paste(song_img.resize((320, 320)), (130, 670))
+
+    # make result
+    difficulty_list = ['Past', 'Present', 'Future', 'Beyond']
+    clear_list = ['TL', 'NC', 'FR', 'PM', 'EC', 'HC']
+    grade = rank_score(record.score)
+    state = 'Recent'  # TODO UniversalProberResult这个类真的没法判断是 Recent 还是 Best
+    str_score = str(record.score).zfill(8)
+    formatted_score = f"{str_score[-8:-6]}'{str_score[-6:-3]}'{str_score[-3:]}"
+    time_played = datetime.utcfromtimestamp(int(record.time_played / 1000)).strftime("%Y/%m/%d %H:%M:%S")
+    partner_img = partner_image(account_info.character, account_info.is_char_uncapped)
+    img = background
+    rating = rating_image(account_info.rating)
+    img.paste(rating, (79, 38), rating)
+    img.paste(partner_img.resize((1400, 1400)), (850, 0), partner_img.resize((1400, 1400)))
+
+    shadow = Image.new(size=(1920, 1080), mode='RGBA')  # To provide a blurred shadow of the text
+    shadow_draw = ImageDraw.Draw(shadow, mode='RGBA')
+    shadow_draw.text((514, 850),
+                     f'{difficulty_list[record.difficulty]} {calc_last_const(record.score, record.rating)}',
+                     font=Fonts.andrea_36_2, stroke_width=3, stroke_fill=(1, 1, 1))
+    shadow_draw.text((398, 270), formatted_score, font=Fonts.exo_36_2, stroke_width=3, stroke_fill=(1, 1, 1))
+    shadow_draw.text((730, 270), f'[{grade}][{clear_list[record.clear_type]}]', font=Fonts.exo_36_2, stroke_width=3,
+                     stroke_fill=(1, 1, 1))
+    shadow_draw.text((240, 455), str(record.perfect_count), font=Fonts.exo_32_2, stroke_width=3,
+                     stroke_fill=(1, 1, 1))
+    shadow_draw.text((415, 455), f'(+{str(record.shiny_perfect_count)})', font=Fonts.exo_32_2, stroke_width=3,
+                     stroke_fill=(1, 1, 1))
+    shadow_draw.text((240, 525), str(record.near_count), font=Fonts.exo_32_2, stroke_width=3, stroke_fill=(1, 1, 1))
+    shadow_draw.text((560, 525), str(record.miss_count), font=Fonts.exo_32_2, stroke_width=3, stroke_fill=(1, 1, 1))
+    shadow_draw.text((350, 595), f'{time_played}', font=Fonts.exo_32_2, stroke_width=3, stroke_fill=(1, 1, 1))
+    shadow_draw.text((120, 260), state, font=Fonts.exo_44_2, stroke_width=3, stroke_fill=(1, 1, 1))
+    shadow_draw.text((398, 354), "%.4f" % record.rating, font=Fonts.exo_36_2, stroke_width=3, stroke_fill=(1, 1, 1))
+    shadow_draw.text((290, 60), account_info.name, font=Fonts.andrea_56_2, stroke_width=3, stroke_fill=(1, 1, 1))
+    shadow_draw.text((297, 150), f'ArcID: {account_info.user_id}', font=Fonts.andrea_28_2, stroke_width=3,
+                     stroke_fill=(1, 1, 1))
+    shadow = shadow.filter(ImageFilter.GaussianBlur(0.8))
+    img.paste(shadow, mask=shadow)
+
+    draw = ImageDraw.Draw(img)
+    draw.text((514, 850),
+              f'{difficulty_list[record.difficulty]} {calc_last_const(record.score, record.rating)}',
+              font=Fonts.andrea_36_2)
+    draw.text((398, 270), formatted_score, font=Fonts.exo_36_2)
+    draw.text((730, 270), f'[{grade}][{clear_list[record.clear_type]}]', font=Fonts.exo_36_2)
+    draw.text((240, 455), str(record.perfect_count), font=Fonts.exo_32_2)
+    draw.text((415, 455), f'(+{str(record.shiny_perfect_count)})', font=Fonts.exo_32_2)
+    draw.text((240, 525), str(record.near_count), font=Fonts.exo_32_2)
+    draw.text((560, 525), str(record.miss_count), font=Fonts.exo_32_2)
+    draw.text((350, 595), f'{time_played}', font=Fonts.exo_32_2)
+    draw.text((120, 260), state, font=Fonts.exo_44_2)
+    draw.text((398, 354), "%.4f" % record.rating, font=Fonts.exo_36_2)
+    draw.text((290, 60), account_info.name, font=Fonts.andrea_56_2)
+    draw.text((297, 150), f'ArcID: {account_info.user_id}', font=Fonts.andrea_28_2)
+
+    # return
+    make_path = os.path.join(temp_absdir, f'{account_info.user_id}_andreal_v2.png')
+    img.save(make_path)
+    return make_path
+
+
+def andreal_v3_draw_recent(data: UniversalProberResult):
+    # TODO slogan
+    # data preparation
+    account_info = data.user_info
+    record = data.recent_score[0]
+    songinfo = songtitle[record.song_id]
+
+    # make background
+    song_img = song_image(record.song_id, record.difficulty)[0]
+    background_mask = Image.open(os.path.join(ARCLASTDIR, 'res_andreal', f'RawV3Bg_{songinfo["side"]}.png'))
+    fill = Image.new(mode='RGBA', size=(1000, 1444), color=(255, 255, 255, 100))
+    if len(songinfo["en"]) > 30:  # To restrict the length of the songname
+        final_songname = songinfo["en"][0:30] + '...'
+    else:
+        final_songname = songinfo["en"]
+
+    background = Image.new(size=(1000, 1444), mode='RGBA')
+    background.paste(song_img.crop((78, 0, 354, 590)).filter(ImageFilter.GaussianBlur(4)).resize((1000, 1444)), (0, 0))
+    background.paste(fill, (0, 0), fill)
+    background.paste(background_mask.resize((1000, 1444)), (0, 0), background_mask.resize((1000, 1444)))
+    background.paste(song_img.resize((428, 428)), (286, 408))
+
+    draw = ImageDraw.Draw(background)
+    #  To have the final_songname in the center of the row of text with the specific position
+    draw.text(((1000 - draw.textsize(text=final_songname, font=Fonts.beatrice_36_2)[0]) / 2, 860), final_songname,
+              font=Fonts.beatrice_36_2, fill=(1, 1, 1))
+    draw.text((110, 1275), "PlayPtt:", font=Fonts.exo_24_2, fill=(110, 110, 110))
+    draw.text((110, 1355), "PlayTime:", font=Fonts.exo_24_2, fill=(110, 110, 110))
+    draw.text((635, 1260), "Pure", font=Fonts.exo_24_2, fill=(1, 1, 1))
+    draw.text((635, 1315), "Far", font=Fonts.exo_24_2, fill=(1, 1, 1))
+    draw.text((635, 1370), "Lost", font=Fonts.exo_24_2, fill=(1, 1, 1))
+
+    # make result
+    difficulty_list = ['Past', 'Present', 'Future', 'Beyond']
+    color_list = [(20, 165, 215), (120, 155, 80), (115, 35, 100), (165, 20, 49)]
+    grade = rank_score(record.score)
+    str_score = str(record.score).zfill(8)
+    formatted_score = f"{str_score[-8:-6]}'{str_score[-6:-3]}'{str_score[-3:]}"
+    constant = calc_last_const(record.score, record.rating)
+    time_played = datetime.utcfromtimestamp(int(record.time_played / 1000)).strftime("%Y/%m/%d %H:%M:%S")
+    partner = partner_icon(account_info.character, account_info.is_char_uncapped)
+    rating_img = rating_image(account_info.rating)
+    clear_type_img = Image.open(os.path.join(ARCLASTDIR, 'res_andreal', f'clear_{record.clear_type}.png'))
+    img = background
+
+    img.paste(partner.resize((160, 160)), (150, 160), partner.resize((160, 160)))
+    img.paste(rating_img.resize((140, 140)), (215, 215), rating_img.resize((140, 140)))
+    height = round(630 * clear_type_img.size[1] / clear_type_img.size[0])
+    img.paste(clear_type_img.resize((630, height)), (185, 1035), clear_type_img.resize((630, height)))
+
+    draw = ImageDraw.Draw(img)
+    draw.text((340, 200), account_info.name, font=Fonts.andrea_36_2, fill=(1, 1, 1))
+    draw.text((340, 270), f'ArcID: {account_info.user_id}', font=Fonts.geosans_light_20_2, fill=(110, 110, 110))
+    pos = draw.textsize(text=f'{difficulty_list[record.difficulty]} | {constant}', font=Fonts.beatrice_24_2)[0]
+    draw.text(((1000 - pos) / 2, 925), f'{difficulty_list[record.difficulty]} | {constant}', font=Fonts.beatrice_24_2,
+              fill=color_list[record.difficulty])
+    pos_score = draw.textsize(text=f'{formatted_score} [{grade}]', font=Fonts.exo_44_2)[0]
+    draw.text(((1000 - pos_score) / 2, 1130), f'{formatted_score} [{grade}]', font=Fonts.exo_44_2, fill=(1, 1, 1))
+    draw.text((260, 1280), "%.4f" % record.rating, font=Fonts.exo_20_2, fill=(110, 110, 110))
+    draw.text((260, 1360), time_played, font=Fonts.exo_20_2, fill=(110, 110, 110))
+    draw.text((730, 1265), f'{record.perfect_count}(+{record.shiny_perfect_count})', font=Fonts.exo_20_2,
+              fill=(1, 1, 1))
+    draw.text((730, 1320), f'{record.near_count}', font=Fonts.exo_20_2, fill=(1, 1, 1))
+    draw.text((730, 1375), f'{record.miss_count}', font=Fonts.exo_20_2, fill=(1, 1, 1))
+
+    # return
+    make_path = os.path.join(temp_absdir, f'{account_info.user_id}_andreal_v3.png')
+    img.save(make_path)
+    return make_path

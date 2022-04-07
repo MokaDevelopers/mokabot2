@@ -13,7 +13,8 @@ from public_module.mb2pkg_mokalogger import getlog
 from .config import Config
 from .data_model import UniversalProberResult, ArcaeaBind
 from .exceptions import *
-from .make_score_image import moe_draw_recent, guin_draw_recent, bandori_draw_recent, song_list, draw_b30
+from .make_score_image import moe_draw_recent, guin_draw_recent, bandori_draw_recent, song_list, draw_b30, \
+    andreal_v1_draw_recent, andreal_v2_draw_recent, andreal_v3_draw_recent
 from .probers import BotArcAPIProber, BaseProber
 
 match_arcaea_probe = on_command('arc查询', priority=5)
@@ -23,7 +24,7 @@ match_arcaea_change_result_style = on_command('arc查分样式', priority=5)
 
 log = getlog()
 
-arc_result_type_options = ['moe', 'guin', 'bandori']
+arc_result_type_options = ['moe', 'guin', 'bandori', 'andreal1', 'andreal2', 'andreal3']
 SONGDB = Config().arcsong_db_abspath
 enable_arcaea_prober_botarcapi = True
 
@@ -137,7 +138,7 @@ async def make_arcaea_recent_result(qq: int) -> str:
         with_best=draw_recent_function is bandori_draw_recent,  # 当使用bandori版式绘图时，需要在scores里写入该谱面的最佳成绩
     )
 
-    return await draw_recent_function(arcaea_data)
+    return draw_recent_function(arcaea_data)
 
 
 async def make_arcaea_specific_result(qq: int, chart: str) -> str:
@@ -163,7 +164,7 @@ async def make_arcaea_specific_result(qq: int, chart: str) -> str:
     arcaea_data.recent_score[0] = arcaea_data.scores[0]
     arcaea_data.scores = []
 
-    return await draw_recent_function(arcaea_data)
+    return draw_recent_function(arcaea_data)
 
 
 async def make_arcaea_best35_result(
@@ -265,7 +266,7 @@ def select_available_prober(mode: str) -> type(BaseProber):
         raise ValueError(f'mode应该为 b35 b30 specific recent bind 中的一个，而你输入了 {mode}')
 
 
-def select_draw_style(arc_result_type: str) -> Callable[[UniversalProberResult], Coroutine[Any, Any, str]]:
+def select_draw_style(arc_result_type: str) -> Callable[[UniversalProberResult], str]:
     """
     根据arc_result_type的值选择一个绘图方案
 
@@ -281,6 +282,12 @@ def select_draw_style(arc_result_type: str) -> Callable[[UniversalProberResult],
         return guin_draw_recent
     elif arc_result_type == 'bandori':
         return bandori_draw_recent
+    elif arc_result_type == 'andreal1':
+        return andreal_v1_draw_recent
+    elif arc_result_type == 'andreal2':
+        return andreal_v2_draw_recent
+    elif arc_result_type == 'andreal3':
+        return andreal_v3_draw_recent
 
 
 def get_song_alias() -> dict[str, str]:
