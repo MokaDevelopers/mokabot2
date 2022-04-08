@@ -7,4 +7,4 @@ match_moka_manual = on_command('man', aliases={'manual', 'help'}, priority=5)
 
 @match_moka_manual.handle()
 async def moka_manual_handle(bot: Bot, event: MessageEvent):
-    await bot.send(event, '请参考该在线文档\nhttps://docs.arisa.moe/mokabot2')
+    await bot.send(event, '请参考该在线文档\nhttps://docs-mokabot.arisa.moe')
