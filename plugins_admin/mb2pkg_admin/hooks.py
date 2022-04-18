@@ -3,6 +3,7 @@ from nonebot.adapters import Bot
 from nonebot.message import run_postprocessor, event_postprocessor, event_preprocessor, run_preprocessor
 
 from public_module.mb2pkg_mokalogger import getlog
+from .alive import call_tgbot
 from .arr import arr
 from .disable_temp_msg import disable_temp_msg
 from .log4send import log_after_bot_send, log_before_exec_command
@@ -32,6 +33,7 @@ async def on_bot_connect(*args, **kwargs):
 @driver.on_bot_disconnect
 async def on_bot_disconnect(*args, **kwargs):
     """这个钩子函数会在 bot 断开与 nonebot2 的 websocket 连接时运行"""
+    await call_tgbot(*args, **kwargs)
 
 
 @Bot.on_calling_api
