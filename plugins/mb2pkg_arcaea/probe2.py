@@ -185,7 +185,7 @@ async def make_arcaea_best35_result(
         friend_id=specific_friend_id or bind_info.arc_friend_id
     )
 
-    if 'andreal' in bind_info.arc_result_type:
+    if bind_info.arc_result_type and 'andreal' in bind_info.arc_result_type:
         return await andreal_draw_b30(arcaea_data)
     else:
         return await draw_b30(arcaea_data)
