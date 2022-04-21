@@ -1,7 +1,7 @@
 """该文件定义了查分器接口"""
 
 import abc
-from typing import Union
+from typing import Union, Optional
 
 from .botarcapi import BotArcAPIClient
 from .data_model import UniversalProberResult, Score
@@ -31,12 +31,18 @@ class BaseProber(abc.ABC):
         """
         raise NotImplementedError
 
-    async def get_user_best(self, friend_id: str, song_id: str, difficulty: Union[str, int] = 2) -> UniversalProberResult:
+    async def get_user_best(
+            self, friend_id: str,
+            song_name: str,
+            song_id: Optional[str] = None,
+            difficulty: Union[str, int] = 2
+    ) -> UniversalProberResult:
         """
         返回用户指定歌曲的指定成绩
 
         :param friend_id: 好友码
         :param song_id: 歌曲id
+        :param song_name: 歌曲名
         :param difficulty: 难度标记，0/1/2/3 -> pst/prs/ftr/byd
         """
         raise NotImplementedError
@@ -82,10 +88,16 @@ class BotArcAPIProber(BaseProber):
 
         return user_info
 
-    async def get_user_best(self, friend_id: str, song_id: str, difficulty: Union[str, int] = 2) -> UniversalProberResult:
+    async def get_user_best(
+            self, friend_id: str,
+            song_name: str,
+            song_id: Optional[str] = None,
+            difficulty: Union[str, int] = 2
+    ) -> UniversalProberResult:
         user_best_response = await self.baa.user_best(
             usercode=friend_id,
             songid=song_id,
+            songname=None if song_id else song_name,
             withrecent=True,
             difficulty=difficulty,
         )

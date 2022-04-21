@@ -156,7 +156,7 @@ async def make_arcaea_specific_result(qq: int, chart: str) -> str:
 
     arcaea_data: UniversalProberResult = await Prober().get_user_best(
         friend_id=bind_info.arc_friend_id,
-        song_id=parse_song_name(song_name),
+        song_name=song_name,
         difficulty=difficulty
     )
 
