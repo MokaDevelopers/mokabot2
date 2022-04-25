@@ -293,7 +293,7 @@ class YouTubeChannelListResponse(BaseModel):
                 title: str
                 description: str
                 keywords: str
-                unsubscribedTrailer: str
+                unsubscribedTrailer: Optional[str]
                 defaultLanguage: Optional[str]
                 country: Optional[str]
 
