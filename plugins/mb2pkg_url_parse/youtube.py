@@ -144,8 +144,9 @@ def formatter_video(data: dict) -> Union[str, Message, MessageSegment]:
     response = YouTubeVideoListResponse(**data).items[0]
     video = response.snippet
     stat = response.statistics
+    video.description = video.description.replace('\n', ' ')
 
-    dotx3_description = '...' if len(video.description) > 30 else ''
+    dotx3_description = '...' if len(video.description) > 60 else ''
     if 'standard' in video.thumbnails:
         pic = MessageSegment.image(video.thumbnails['standard'].url)
     else:  # thumbnails字典没有standard大小封面的时候直接用剩余最大的那个作为封面
@@ -159,7 +160,7 @@ def formatter_video(data: dict) -> Union[str, Message, MessageSegment]:
     text = f'标题：{video.title}\n' \
            f'时间：{publish_time}({publish_delta})\n' \
            f'频道：{video.channelTitle}\n' \
-           f'描述：{video.description[:30]}{dotx3_description}\n' \
+           f'描述：{video.description[:60]}{dotx3_description}\n' \
            f'▶:{stat.viewCount} 👍:{stat.likeCount} 💬:{stat.commentCount}'
 
     if video.tags is not None:
@@ -176,8 +177,9 @@ def formatter_channel(data: dict) -> Union[str, Message, MessageSegment]:
     channel = response.snippet
     stat = response.statistics
     branding = response.brandingSettings
+    channel.description = channel.description.replace('\n', ' ')
 
-    dotx3_description = '...' if len(channel.description) > 45 else ''
+    dotx3_description = '...' if len(channel.description) > 60 else ''
     if branding.image is not None:
         pic = MessageSegment.image(branding.image.bannerExternalUrl)
     else:  # 未设置频道banner时，使用频道默认头像作为频道banner
@@ -192,7 +194,7 @@ def formatter_channel(data: dict) -> Union[str, Message, MessageSegment]:
     text = f'名称：{channel.title}\n' \
            f'建立：{publish_time}({publish_delta})\n' \
            f'🔔:{sigfig_subscriberCount} 🎞:{stat.videoCount} 👀:{stat.viewCount}\n' \
-           f'简介：{channel.description[:45]}{dotx3_description}'
+           f'简介：{channel.description[:60]}{dotx3_description}'
 
     return pic + text
 
