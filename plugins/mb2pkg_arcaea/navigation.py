@@ -260,7 +260,7 @@ async def arc_world_map(username: str, password: str) -> str:
 
             result.append(' '.join(line))
 
-    savepath = os.path.join(temp_absdir, f'/{username}_navigation.jpg')
+    savepath = os.path.join(temp_absdir, f'{username}_navigation.jpg')
     await draw_image(result, savepath)
 
     return savepath
