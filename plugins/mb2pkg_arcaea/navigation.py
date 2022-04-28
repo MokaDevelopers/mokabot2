@@ -54,6 +54,8 @@ async def arc_world_map_cmd(bot: Bot, event: MessageEvent):
 async def arc_world_map(username: str, password: str) -> str:
 
     def calc_target(_target_name: str, _target: int) -> None:
+        if curr_position + 1 >= _target:
+            return
         step_to_target = sum([_item['capture'] for _item in steps[curr_position:_target-1]]) - curr_capture
         result.extend([
             f'目标<{_target_name}>',
@@ -108,6 +110,7 @@ async def arc_world_map(username: str, password: str) -> str:
     # 获取详细地图
     world_map = (await myArc.get_world_map_specific(map_id))['value']['maps'][0]
     steps = world_map['steps']
+    print(steps)
     curr_capture = world_map['curr_capture']
     curr_position: int = world_map['curr_position']
     now = time.time()
