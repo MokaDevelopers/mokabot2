@@ -97,8 +97,7 @@ async def b23_extract(text: str) -> str:
     b23 = re.compile(r'b23.tv/(\w+)|(bili(22|23|33|2233).cn)/(\w+)', re.I).search(text.replace('\\', ''))
     url = f'https://{b23[0]}'
     async with aiohttp.request('GET', url, timeout=aiohttp.client.ClientTimeout(10)) as resp:
-        r = str(resp.url)
-    return r
+        return str(resp.url)
 
 
 async def search_bili_by_title(title: str) -> str:
@@ -112,8 +111,7 @@ async def search_bili_by_title(title: str) -> str:
         if item.get('result_type') != 'video':
             continue
         # 只返回第一个结果
-        url = item['data'][0].get('arcurl')
-        return url
+        return item['data'][0].get('arcurl')
 
 
 async def video_detail(api_url: str) -> Message:
@@ -123,13 +121,15 @@ async def video_detail(api_url: str) -> Message:
     desc = video.desc
     desc_list = video.desc.split('\n')
     if len(desc_list) >= 4:  # 超过3行，只取前三行，多出来的变成省略号
-        desc = '\n'.join(desc_list[0:3]) + '……'
+        desc = '\n'.join(desc_list[:3]) + '……'
 
-    text = f'标题：{video.title}\n' \
-           f'UP主：{video.owner.name}\n' \
-           f'发布时间：{format_time(video.pubdate)}\n' \
-           f'▶:{video.stat.view} 〰:{video.stat.danmaku} 💬:{video.stat.reply} ⭐:{video.stat.favorite} 💰:{video.stat.coin} ↗:{video.stat.share} 👍:{video.stat.like}\n' \
-           f'简介：{desc.strip()}'
+    text = (
+        f'标题：{video.title}\n'
+        f'UP主：{video.owner.name}\n'
+        f'发布时间：{format_time(video.pubdate)}\n'
+        f'▶:{video.stat.view} 〰:{video.stat.danmaku} 💬:{video.stat.reply} ⭐:{video.stat.favorite} 💰:{video.stat.coin} ↗:{video.stat.share} 👍:{video.stat.like}\n'
+        f'简介：{desc.strip()}'
+    )
 
     return MessageSegment.image(video.pic) + text
 
@@ -156,13 +156,15 @@ async def bangumi_detail(url: str) -> Message:
     if len(evaluate_list) >= 4:  # 超过3行，只取前三行，多出来的变成省略号
         evaluate = '\n'.join(evaluate_list[:3]) + '……'
 
-    text = f'标题：{bangumi.title}\n' \
-           f'{episode_title or bangumi.newest_ep.desc}\n' \
-           f'发布时间：{format_time(episode_pub_time or bangumi.publish.pub_time)}\n' \
-           f'评分：{bangumi.rating.score}（{bangumi.rating.count}人）\n' \
-           f'▶: {bangumi.stat.views} 〰:{bangumi.stat.danmakus} 💰:{bangumi.stat.coins} \n' \
-           f'类型：{" ".join(bangumi.style)}\n' \
-           f'简介：{evaluate}'
+    text = (
+        f'标题：{bangumi.title}\n'
+        f'{episode_title or bangumi.newest_ep.desc}\n'
+        f'发布时间：{format_time(episode_pub_time or bangumi.publish.pub_time)}\n'
+        f'评分：{bangumi.rating.score}（{bangumi.rating.count}人）\n'
+        f'▶: {bangumi.stat.views} 〰:{bangumi.stat.danmakus} 💰:{bangumi.stat.coins}\n'
+        f'类型：{" ".join(bangumi.style)}\n'
+        f'简介：{evaluate}'
+    )
 
     return MessageSegment.image(episode_pic or bangumi.cover) + text
 
@@ -179,12 +181,14 @@ async def live_detail(url: str) -> Message:
         2: '轮播中',
     }
 
-    text = f'标题：{live.room_info.title}\n' \
-           f'主播：{live.anchor_info.base_info.uname}\n' \
-           f'状态：{"已封禁" if live.room_info.lock_status else live_status.get(live.room_info.live_status, "未开播")}\n' \
-           f'分区：[{live.room_info.parent_area_name}] {live.room_info.area_name}\n' \
-           f'人气上一次刷新值：{live.room_info.online}\n' \
-           f'标签：{live.room_info.tags}'
+    text = (
+        f'标题：{live.room_info.title}\n'
+        f'主播：{live.anchor_info.base_info.uname}\n'
+        f'状态：{"已封禁" if live.room_info.lock_status else live_status.get(live.room_info.live_status, "未开播")}\n'
+        f'分区：[{live.room_info.parent_area_name}] {live.room_info.area_name}\n'
+        f'人气上一次刷新值：{live.room_info.online}\n'
+        f'标签：{live.room_info.tags}'
+    )
 
     return MessageSegment.image(live.room_info.cover) + text
 
@@ -193,9 +197,11 @@ async def article_detail(url: str) -> Message:
     async with aiohttp.request('GET', url, timeout=aiohttp.client.ClientTimeout(10)) as resp:
         article = ArticleResponse(**(await resp.json())['data'])
 
-    text = f'标题：{article.title}\n' \
-           f'作者：{article.author_name}\n' \
-           f'👀:{article.stats.view} 👍:{article.stats.like} 👎:{article.stats.dislike} 💬:{article.stats.reply} ⭐:{article.stats.favorite} 💰:{article.stats.coin} ↗:{article.stats.share}'
+    text = (
+        f'标题：{article.title}\n'
+        f'作者：{article.author_name}\n'
+        f'👀:{article.stats.view} 👍:{article.stats.like} 👎:{article.stats.dislike} 💬:{article.stats.reply} ⭐:{article.stats.favorite} 💰:{article.stats.coin} ↗:{article.stats.share}'
+    )
 
     return MessageSegment.image(article.image_urls[0]) + text
 
