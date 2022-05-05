@@ -100,7 +100,7 @@ async def arc_stamina(username: str, password: str):
         # 自行处理以下错误
         if error_code == 108:  # 体力已满（或超过12），无法再获取更多
             # 若体力满时，返回的stamina_count会变成1而不是12
-            error_info = 12 if stamina_count == 1 else stamina_count
+            error_info = 12 + stamina_count
             raise MaxStaminaError(error_info)
         elif error_code == 109:  # 尚未到达下一次残片交换体力的允许时刻
             error_info = next_fragstam_ts / 1000
