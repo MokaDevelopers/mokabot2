@@ -56,7 +56,7 @@ class YouTubeParse(BaseParse):
                 'id': suburl,
                 'key': gcp_youtube_apikey
             }
-            return formatter_video(await youtube_api('https://youtube.googleapis.com/youtube/v3/videos', 'GET', video_params))
+            return await formatter_video(await youtube_api('https://youtube.googleapis.com/youtube/v3/videos', 'GET', video_params))
         elif subtype == 'channel':
             channel_params = {
                 'part': 'snippet,statistics,brandingSettings',
@@ -103,6 +103,18 @@ async def youtube_api(url: str, method: str, params: dict[str, str]) -> dict[str
     return response_json
 
 
+async def get_estimate_stat_result(video_id: str) -> tuple[Optional[int], Optional[int]]:
+    """通过 Return YouTube Dislike API 估计视频的（不）喜欢数"""
+    request_url = 'https://returnyoutubedislikeapi.com/Votes'
+    params = {'videoId': video_id}
+
+    async with aiohttp.request('GET', request_url, params=params) as r:
+        if r.status == 200:
+            response = ReturnYouTubeDislikeAPIVotesResponse(**await r.json())
+            return response.likes, response.dislikes
+        return None, None
+
+
 def parse_youtudotbe(url: str) -> str:
     """解析 youtu.be 系列视频"""
     return re.search(r'youtu\.be/([^?]+)', url).groups()[0]
@@ -140,7 +152,7 @@ def subscriber_count_round_significant_figures(count: int) -> str:
     return result
 
 
-def formatter_video(data: dict) -> Union[str, Message, MessageSegment]:
+async def formatter_video(data: dict) -> Union[str, Message, MessageSegment]:
     response = YouTubeVideoListResponse(**data).items[0]
     video = response.snippet
     stat = response.statistics
@@ -157,11 +169,13 @@ def formatter_video(data: dict) -> Union[str, Message, MessageSegment]:
     # 去掉描述中所有的\n，由于f-string中的表达式片段不能包含反斜杠，因此放到外面事先处理
     video.description = video.description.replace('\n', '')
 
+    estimate_likes, estimate_dislikes = await get_estimate_stat_result(response.id)
+
     text = f'标题：{video.title}\n' \
            f'时间：{publish_time}({publish_delta})\n' \
            f'频道：{video.channelTitle}\n' \
            f'描述：{video.description[:60]}{dotx3_description}\n' \
-           f'▶:{stat.viewCount} 👍:{stat.likeCount} 💬:{stat.commentCount}'
+           f'▶:{stat.viewCount} 👍:{stat.likeCount or estimate_likes} 👎: {estimate_dislikes} 💬:{stat.commentCount}'
 
     if video.tags is not None:
         dotx3_tags = '...' if len(video.tags) > 12 else ''
@@ -316,3 +330,13 @@ class YouTubeChannelListResponse(BaseModel):
     etag: str
     pageInfo: PageInfo
     items: list[YouTubeChannelResource]
+
+
+class ReturnYouTubeDislikeAPIVotesResponse(BaseModel):
+    id: str
+    dateCreated: datetime
+    likes: int
+    dislikes: int
+    rating: float
+    viewCount: int
+    deleted: bool
