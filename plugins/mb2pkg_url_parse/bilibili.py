@@ -93,6 +93,10 @@ def format_time(_time: Union[int, float, datetime]) -> str:
     return f'{fmted_time}（{time_delta}）'
 
 
+def format_duration(duration: int) -> str:
+    return f'{duration // 3600:02}:{duration % 3600 // 60:02}:{duration % 60:02}'
+
+
 async def b23_extract(text: str) -> str:
     b23 = re.compile(r'b23.tv/(\w+)|(bili(22|23|33|2233).cn)/(\w+)', re.I).search(text.replace('\\', ''))
     url = f'https://{b23[0]}'
@@ -126,6 +130,7 @@ async def video_detail(api_url: str) -> Message:
     text = (
         f'标题：{video.title}\n'
         f'UP主：{video.owner.name}\n'
+        f'时长：{format_duration(video.duration)}\n'
         f'发布时间：{format_time(video.pubdate)}\n'
         f'▶:{video.stat.view} 〰:{video.stat.danmaku} 💬:{video.stat.reply} ⭐:{video.stat.favorite} 💰:{video.stat.coin} ↗:{video.stat.share} 👍:{video.stat.like}\n'
         f'简介：{desc.strip()}'
@@ -365,6 +370,7 @@ class VideoResponse(BaseModel):
     owner: Owner
     stat: Stat
     desc: str
+    duration: int
     pic: str
 
 
