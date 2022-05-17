@@ -921,7 +921,7 @@ def andreal_v1_draw_recent(data: UniversalProberResult):
     str_score = str(record.score).zfill(8)
     formatted_score = f"{str_score[-8:-6]}'{str_score[-6:-3]}'{str_score[-3:]}"
     constant = calc_last_const(record.score, record.rating)
-    time_played = datetime.utcfromtimestamp(int(record.time_played / 1000)).strftime("%Y/%m/%d %H:%M:%S")
+    time_played = datetime.fromtimestamp(int(record.time_played / 1000)).strftime("%Y/%m/%d %H:%M:%S")
     if len(songinfo["en"]) > 23:  # To restrict the length of the songname
         final_songname = songinfo["en"][0:23] + '...'
     else:
@@ -1009,7 +1009,7 @@ def andreal_v2_draw_recent(data: UniversalProberResult):
     state = 'Recent'  # TODO UniversalProberResult这个类真的没法判断是 Recent 还是 Best
     str_score = str(record.score).zfill(8)
     formatted_score = f"{str_score[-8:-6]}'{str_score[-6:-3]}'{str_score[-3:]}"
-    time_played = datetime.utcfromtimestamp(int(record.time_played / 1000)).strftime("%Y/%m/%d %H:%M:%S")
+    time_played = datetime.fromtimestamp(int(record.time_played / 1000)).strftime("%Y/%m/%d %H:%M:%S")
     partner_img = get_partner_image(account_info.character, account_info.is_char_uncapped)
     img = background
     rating = get_rating_image(account_info.rating)
@@ -1103,7 +1103,7 @@ def andreal_v3_draw_recent(data: UniversalProberResult):
     str_score = str(record.score).zfill(8)
     formatted_score = f"{str_score[-8:-6]}'{str_score[-6:-3]}'{str_score[-3:]}"
     constant = calc_last_const(record.score, record.rating)
-    time_played = datetime.utcfromtimestamp(int(record.time_played / 1000)).strftime("%Y/%m/%d %H:%M:%S")
+    time_played = datetime.fromtimestamp(int(record.time_played / 1000)).strftime("%Y/%m/%d %H:%M:%S")
     partner = get_partner_icon(account_info.character, account_info.is_char_uncapped)
     rating_img = get_rating_image(account_info.rating)
     clear_type_img = Image.open(os.path.join(ARCLASTDIR, 'res_andreal', f'clear_{record.clear_type}.png'))
