@@ -192,8 +192,8 @@ async def handleTimer():
     global dictFlags
     bot: Bot = list(nonebot.get_bots().values())[0]
 
-    try:
-        for group_id, flag in dictFlags.items():
+    for group_id, flag in dictFlags.items():
+        try:
             if flag == '1':
                 clu = DailyConlusion(group_id)
                 report = clu.generateReport()
@@ -202,9 +202,10 @@ async def handleTimer():
 
                 with open(os.path.join(os.path.join(global_config.groupdata_absdir, str(group_id), 'chat.log')), 'w', encoding='utf-8'):  # 直接覆盖为空
                     pass
-    except Exception as e:
-        log.error(e)
-        log.exception(e)
+
+        except Exception as e:
+            log.error(e)
+            log.exception(e)
 
 
 _hours, _minutes = config.auto_send_time
