@@ -583,6 +583,8 @@ async def return_all_chars_for_vn(vnid: int) -> list[dict]:
             if is_more:  # 在下一轮查询之前先等待1s，以防止服务器sql报错
                 await asyncio.sleep(1)
                 page += 1
+            if not char_list:  # 如果没有查询到角色，则返回空列表
+                break
 
     return char_list
 
