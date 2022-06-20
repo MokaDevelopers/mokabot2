@@ -147,7 +147,7 @@ async def return_select_catalyst_mine_stage(needs: list[str]) -> list[Optional[t
                         else:
                             rating += item_not_in_needs
                     for item in needs:
-                        if item in stage['store']:
+                        if item in stage['store'] or alias == 'Episode 1 Epilogue':
                             if item in rare_catalyst_list:
                                 rating += rare_item_in_AP_store
                             else:
