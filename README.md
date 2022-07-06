@@ -84,11 +84,13 @@ nonebot.load_plugins('plugins')  # 将会加载plugins文件夹中所有插件
 
 #### 1.2.4 配置日志系统
 
-`mokabot2`系列插件均使用[mokalogger](public_module/mb2pkg_mokalogger/__init__.py)作为默认日志记录工具，该插件特性请具体参考`mokalogger`文档。
+`mokabot2`系列插件均使用[mokalogger](utils/mb2pkg_mokalogger/__init__.py)作为默认日志记录工具，该插件特性请具体参考`mokalogger`文档。
 
 若不使用`mokalogger`，请在移植时将以下两行：
+
 ```python
-from public_module.mb2pkg_mokalogger import getlog
+from utils.mb2pkg_mokalogger import getlog
+
 ...
 log = getlog()
 ```
@@ -104,7 +106,7 @@ import logging as log
 
 #### 1.2.5 配置文字转图片系统
 
-mokabot2系列插件均使用[mb2pkg_test2pic](public_module/mb2pkg_test2pic/__init__.py)作为文字转图片工具，用于发送超长文本时转换为图片并提高美观度。该插件特殊之处在于其通过一个字符串列表`list[str]`来制图，因此如果你不使用`mb2pkg_test2pic`的话需要改很多东西：
+mokabot2系列插件均使用[mb2pkg_test2pic](utils/mb2pkg_text2pic/__init__.py)作为文字转图片工具，用于发送超长文本时转换为图片并提高美观度。该插件特殊之处在于其通过一个字符串列表`list[str]`来制图，因此如果你不使用`mb2pkg_test2pic`的话需要改很多东西：
 
 将所有的
 ```python
@@ -134,10 +136,13 @@ msg = await foo(...)
 ~~这个目录实际上是应该被叫做`utils`的~~
 
 如果任何插件需要导入以下内容
+
 ```python
-from public_module.mb2pkg_public_plugin import ...
+from utils.mb2pkg_public_plugin import ...
+
+...
 ```
-由于此处导入的函数均比较简单，请直接将[mb2pkg_public_plugin](public_module/mb2pkg_public_plugin/__init__.py)中对应的函数直接复制过去即可。
+由于此处导入的函数均比较简单，请直接将[mb2pkg_public_plugin](utils/mb2pkg_public_plugin/__init__.py)中对应的函数直接复制过去即可。
 
 #### 1.2.7 放置素材（res）以及其他文件（动态链接库等）
 

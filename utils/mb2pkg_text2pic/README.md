@@ -22,7 +22,8 @@ res
 ## 使用方法
 
 ```python
-from public_module.mb2pkg_test2pic import draw_image
+from utils.mb2pkg_text2pic import draw_image
+
 lines = ['这是第一行', '这是第二行', '这是第三行']
 savepath = 'D:/1.jpg'
 await draw_image(lines, savepath)

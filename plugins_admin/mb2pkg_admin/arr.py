@@ -12,7 +12,7 @@ from nonebot.exception import IgnoredException
 from nonebot.matcher import Matcher
 from nonebot.typing import T_State
 
-from public_module.mb2pkg_mokalogger import getlog
+from utils.mb2pkg_mokalogger import getlog
 from .config import Config
 
 log = getlog()

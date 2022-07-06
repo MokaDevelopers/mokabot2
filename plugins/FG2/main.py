@@ -17,8 +17,8 @@ from nonebot.adapters.cqhttp import MessageSegment, Message
 from nonebot.typing import T_State
 from wordcloud import WordCloud
 
-from public_module.mb2pkg_database import Group
-from public_module.mb2pkg_mokalogger import getlog
+from utils.mb2pkg_database import Group
+from utils.mb2pkg_mokalogger import getlog
 from .TextRank4ZH import TextRank4Keyword
 from .config import Config
 

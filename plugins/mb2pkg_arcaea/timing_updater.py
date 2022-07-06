@@ -2,7 +2,7 @@ import aiohttp
 import nonebot
 from nonebot import require
 
-from public_module.mb2pkg_mokalogger import getlog
+from utils.mb2pkg_mokalogger import getlog
 from .const import tc_text_parse, save_model, pm_text_parse, const_text_parse, update_twitter_const_image
 
 log = getlog()

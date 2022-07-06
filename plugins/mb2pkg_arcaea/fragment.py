@@ -4,9 +4,9 @@ from nonebot import on_command
 from nonebot.adapters import Bot
 from nonebot.adapters.cqhttp import MessageEvent
 
-from public_module.mb2pkg_database import QQ
-from public_module.mb2pkg_mokalogger import getlog
-from public_module.mb2pkg_public_plugin import datediff, get_time
+from utils.mb2pkg_database import QQ
+from utils.mb2pkg_mokalogger import getlog
+from utils.mb2pkg_public_plugin import datediff, get_time
 from .arcaea_lib import Arcaea, APP_VERSION
 from .exceptions import *
 

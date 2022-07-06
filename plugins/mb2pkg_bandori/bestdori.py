@@ -16,9 +16,9 @@ from nonebot.permission import SUPERUSER
 from openpyxl import Workbook
 from tenacity import retry, stop_after_attempt
 
-from public_module.mb2pkg_mokalogger import getlog
-from public_module.mb2pkg_public_plugin import datediff, get_time, now_datetime
-from public_module.mb2pkg_test2pic import draw_image
+from utils.mb2pkg_mokalogger import getlog
+from utils.mb2pkg_public_plugin import datediff, get_time, now_datetime
+from utils.mb2pkg_text2pic import draw_image
 from .config import Config
 
 scheduler = require('nonebot_plugin_apscheduler').scheduler

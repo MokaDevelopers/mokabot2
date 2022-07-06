@@ -4,7 +4,7 @@ from nonebot import on_command
 from nonebot.adapters import Bot
 from nonebot.adapters.cqhttp import MessageEvent
 
-from public_module.mb2pkg_mokalogger import getlog
+from utils.mb2pkg_mokalogger import getlog
 
 match_random_choice = on_command('moka选择', priority=5)
 

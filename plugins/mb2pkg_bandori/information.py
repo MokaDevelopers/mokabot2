@@ -14,9 +14,9 @@ from nonebot.adapters import Bot
 from nonebot.adapters.cqhttp import MessageSegment, GroupMessageEvent, permission
 from selenium import webdriver
 
-from public_module.mb2pkg_database import Group
-from public_module.mb2pkg_mokalogger import getlog
-from public_module.mb2pkg_public_plugin import get_time
+from utils.mb2pkg_database import Group
+from utils.mb2pkg_mokalogger import getlog
+from utils.mb2pkg_public_plugin import get_time
 from .config import Config
 
 scheduler = require('nonebot_plugin_apscheduler').scheduler

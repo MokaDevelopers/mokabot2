@@ -6,9 +6,9 @@ from typing import Optional
 import nonebot
 from PIL import Image, ImageDraw, ImageFont, ImageOps, ImageFilter
 from datetime import datetime
-from public_module.mb2pkg_mokalogger import getlog
-from public_module.mb2pkg_public_plugin import get_time, now_datetime, datediff
-from public_module.mb2pkg_test2pic import str_width, draw_image
+from utils.mb2pkg_mokalogger import getlog
+from utils.mb2pkg_public_plugin import get_time, now_datetime, datediff
+from utils.mb2pkg_text2pic import str_width, draw_image
 from .config import Config
 from .data_model import UniversalProberResult, Score
 

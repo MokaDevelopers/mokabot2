@@ -8,9 +8,9 @@ from nonebot import on_command
 from nonebot.adapters import Bot
 from nonebot.adapters.cqhttp import MessageSegment, MessageEvent
 
-from public_module.mb2pkg_mokalogger import getlog
-from public_module.mb2pkg_public_plugin import now_datetime
-from public_module.mb2pkg_test2pic import draw_image
+from utils.mb2pkg_mokalogger import getlog
+from utils.mb2pkg_public_plugin import now_datetime
+from utils.mb2pkg_text2pic import draw_image
 from .config import Config
 
 temp_absdir = nonebot.get_driver().config.temp_absdir

@@ -6,7 +6,7 @@ from nonebot.adapters.cqhttp import MessageEvent
 from nonebot.permission import SUPERUSER
 from nonebot.rule import to_me
 
-from public_module.mb2pkg_mokalogger import getlog
+from utils.mb2pkg_mokalogger import getlog
 from .config import Config
 
 match_broadcast = on_command('群广播', aliases={'群公告'}, priority=5, permission=SUPERUSER, rule=to_me())

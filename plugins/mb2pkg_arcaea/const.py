@@ -15,8 +15,8 @@ from nonebot.adapters.cqhttp import MessageSegment, MessageEvent
 from nonebot.permission import SUPERUSER
 from pydantic import BaseModel
 
-from public_module.mb2pkg_mokalogger import getlog
-from public_module.mb2pkg_test2pic import str_width, draw_image
+from utils.mb2pkg_mokalogger import getlog
+from utils.mb2pkg_text2pic import str_width, draw_image
 from .config import Config
 
 match_twitter_const = on_command('const8', aliases={'const9', 'const10'}, priority=5)

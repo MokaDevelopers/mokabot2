@@ -16,7 +16,8 @@
 ## 使用方法
 
 ```python
-from public_module.mb2pkg_database import QQ
+from utils.mb2pkg_database import QQ
+
 myqq = QQ(1234567)
 myqq.XXXX = 'YYYY'
 ```

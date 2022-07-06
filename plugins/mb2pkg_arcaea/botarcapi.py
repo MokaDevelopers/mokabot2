@@ -6,7 +6,7 @@ import aiofiles
 import aiohttp
 import httpx
 
-from public_module.mb2pkg_mokalogger import getlog
+from utils.mb2pkg_mokalogger import getlog
 from .exceptions import BotArcAPIError
 
 log = getlog()

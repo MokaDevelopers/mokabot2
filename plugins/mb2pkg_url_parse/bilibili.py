@@ -13,8 +13,8 @@ from nonebot.adapters.cqhttp import Message, MessageSegment
 from nonebot.matcher import Matcher
 from pydantic import BaseModel
 
-from public_module.mb2pkg_mokalogger import getlog
-from public_module.mb2pkg_public_plugin import get_time, datediff
+from utils.mb2pkg_mokalogger import getlog
+from utils.mb2pkg_public_plugin import get_time, datediff
 from .base import BaseParse
 from .exceptions import NoSuchTypeError
 
@@ -231,15 +231,15 @@ async def dynamic_detail(url: str) -> str:  # from mengshouer/nonebot_plugin_ana
         content = content[:250] + '……'
     pics = item.pictures_count
     if pics:
-        content += f'\n动态中包含{pics}张图片'
+        content += f'动态中包含{pics}张图片\n'
     origin = card.origin
     if origin:
         jorigin = DynamicCardOrigin(**json.loads(origin))
         short_link = jorigin.short_link
         if short_link:
-            content += f'\n动态包含转发视频{short_link}'
+            content += f'动态包含转发视频{short_link}\n'
         else:
-            content += f'\n动态包含转发其他动态'
+            content += f'动态包含转发其他动态\n'
 
     return user + content + stat
 

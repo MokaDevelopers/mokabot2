@@ -17,8 +17,8 @@ from nonebot.adapters import Bot
 from nonebot.adapters.cqhttp import MessageSegment, MessageEvent
 from nonebot.permission import SUPERUSER
 
-from public_module.mb2pkg_database import QQ
-from public_module.mb2pkg_mokalogger import getlog
+from utils.mb2pkg_database import QQ
+from utils.mb2pkg_mokalogger import getlog
 from .arcaea_lib import APP_VERSION, Arcaea
 from .bind import return_this_prober_user_me
 from .botarcapi import BotArcAPIClient

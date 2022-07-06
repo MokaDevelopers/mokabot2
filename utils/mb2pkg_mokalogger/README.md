@@ -5,7 +5,8 @@
 ## 使用方法
 
 ```python
-from public_module.mb2pkg_mokalogger import getlog
+from utils.mb2pkg_mokalogger import getlog
+
 log = getlog()
 ```
 

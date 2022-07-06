@@ -10,8 +10,8 @@ from nonebot.adapters.cqhttp import Message, MessageSegment
 from nonebot.matcher import Matcher
 from pydantic import BaseModel
 
-from public_module.mb2pkg_mokalogger import getlog
-from public_module.mb2pkg_public_plugin import get_time, datediff
+from utils.mb2pkg_mokalogger import getlog
+from utils.mb2pkg_public_plugin import get_time, datediff
 from .base import BaseParse
 from .config import Config
 from .exceptions import *

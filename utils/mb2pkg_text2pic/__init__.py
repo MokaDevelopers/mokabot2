@@ -7,7 +7,7 @@ import string
 
 from PIL import Image, ImageDraw, ImageFont
 
-from public_module.mb2pkg_mokalogger import getlog
+from utils.mb2pkg_mokalogger import getlog
 from .config import Config
 
 log = getlog()

@@ -26,7 +26,7 @@ from nonebot.matcher import Matcher
 from pydantic import BaseModel
 from pyquery import PyQuery
 
-from public_module.mb2pkg_mokalogger import getlog
+from utils.mb2pkg_mokalogger import getlog
 from .base import BaseParse
 
 log = getlog()

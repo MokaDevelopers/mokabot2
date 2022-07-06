@@ -8,7 +8,7 @@ from nonebot.adapters.cqhttp import Event, FriendRequestEvent, GroupRequestEvent
     MessageSegment
 from nonebot.typing import T_State
 
-from public_module.mb2pkg_mokalogger import getlog
+from utils.mb2pkg_mokalogger import getlog
 
 log = getlog()
 
@@ -55,7 +55,7 @@ async def auto_approve_group_invite(bot: Bot, event: GroupRequestEvent):
     await asyncio.sleep(5)  # 等待5秒后再发送使用说明，以免发送失败
     usage = 'bot使用帮助：help、man或manual\n' \
             '请管理员注意：bot默认开启部分功能，请务必阅读该在线文档：\n' \
-            'https://github.com/MokaDevelopers/mokabot2/blob/master/MANUAL.md'
+            'https://docs-mokabot.arisa.moe/'
     await bot.send_group_msg(group_id=event.group_id, message=usage)
 
 

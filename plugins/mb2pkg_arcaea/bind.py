@@ -8,9 +8,9 @@ from nonebot.adapters import Bot
 from nonebot.adapters.cqhttp import MessageEvent, MessageSegment
 from nonebot.permission import SUPERUSER
 
-from public_module.mb2pkg_database import QQ, USERDIR
-from public_module.mb2pkg_mokalogger import getlog
-from public_module.mb2pkg_test2pic import draw_image
+from utils.mb2pkg_database import QQ, USERDIR
+from utils.mb2pkg_mokalogger import getlog
+from utils.mb2pkg_text2pic import draw_image
 from .config import Config
 from .exceptions import *
 

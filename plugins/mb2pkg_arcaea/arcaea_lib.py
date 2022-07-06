@@ -23,7 +23,7 @@ import aiohttp
 # Using the tenacity with ctypes is suspected to lead to memory leak, so I commented out this line.
 # See also the wrap of the private method "arc_request" of class Arcaea.
 
-from public_module.mb2pkg_mokalogger import getlog
+from utils.mb2pkg_mokalogger import getlog
 # If you don't use mokalogger, you can replace it with "import logging as log",
 # or any other logging method you are familiar with or comfortable with.
 from .challenge_generator import select_available_generator

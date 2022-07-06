@@ -7,10 +7,10 @@ from nonebot import on_command
 from nonebot.adapters import Bot
 from nonebot.adapters.cqhttp import MessageSegment, MessageEvent
 
-from public_module.mb2pkg_database import QQ
-from public_module.mb2pkg_mokalogger import getlog
-from public_module.mb2pkg_public_plugin import get_time, pct, datediff
-from public_module.mb2pkg_test2pic import draw_image
+from utils.mb2pkg_database import QQ
+from utils.mb2pkg_mokalogger import getlog
+from utils.mb2pkg_public_plugin import get_time, pct, datediff
+from utils.mb2pkg_text2pic import draw_image
 from .arc_client_dict import character_name, scenery, core
 from .arcaea_lib import APP_VERSION, Arcaea
 from .config import Config

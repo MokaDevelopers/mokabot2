@@ -3,7 +3,7 @@ from typing import Type
 from nonebot.adapters import Bot
 from nonebot.adapters.cqhttp import MessageEvent, GroupMessageEvent
 
-from public_module.mb2pkg_mokalogger import getlog
+from utils.mb2pkg_mokalogger import getlog
 from .base import BaseParse
 from .bilibili import BilibiliParse
 from .youtube import YouTubeParse

@@ -2,7 +2,7 @@ from nonebot import get_driver
 from nonebot.adapters import Bot
 from nonebot.message import run_postprocessor, event_postprocessor, event_preprocessor, run_preprocessor
 
-from public_module.mb2pkg_mokalogger import getlog
+from utils.mb2pkg_mokalogger import getlog
 from .alive import call_tgbot
 from .arr import arr
 from .disable_temp_msg import disable_temp_msg

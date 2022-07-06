@@ -3,7 +3,7 @@ import json
 import ssl
 from typing import Optional, Union
 
-from public_module.mb2pkg_mokalogger import getlog
+from utils.mb2pkg_mokalogger import getlog
 from .exceptions import VndbError
 
 log = getlog()
