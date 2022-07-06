@@ -6,11 +6,8 @@ from nonebot import on_request, on_notice
 from nonebot.adapters import Bot
 from nonebot.adapters.cqhttp import Event, FriendRequestEvent, GroupRequestEvent, GroupDecreaseNoticeEvent, Message, \
     MessageSegment
+from nonebot.log import logger
 from nonebot.typing import T_State
-
-from utils.mb2pkg_mokalogger import getlog
-
-log = getlog()
 
 superusers = nonebot.get_driver().config.superusers
 
@@ -38,7 +35,7 @@ async def auto_approve_friend_add_handle(bot: Bot, event: FriendRequestEvent):
     msg = f'来自QQ<{event.user_id}>的好友申请，已自动同意'
     await send_to_superusers(bot, msg)
     await event.approve(bot)
-    log.info(msg)
+    logger.info(msg)
 
 
 # 自动同意邀请我入其他群
@@ -50,7 +47,7 @@ async def auto_approve_group_invite(bot: Bot, event: GroupRequestEvent):
         await event.approve(bot)
     except nonebot.adapters.cqhttp.exception.ActionFailed:
         pass
-    log.info(msg)
+    logger.info(msg)
 
     await asyncio.sleep(5)  # 等待5秒后再发送使用说明，以免发送失败
     usage = 'bot使用帮助：help、man或manual\n' \
@@ -64,7 +61,7 @@ async def auto_approve_group_invite(bot: Bot, event: GroupRequestEvent):
 async def notice_kick_me(bot: Bot, event: GroupDecreaseNoticeEvent):
     msg = f'已被踢出群聊<{event.group_id}>，操作者<{event.operator_id}>'
     await send_to_superusers(bot, msg)
-    log.info(msg)
+    logger.info(msg)
 
 
 async def send_to_superusers(bot: Bot, msg: Union[str, Message, MessageSegment]) -> None:

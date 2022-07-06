@@ -7,9 +7,9 @@ from typing import Callable
 from nonebot import on_command
 from nonebot.adapters import Bot
 from nonebot.adapters.cqhttp import MessageSegment, MessageEvent
+from nonebot.log import logger
 
 from utils.mb2pkg_database import QQ
-from utils.mb2pkg_mokalogger import getlog
 from .config import Config
 from .data_model import UniversalProberResult, ArcaeaBind
 from .exceptions import *
@@ -24,8 +24,6 @@ match_arcaea_probe = on_command('arc查询', priority=5)
 match_arcaea_probe_recent = on_command('arc最近', priority=5)
 match_arcaea_bind = on_command('arc绑定', priority=5)
 match_arcaea_change_result_style = on_command('arc查分样式', priority=5)
-
-log = getlog()
 
 arc_result_type_options = ['moe', 'guin', 'bandori', 'andreal1', 'andreal2', 'andreal3']
 SONGDB = Config().arcsong_db_abspath
@@ -49,14 +47,14 @@ async def _(bot: Bot, event: MessageEvent):
         msg = MessageSegment.image(file=f'file:///{pic_save_path}')
     except BotArcAPIError as e:
         msg = f'查询时发生错误：{e.message}'
-        log.exception(e)
+        logger.exception(e)
     except NotBindError as e:
         msg = f'{e}未绑定好友码，请使用\narc绑定 <你的好友码>\n进行绑定（无需加括号）'
     except NoSuchScoreError as e:
         msg = f'在歌曲名、歌曲id、歌曲别名中都找不到：{e}'
     except Exception as e:
         msg = f'查询成绩时发生错误：{e}'
-        log.exception(e)
+        logger.exception(e)
 
     if event.message_type == 'group':
         msg = MessageSegment.at(user_id=event.user_id) + msg
@@ -71,12 +69,12 @@ async def _(bot: Bot, event: MessageEvent):
         msg = MessageSegment.image(file=f'file:///{pic_save_path}')
     except BotArcAPIError as e:
         msg = f'查询最近成绩时发生错误：{e.message}'
-        log.exception(e)
+        logger.exception(e)
     except NotBindError as e:
         msg = f'{e}未绑定好友码，请使用\narc绑定 <你的好友码>\n进行绑定（无需加括号）'
     except Exception as e:
         msg = f'查询最近成绩时发生错误：{e}'
-        log.exception(e)
+        logger.exception(e)
 
     if event.message_type == 'group':
         msg = MessageSegment.at(user_id=event.user_id) + msg
@@ -102,10 +100,10 @@ async def _(bot: Bot, event: MessageEvent):
                     msg = f'绑定好友码时发生错误：好友码{arg_list[0]}查无此人'
                 else:
                     msg = f'绑定好友码时发生错误：{e.message}'
-                log.exception(e)
+                logger.exception(e)
             except Exception as e:
                 msg = f'绑定好友码时发生错误：{e}'
-                log.exception(e)
+                logger.exception(e)
         else:
             msg = f'好友码必须是9位数字，而你输入了{arg_list[0]}'
 

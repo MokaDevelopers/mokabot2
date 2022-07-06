@@ -9,13 +9,11 @@ import time
 from nonebot.adapters.cqhttp import Bot, Event
 from nonebot.adapters.cqhttp import MessageEvent
 from nonebot.exception import IgnoredException
+from nonebot.log import logger
 from nonebot.matcher import Matcher
 from nonebot.typing import T_State
 
-from utils.mb2pkg_mokalogger import getlog
 from .config import Config
-
-log = getlog()
 
 arr_table: dict[int, tuple[float, str]] = {}  # {QQ号: (上一次发送的时间, 上一次发送的原始消息), ...}
 default_cd = Config().default_cd
@@ -32,7 +30,7 @@ async def arr(matcher: Matcher, bot: Bot, event: Event, state: T_State) -> None:
             # 如果距离上一次指令发送还不到指定cd时间，并且两次发送的消息一致
             cd = default_cd - (time.time() - last_time)
             if cd > 0 and last_raw_message == raw_message:
-                log.warn(f'event被ARR拦截: event={event}, cd=<{cd}>')
+                logger.warning(f'event被ARR拦截: event={event}, cd=<{cd}>')
                 await bot.send(event, f'被mokabot反重复请求模块(ARR)拒绝，请等待{round(cd, 1)}秒后再发送')
                 raise IgnoredException('ignore')
 

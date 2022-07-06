@@ -19,17 +19,10 @@ from typing import Optional, Union
 from urllib.parse import urlparse
 
 import aiohttp
-# from tenacity import retry, stop_after_attempt
-# Using the tenacity with ctypes is suspected to lead to memory leak, so I commented out this line.
-# See also the wrap of the private method "arc_request" of class Arcaea.
+from nonebot.log import logger
 
-from utils.mb2pkg_mokalogger import getlog
-# If you don't use mokalogger, you can replace it with "import logging as log",
-# or any other logging method you are familiar with or comfortable with.
 from .challenge_generator import select_available_generator
 from .config import Config
-
-log = getlog()
 
 # Your arc_static_uuid is just a constant uuid, use "str(uuid.uuid4()).upper()" to generate one and save it.
 DEFAULT_UUID = Config().arc_static_uuid
@@ -86,11 +79,10 @@ class Arcaea:
     }
 
     def __init__(self):
-        log.debug(f'using Arcaea API: {baseUrl}{api_entry}')
-        log.debug(f'static_uuid: {self.__static_uuid}')
-        log.debug(f'auth_str: {self.__auth_str}')
+        logger.debug(f'using Arcaea API: {baseUrl}{api_entry}')
+        logger.debug(f'static_uuid: {self.__static_uuid}')
+        logger.debug(f'auth_str: {self.__auth_str}')
 
-    # @retry(stop=stop_after_attempt(5))
     async def _arc_request(self, method: str, url: str, body: Optional[dict] = None) -> dict:
         # Authorization and DeviceId check
         if self.__auth_str and not self.__headers['Authorization']:
@@ -113,9 +105,9 @@ class Arcaea:
         async with aiohttp.request(method, url, headers=self.__headers, connector=aiohttp.TCPConnector(ssl=ssl_ctx), **kwargs) as r:
             response_json = await r.json()
 
-        log.debug(f'{method} {url} with '
+        logger.debug(f'{method} {url} with '
                   f'{json.dumps(body, indent=4)}')
-        log.debug(f'response after {int((time.time()-start_time)*1000)}ms '
+        logger.debug(f'response after {int((time.time() - start_time) * 1000)}ms '
                   f'{json.dumps(response_json, indent=4)}')
 
         return response_json
@@ -437,7 +429,7 @@ class Arcaea:
         if change_device_id:
             self.__headers['DeviceId'] = str(uuid.uuid4()).upper()
             self.__static_uuid = self.__headers['DeviceId']
-            log.debug('new_uuid: ' + self.__static_uuid)
+            logger.debug('new_uuid: ' + self.__static_uuid)
 
         self.__headers['Authorization'] = 'Basic ' + str(base64.b64encode((login_cred['name'] + ':' + login_cred['password']).encode('utf-8')), 'utf-8')
         login_url = baseUrl + api_entry + loginUrl
@@ -448,7 +440,7 @@ class Arcaea:
             if add_auth:
                 self.__headers['Authorization'] = login_json['token_type'] + ' ' + login_json['access_token']
                 self.__auth_str = self.__headers['Authorization']
-                log.debug('new_auth: ' + self.__auth_str)
+                logger.debug('new_auth: ' + self.__auth_str)
             else:
                 self.__headers['Authorization'] = self.__auth_str
 
@@ -478,7 +470,7 @@ class Arcaea:
         if change_device_id:
             register_data['device_id'] = str(uuid.uuid4()).upper()
             self.__static_uuid = register_data['device_id']
-            log.debug('new_uuid: ' + self.__static_uuid)
+            logger.debug('new_uuid: ' + self.__static_uuid)
         if 'Authorization' in self.__headers:
             self.__headers.pop('Authorization')
         register_url = baseUrl + api_entry + registeredUrl
@@ -489,7 +481,7 @@ class Arcaea:
             if add_auth:
                 self.__headers['Authorization'] = 'Bearer ' + register_json['value']['access_token']
                 self.__auth_str = self.__headers['Authorization']
-                log.debug('new_auth: ' + self.__auth_str)
+                logger.debug('new_auth: ' + self.__auth_str)
             else:
                 self.__headers['Authorization'] = self.__auth_str
 

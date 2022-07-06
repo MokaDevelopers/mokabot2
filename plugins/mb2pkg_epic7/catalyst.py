@@ -6,15 +6,13 @@ import nonebot
 from nonebot import on_command
 from nonebot.adapters import Bot
 from nonebot.adapters.cqhttp import MessageEvent, MessageSegment
+from nonebot.log import logger
 
-from utils.mb2pkg_mokalogger import getlog
 from utils.mb2pkg_text2pic import draw_image
 from .config import Config
 
 match_catalyst_probe = on_command('查询催化剂', aliases={'催化剂查询'}, priority=5)
 match_catalyst_list = on_command('催化剂列表', priority=5)
-
-log = getlog()
 
 temp_absdir = nonebot.get_driver().config.temp_absdir
 catalyst_json_abspath = Config().catalyst_json_abspath
@@ -77,7 +75,7 @@ async def probe(needs: list[str]) -> str:
     def zfilln(count: int, n: str) -> str:
         return (count - len(str(n))) * '0' + str(n)
 
-    log.info(f'搜索催化剂列表：{needs}')
+    logger.info(f'搜索催化剂列表：{needs}')
 
     result.extend([
         '以下是对每个副本的评分标准：',

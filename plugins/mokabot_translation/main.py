@@ -1,9 +1,8 @@
-from utils.mb2pkg_mokalogger import getlog
+from nonebot.log import logger
+
 from .config import Config
 from .exceptions import BaiduFanyiAPIError
 from .translator import BaiduFanyiTranslator
-
-log = getlog()
 
 # 映射语种名称到百度翻译的语种代码
 language_code_baidu = {
@@ -57,6 +56,6 @@ async def translate_to(src: str, target: str) -> str:
             result = f'翻译时发生了错误：{e}'
         except Exception as e:
             result = f'翻译时发生了未知错误：{e}，该错误已被记录'
-            log.exception(e)
+            logger.exception(e)
 
     return result

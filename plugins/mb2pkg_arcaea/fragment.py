@@ -3,16 +3,14 @@ import time
 from nonebot import on_command
 from nonebot.adapters import Bot
 from nonebot.adapters.cqhttp import MessageEvent
+from nonebot.log import logger
 
 from utils.mb2pkg_database import QQ
-from utils.mb2pkg_mokalogger import getlog
 from utils.mb2pkg_public_plugin import datediff, get_time
 from .arcaea_lib import Arcaea, APP_VERSION
 from .exceptions import *
 
 match_free_stamina = on_command('arc获取体力', aliases={'arc嫖体力'}, priority=5)
-
-log = getlog()
 
 
 @match_free_stamina.handle()
@@ -47,26 +45,26 @@ async def free_stamina_handle(bot: Bot, event: MessageEvent):
         )
     except ArcaeaVersionError:
         msg = '未更新Arcaea版本，目前的版本是' + APP_VERSION
-        log.error(msg)
+        logger.error(msg)
     except NoBindError:
         msg = '这是一个非常危险的功能，请与维护者联系获取帮助'
-        log.error('该用户未绑定账号和密码')
+        logger.error('该用户未绑定账号和密码')
     except FirstUseError:
         msg = '你是第一次使用该功能的用户，请务必了解到这是一个非常危险的功能\n如有任何疑问请咨询维护者\n再次输入该指令以继续'
         myQQ.arc_next_stamina = 0
-        log.error('为新用户警示而取消指令')
+        logger.error('为新用户警示而取消指令')
     except MaxStaminaError as stamina_count:
         msg = f'当前体力为{stamina_count}\n体力大于等于12时无法获取更多体力'
-        log.error(msg)
+        logger.error(msg)
     except StaminaTimeNotReadyError as next_fragstam_ts:
         msg = f'尚未到达下一次残片交换体力的允许时刻\n下一次可交换体力的时刻是{get_time("%Y-%m-%d %H:%M:%S", str(next_fragstam_ts))}'
-        log.error(msg)
+        logger.error(msg)
     except InvalidUsernameOrPassword:
         msg = '无法登录，请检查并重新绑定'
-        log.error(msg)
+        logger.error(msg)
     except Exception as e:
         msg = f'未知的失败原因'
-        log.exception(e)
+        logger.exception(e)
 
     await bot.send(event, msg)
 
@@ -77,7 +75,7 @@ async def arc_stamina(username: str, password: str):
     try:
         login_json = await myArc.user_login(username, password)
     except Exception as e:
-        log.exception(e)
+        logger.exception(e)
         raise RuntimeError(e)
     if not login_json['success']:
         if login_json['error_code'] == 5:
@@ -88,8 +86,8 @@ async def arc_stamina(username: str, password: str):
 
     stamina_json = await myArc.frag_stamina()
     if not stamina_json['success']:
-        log.error('获取体力时登录成功，但获取体力错误')
-        log.error(stamina_json)
+        logger.error('获取体力时登录成功，但获取体力错误')
+        logger.error(stamina_json)
         error_code = stamina_json['error_code']
 
         user_info_json = await myArc.user_info()

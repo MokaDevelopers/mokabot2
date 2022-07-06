@@ -4,13 +4,11 @@ import os
 
 import nonebot
 from nonebot import require
+from nonebot.log import logger
 from pixivpy_async import AppPixivAPI
 from pixivpy_async.error import AuthCredentialsError
 
-from utils.mb2pkg_mokalogger import getlog
 from .config import Config
-
-log = getlog()
 
 temp_absdir = nonebot.get_driver().config.temp_absdir
 PIXIV_ACT = Config().pixiv_username
@@ -27,18 +25,18 @@ async def _init_pixiv():
     if Pixiv.refresh_token is None:
         try:
             login_json = await Pixiv.login(PIXIV_ACT, PIXIV_PWD)
-            log.info('Pixiv初始化成功')
-            log.debug(str(login_json))
+            logger.info('Pixiv初始化成功')
+            logger.debug(str(login_json))
         except AuthCredentialsError as e:
-            log.error(f'Pixiv初始化失败，原因：{e}。\nPixiv重新登陆计划任务已停止')
+            logger.error(f'Pixiv初始化失败，原因：{e}。\nPixiv重新登陆计划任务已停止')
             scheduler.remove_job('login_pixiv_job')
     else:
         try:
             login_json = await Pixiv.login(refresh_token=Pixiv.refresh_token)
-            log.info('Pixiv重新登陆成功')
-            log.debug(str(login_json))
+            logger.info('Pixiv重新登陆成功')
+            logger.debug(str(login_json))
         except AuthCredentialsError as e:
-            log.error(f'Pixiv重新登陆失败，原因：{e}。\nPixiv重新登陆计划任务已停止')
+            logger.error(f'Pixiv重新登陆失败，原因：{e}。\nPixiv重新登陆计划任务已停止')
             scheduler.remove_job('login_pixiv_job')
 
 
@@ -46,7 +44,7 @@ async def pixiv_mokabot_api(api_method, **kwargs):
     global Pixiv
     result = None
 
-    log.info('PixivAPI处理：method:{}, params:{}'.format(api_method, kwargs))
+    logger.info('PixivAPI处理：method:{}, params:{}'.format(api_method, kwargs))
 
     try:
         if api_method == 'illust_detail':
@@ -65,13 +63,13 @@ async def pixiv_mokabot_api(api_method, **kwargs):
             url = kwargs['url']
             await Pixiv.download(url=url, path=temp_absdir, name=os.path.basename(url))
             savepath = os.path.join(temp_absdir, os.path.basename(url))
-            log.info('下载完成：保存路径：{}'.format(savepath))
+            logger.info('下载完成：保存路径：{}'.format(savepath))
             pic_b64 = base64.b64encode(open(savepath, 'rb').read()).decode()
             result = {'format': os.path.splitext(savepath)[1][1:], 'image': pic_b64}
             # return: {'format': 后缀名..., 'image': b64编码图像...}
         assert result
     except Exception as e:
-        log.exception(e)
+        logger.exception(e)
         result = str(e)
 
     return result

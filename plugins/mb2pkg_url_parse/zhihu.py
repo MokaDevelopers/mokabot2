@@ -25,15 +25,13 @@ from typing import Union, Any, Type, Optional
 import aiohttp
 from nonebot import on_regex
 from nonebot.adapters.cqhttp import Message, MessageSegment
+from nonebot.log import logger
 from nonebot.matcher import Matcher
 from pydantic import BaseModel
 
-from utils.mb2pkg_mokalogger import getlog
 from utils.mb2pkg_public_plugin import get_time, datediff
 from .base import BaseParse
 from .exceptions import *
-
-log = getlog()
 
 
 class ZhihuParse(BaseParse):
@@ -57,8 +55,8 @@ class ZhihuParse(BaseParse):
             if 'zvideo' in url:
                 return 'zvideo', parse_zvideo(url)
         except AttributeError as e:
-            log.error(f'解析失败，url为{url}')
-            log.exception(e)
+            logger.error(f'解析失败，url为{url}')
+            logger.exception(e)
 
     @staticmethod
     async def fetch(subtype: str, suburl: str) -> Union[str, Message, MessageSegment]:
@@ -103,12 +101,12 @@ async def zhihu_api(url: str, method: str, params: Optional[dict[str, str]] = No
         response_json = await r.json()
         response_code = r.status
 
-    log.debug(f'response after {int((time.time() - start_time) * 1000)}ms '
+    logger.debug(f'response after {int((time.time() - start_time) * 1000)}ms '
               f'{json.dumps(response_json, indent=4)}'
               f'code: {response_code}')
 
     if response_code != 200:
-        log.error(f'请求zhihuapiv4失败，响应 {response_code}：\n{response_json}')
+        logger.error(f'请求zhihuapiv4失败，响应 {response_code}：\n{response_json}')
         raise RuntimeError
 
     return response_json

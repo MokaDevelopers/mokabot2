@@ -8,13 +8,11 @@ import nonebot
 from nonebot import on_command
 from nonebot.adapters import Bot
 from nonebot.adapters.cqhttp import MessageSegment, MessageEvent
+from nonebot.log import logger
 from nonebot.rule import to_me
 
-from utils.mb2pkg_mokalogger import getlog
 from utils.mb2pkg_public_plugin import now_datetime
 from utils.mb2pkg_text2pic import draw_image, long_line, str_width
-
-log = getlog()
 
 temp_absdir = nonebot.get_driver().config.temp_absdir
 
@@ -47,12 +45,12 @@ async def cars() -> Union[bool, str]:
         async with session.get(url=url, timeout=5) as room_number:
             # 从网页获取json
             rooms = json.loads(await room_number.text(encoding='utf-8'))
-            log.debug('从车站获取到了车牌信息，内容：' + str(rooms))
+            logger.debug('从车站获取到了车牌信息，内容：' + str(rooms))
         url = 'https://api.bandoristation.com/?function=get_online_number'
         async with session.get(url=url, timeout=5) as room_number:
             # 从网页获取json
             online_number = (json.loads(await room_number.text(encoding='utf-8')))['response']['online_number']
-            log.debug(f'网页主页在线人数：{online_number}')
+            logger.debug(f'网页主页在线人数：{online_number}')
 
     if len(rooms['response']) == 0:
         return ''

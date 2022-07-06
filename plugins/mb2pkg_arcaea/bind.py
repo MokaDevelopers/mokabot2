@@ -6,10 +6,10 @@ import nonebot
 from nonebot import on_command
 from nonebot.adapters import Bot
 from nonebot.adapters.cqhttp import MessageEvent, MessageSegment
+from nonebot.log import logger
 from nonebot.permission import SUPERUSER
 
 from utils.mb2pkg_database import QQ, USERDIR
-from utils.mb2pkg_mokalogger import getlog
 from utils.mb2pkg_text2pic import draw_image
 from .config import Config
 from .exceptions import *
@@ -18,8 +18,6 @@ match_arc_bind = on_command('arc绑定', priority=5)
 match_arc_bind_username = on_command('arc绑定用户名', priority=5)
 match_arc_check_bind = on_command('arc检测', aliases={'arc检查', 'arc检查好友状态', 'arc检测好友状态'}, priority=5, permission=SUPERUSER)
 match_arc_check_detail_bind = on_command('arc详细检测', priority=5, permission=SUPERUSER)
-
-log = getlog()
 
 temp_absdir = nonebot.get_driver().config.temp_absdir
 superusers = nonebot.get_driver().config.superusers
@@ -37,7 +35,7 @@ async def arc_bind_handle(bot: Bot, event: MessageEvent):
         msg = f'关联完成！已将QQ<{event.user_id}>关联至Arc好友码<{userid}>'
     except InvalidUserIdError as e:
         msg = f'{e}：只能绑定纯数字9位好友码，若您想绑定用户名，请使用"arc绑定用户名"指令'
-        log.warn(msg)
+        logger.warning(msg)
 
     await bot.send(event, msg)
 
@@ -97,7 +95,7 @@ def arc_bind_userid(qq: int, userid: str) -> None:
 
     if userid.isdigit() and len(userid) == 9:
         myqq.arc_friend_id = userid
-        log.info(f'已将QQ<{qq}>和Arcaea好友码<{userid}>成功绑定')
+        logger.info(f'已将QQ<{qq}>和Arcaea好友码<{userid}>成功绑定')
     else:
         raise InvalidUserIdError(userid)
 
@@ -106,7 +104,7 @@ def arc_bind_username(qq: int, username: str) -> None:
     myqq = QQ(qq)
 
     myqq.arc_friend_name = username
-    log.info(f'已将QQ<{qq}>和Arcaea用户名<{username}>成功绑定')
+    logger.info(f'已将QQ<{qq}>和Arcaea用户名<{username}>成功绑定')
 
 
 async def return_this_prober_user_me(_username: str,
@@ -120,15 +118,15 @@ async def return_this_prober_user_me(_username: str,
     try:
         login_json: dict = await login_response.json()
     except Exception as e:
-        log.error(f'{_username}无法登录，原因：{e}')
-        log.exception(e)
+        logger.error(f'{_username}无法登录，原因：{e}')
+        logger.exception(e)
         raise WebapiProberLoginError(e)
 
     if 'error' in login_json or 'isLoggedIn' not in login_json or not login_json['isLoggedIn']:
-        log.error(f'{_username}登录失败，返回：\n{login_json}')
+        logger.error(f'{_username}登录失败，返回：\n{login_json}')
         raise WebapiProberLoginError(login_json)
 
-    log.debug(f'webapi登录成功，所用查询账号为{_username}')
+    logger.debug(f'webapi登录成功，所用查询账号为{_username}')
 
     user_me_response = await _session.get(url='https://webapi.lowiro.com/webapi/user/me', timeout=5)
     return await user_me_response.json()

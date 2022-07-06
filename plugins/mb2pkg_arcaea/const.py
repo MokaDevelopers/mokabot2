@@ -12,10 +12,10 @@ from bs4 import BeautifulSoup
 from nonebot import on_command
 from nonebot.adapters import Bot
 from nonebot.adapters.cqhttp import MessageSegment, MessageEvent
+from nonebot.log import logger
 from nonebot.permission import SUPERUSER
 from pydantic import BaseModel
 
-from utils.mb2pkg_mokalogger import getlog
 from utils.mb2pkg_text2pic import str_width, draw_image
 from .config import Config
 
@@ -24,8 +24,6 @@ match_wiki_const = on_command('定数表', priority=5)
 match_wiki_TC = on_command('tc表', priority=5)
 match_wiki_PM = on_command('pm表', priority=5)
 match_update_twitter_const = on_command('手动更新推特定数表', priority=5, permission=SUPERUSER)
-
-log = getlog()
 
 temp_absdir = nonebot.get_driver().config.temp_absdir
 data_absdir = nonebot.get_driver().config.data_absdir
@@ -87,8 +85,8 @@ async def wiki_tc_handle(bot: Bot, event: MessageEvent):
         save_model(model, 'tc.yaml', data_absdir)
     except Exception as e:
         model = load_model_from_yaml(TCModel, 'tc.yaml', data_absdir)
-        log.warn('向wiki解析TC难度表时发生错误，已改用缓存')
-        log.exception(e)
+        logger.warning('向wiki解析TC难度表时发生错误，已改用缓存')
+        logger.exception(e)
 
     head = [
         'Arcaea TC 难度表 (来自Arcaea中文维基)',
@@ -126,8 +124,8 @@ async def wiki_pm_handle(bot: Bot, event: MessageEvent):
         save_model(model, 'pm.yaml', data_absdir)
     except Exception as e:
         model = load_model_from_yaml(PMModel, 'pm.yaml', data_absdir)
-        log.warn('向wiki解析PM难度表时发生错误，已改用缓存')
-        log.exception(e)
+        logger.warning('向wiki解析PM难度表时发生错误，已改用缓存')
+        logger.exception(e)
 
     head = [
         'Arcaea PM 难度表 (来自Arcaea中文维基)',
@@ -167,8 +165,8 @@ async def wiki_const_handle(bot: Bot, event: MessageEvent):
         save_model(model, 'const.yaml', data_absdir)
     except Exception as e:
         model = load_model_from_yaml(ConstModel, 'const.yaml', data_absdir)
-        log.warn('向wiki解析定数表时发生错误，已改用缓存')
-        log.exception(e)
+        logger.warning('向wiki解析定数表时发生错误，已改用缓存')
+        logger.exception(e)
 
     # 先对歌曲列表排序
 
@@ -249,10 +247,10 @@ async def get_arcaea_ig_pinned_tweet_id() -> str:
                 headers=Twitter.headers
         ) as r:  # id: 1189402618767888384
             tweet_id = (await r.json())['data']['pinned_tweet_id']
-            log.info(f'正在检查最新推特定数表，目前作者置顶推文的tweet_id为{tweet_id}')
+            logger.info(f'正在检查最新推特定数表，目前作者置顶推文的tweet_id为{tweet_id}')
             return tweet_id
     except Exception as e:
-        log.exception(e)
+        logger.exception(e)
 
 
 async def get_tweet_image_url(tweet_id: str) -> Optional[dict[str, str]]:
@@ -271,16 +269,16 @@ async def get_tweet_image_url(tweet_id: str) -> Optional[dict[str, str]]:
                 last_pinned_id = f.read().strip()
         else:
             last_pinned_id = None
-        log.info(f'上一次检测时保存的置顶推文id为{last_pinned_id}')
+        logger.info(f'上一次检测时保存的置顶推文id为{last_pinned_id}')
         # 检测该推文内容是否包含关键字，并且推文id不同于上一次保存的id
-        log.info(f'目前作者置顶推文文字内容为{data["data"][0]["text"]}')
+        logger.info(f'目前作者置顶推文文字内容为{data["data"][0]["text"]}')
         if '新曲を追加しました' in data['data'][0]['text'] and last_pinned_id != tweet_id:
-            log.info('检测到需要更新')
+            logger.info('检测到需要更新')
             # 更新保存的id
             with open(last_pinned_id_path, 'w') as f:
                 f.write(tweet_id)
-                log.info(f'已将{tweet_id}作为最新置顶推文id写入last_pinned_id文件保存')
-            log.info(f'目前作者置顶推文媒体内容为{data["includes"]["media"]}')
+                logger.info(f'已将{tweet_id}作为最新置顶推文id写入last_pinned_id文件保存')
+            logger.info(f'目前作者置顶推文媒体内容为{data["includes"]["media"]}')
             return {
                 'const8': data['includes']['media'][1]['url'] + ':orig',  # 第二张图
                 'const9': data['includes']['media'][2]['url'] + ':orig',  # 第三张图
@@ -289,7 +287,7 @@ async def get_tweet_image_url(tweet_id: str) -> Optional[dict[str, str]]:
         else:
             return None
     except Exception as e:
-        log.exception(e)
+        logger.exception(e)
 
 
 async def download_twitter_const_image(constX_dict: dict[str, str]):
@@ -300,21 +298,21 @@ async def download_twitter_const_image(constX_dict: dict[str, str]):
                 async with aiofiles.open(f'{Config().twitter_const_absdir}/{constX}.jpg', mode='wb') as f:
                     await f.write(img)
                     await f.close()
-                    log.info(f'已从 {url} 下载文件，并保存为 {constX}')
+                    logger.info(f'已从 {url} 下载文件，并保存为 {constX}')
 
 
 async def update_twitter_const_image() -> bool:
     try:
         tweet_id = await get_arcaea_ig_pinned_tweet_id()
         constX_dict = await get_tweet_image_url(tweet_id)
-        log.info(f'正在检查推特定数表更新，目前作者置顶推文为{tweet_id}')
+        logger.info(f'正在检查推特定数表更新，目前作者置顶推文为{tweet_id}')
         if constX_dict:
             await download_twitter_const_image(constX_dict)
-            log.info('Arcaea推特定数表已更新至最新')
+            logger.info('Arcaea推特定数表已更新至最新')
             return True
         return False
     except Exception as e:
-        log.exception(e)
+        logger.exception(e)
 
 
 # ⚠️注意 部分歌曲无图片(icon_url = None)，所有歌曲无定数(const = None)，加载时需注意

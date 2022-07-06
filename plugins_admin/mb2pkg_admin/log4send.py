@@ -3,12 +3,9 @@ from typing import Optional, Dict, Any
 
 from nonebot.adapters import Bot
 from nonebot.adapters.cqhttp import MessageEvent, Event, MessageSegment
+from nonebot.log import logger
 from nonebot.matcher import Matcher
 from nonebot.typing import T_State
-
-from utils.mb2pkg_mokalogger import getlog
-
-log = getlog()
 
 b64 = re.compile(r'\[CQ:image,file=base64://\S+]')
 
@@ -34,12 +31,12 @@ async def log_after_bot_send(bot: Bot, exception: Optional[Exception], api: str,
                     msg.append(v)
             else:
                 fin_data[k] = v
-        log.info(f'Bot发送消息，meta={fin_data}，msg={msg}，result={result}')
+        logger.info(f'Bot发送消息，meta={fin_data}，msg={msg}，result={result}')
 
         if result is None:
-            log.warn('Bot发送消息失败')
+            logger.warning('Bot发送消息失败')
 
 
 async def log_before_exec_command(matcher: Matcher, bot: Bot, event: Event, state: T_State):
     if isinstance(event, MessageEvent) and matcher.priority <= 100:
-        log.info(f'Bot收到消息，meta={event}，命中了matcher={matcher}')
+        logger.info(f'Bot收到消息，meta={event}，命中了matcher={matcher}')

@@ -3,10 +3,9 @@ import json
 import ssl
 from typing import Optional, Union
 
-from utils.mb2pkg_mokalogger import getlog
-from .exceptions import VndbError
+from nonebot.log import logger
 
-log = getlog()
+from .exceptions import VndbError
 
 __all__ = ['VNDB']
 
@@ -52,10 +51,10 @@ class VNDB:
         """
 
         self.writer.write(f'{msg}\x04'.encode())
-        log.debug(f'send {msg}')
+        logger.debug(f'send {msg}')
         send_result = await self.reader.readuntil(b'\x04')
         send_result_utf_8 = send_result.replace(b'\x04', b'').decode('utf-8')
-        log.debug(f'recv {send_result_utf_8}')
+        logger.debug(f'recv {send_result_utf_8}')
         return send_result_utf_8
 
     async def login(self, username: str, password: str) -> bool:

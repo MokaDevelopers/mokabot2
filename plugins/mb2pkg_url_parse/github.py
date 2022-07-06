@@ -8,15 +8,13 @@ from urllib import parse
 import aiohttp
 from nonebot import on_regex
 from nonebot.adapters.cqhttp import Message, MessageSegment
+from nonebot.log import logger
 from nonebot.matcher import Matcher
 from pydantic import BaseModel
 
-from utils.mb2pkg_mokalogger import getlog
 from utils.mb2pkg_public_plugin import get_time, datediff
 from .base import BaseParse
 from .exceptions import StatusCodeError, NoSuchTypeError
-
-log = getlog()
 
 headers = {'Accept': 'application/vnd.github.v3+json'}
 
@@ -177,9 +175,9 @@ class GithubParse(BaseParse):
                 raise NoSuchTypeError('不支持的类型:' + '/'.join(path_list))
 
         except NoSuchTypeError as ne:
-            log.error(ne.args[0])
+            logger.error(ne.args[0])
         except Exception as e:
-            log.exception(e)
+            logger.exception(e)
 
     async def fetch(self, subtype: str, suburl: str) -> Union[str, Message, MessageSegment]:
         fetch_func = {
@@ -192,9 +190,9 @@ class GithubParse(BaseParse):
         try:
             return await fetch_func(suburl)
         except StatusCodeError as se:
-            log.error(se.args[0])
+            logger.error(se.args[0])
         except Exception as e:
-            log.exception(e)
+            logger.exception(e)
 
 
 async def user_details(suburl: str) -> Message:

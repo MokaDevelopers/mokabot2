@@ -10,15 +10,13 @@ from typing import Union, Type, Optional
 import aiohttp
 from nonebot import on_regex
 from nonebot.adapters.cqhttp import Message, MessageSegment
+from nonebot.log import logger
 from nonebot.matcher import Matcher
 from pydantic import BaseModel
 
-from utils.mb2pkg_mokalogger import getlog
 from utils.mb2pkg_public_plugin import get_time, datediff
 from .base import BaseParse
 from .exceptions import NoSuchTypeError
-
-log = getlog()
 
 
 class BilibiliParse(BaseParse):
@@ -68,7 +66,7 @@ class BilibiliParse(BaseParse):
                 raise NoSuchTypeError(f'bilibili解析器无法解析该url为任何类型，具体消息为{text}')
 
         except Exception as e:
-            log.exception(e)
+            logger.exception(e)
 
     async def fetch(self, subtype: str, suburl: str) -> Union[str, Message, MessageSegment]:
         fetch_func = {
@@ -82,7 +80,7 @@ class BilibiliParse(BaseParse):
         try:
             return await fetch_func(suburl)
         except Exception as e:
-            log.exception(e)
+            logger.exception(e)
 
 
 def format_time(_time: Union[int, float, datetime]) -> str:

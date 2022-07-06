@@ -7,10 +7,8 @@ import string
 
 from PIL import Image, ImageDraw, ImageFont
 
-from utils.mb2pkg_mokalogger import getlog
 from .config import Config
 
-log = getlog()
 
 FONTPATH = os.path.join(Config().font_absdir, 'NotoSansMonoCJKsc-Regular.otf')
 
@@ -125,8 +123,6 @@ async def draw_image(strlist: list[str], savepath: str, max_width: int = 0) -> N
     if max_width != 0:
         strlist = long_line(strlist, max_width)
 
-    log.debug(f'正在制图，文字行数：{len(strlist)}行')
-
     # 开始制做背景
     im = Image.new('RGB', nonlsize(strlist), '#FFFFFF')
     draw = ImageDraw.Draw(im)
@@ -140,7 +136,6 @@ async def draw_image(strlist: list[str], savepath: str, max_width: int = 0) -> N
 
     # 存档
     im.save(savepath)
-    log.info(f'图片已生成，位置：{savepath}')
 
 
 __all__ = ['str_width', 'nonlsize', 'long_line', 'draw_image']

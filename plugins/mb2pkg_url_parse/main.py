@@ -2,16 +2,14 @@ from typing import Type
 
 from nonebot.adapters import Bot
 from nonebot.adapters.cqhttp import MessageEvent, GroupMessageEvent
+from nonebot.log import logger
 
-from utils.mb2pkg_mokalogger import getlog
 from .base import BaseParse
 from .bilibili import BilibiliParse
 from .youtube import YouTubeParse
 from .tieba import TiebaParse
 from .github import GithubParse
 from .zhihu import ZhihuParse
-
-log = getlog()
 
 
 class SetParse:
@@ -27,7 +25,7 @@ class SetParse:
         message_from = event.group_id if isinstance(event, GroupMessageEvent) else event.user_id
 
         if self._last_parse_dict.get(message_from, None) == (subtype, suburl):
-            log.warn(f'疑似发生机器人重复解析，内容：<{subtype}>{suburl}\n第二次解析发生于{event}')
+            logger.warning(f'疑似发生机器人重复解析，内容：<{subtype}>{suburl}\n第二次解析发生于{event}')
             return
 
         msg = await self._parse.fetch(subtype, suburl)

@@ -22,14 +22,12 @@ from urllib import parse
 import aiohttp
 from nonebot import on_regex
 from nonebot.adapters.cqhttp import MessageSegment, Message
+from nonebot.log import logger
 from nonebot.matcher import Matcher
 from pydantic import BaseModel
 from pyquery import PyQuery
 
-from utils.mb2pkg_mokalogger import getlog
 from .base import BaseParse
-
-log = getlog()
 
 
 class PostModel(BaseModel):
@@ -104,7 +102,7 @@ class TiebaParse(BaseParse):
                     user_model = UserModel(**params)
                     self._msg = user_msg_generate(user_model)
         except Exception as e:
-            log.exception(e)
+            logger.exception(e)
 
     async def fetch(self, subtype: str, suburl: str) -> Union[str, Message, MessageSegment]:
         return self._msg

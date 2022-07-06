@@ -12,11 +12,11 @@ from matplotlib.font_manager import FontProperties
 from nonebot import on_command, require
 from nonebot.adapters import Bot
 from nonebot.adapters.cqhttp import MessageSegment, MessageEvent
+from nonebot.log import logger
 from nonebot.permission import SUPERUSER
 from openpyxl import Workbook
 from tenacity import retry, stop_after_attempt
 
-from utils.mb2pkg_mokalogger import getlog
 from utils.mb2pkg_public_plugin import datediff, get_time, now_datetime
 from utils.mb2pkg_text2pic import draw_image
 from .config import Config
@@ -26,8 +26,6 @@ scheduler = require('nonebot_plugin_apscheduler').scheduler
 match_bandori_track = on_command('分数线', priority=5)
 match_bandori_event_list = on_command('活动列表', priority=5)
 match_make_chart_excel = on_command('生成歌曲列表', priority=5, permission=SUPERUSER)
-
-log = getlog()
 
 temp_absdir = nonebot.get_driver().config.temp_absdir
 FONTPATH = os.path.join(Config().font_absdir, 'NotoSansMonoCJKsc-Regular.otf')
@@ -71,7 +69,7 @@ async def make_chart_excel_handle(bot: Bot, event: MessageEvent):
         msg = '已生成完毕！'
     except Exception as e:
         msg = f'生成时发生错误{e}，请前往服务端查看日志'
-        log.exception(e)
+        logger.exception(e)
 
     await bot.send(event, msg)
 
@@ -93,8 +91,8 @@ async def get_event_track(event: Union[str, int], server: str, rank: Union[str, 
         async with session.get(url=url, timeout=5) as r:
             # 从网页获取json
             event_rank_data = (await r.json())['cutoffs']
-            log.debug('从bestdori获取到了pt观测值json')
-            log.debug(event_rank_data)
+            logger.debug('从bestdori获取到了pt观测值json')
+            logger.debug(event_rank_data)
 
     return event_rank_data
 
@@ -112,7 +110,7 @@ async def get_song_list() -> dict[str, Any]:
         async with session.get(url=url, timeout=5) as r:
             # 从网页获取json
             song_list_data = (await r.json())
-            log.debug('从bestdori获取到了歌曲meta列表')
+            logger.debug('从bestdori获取到了歌曲meta列表')
 
     return song_list_data
 
@@ -130,7 +128,7 @@ async def get_band_list() -> dict[str, dict[str, list[str]]]:
         async with session.get(url=url, timeout=5) as r:
             # 从网页获取json
             band_list_data = (await r.json())
-            log.debug('从bestdori获取到了乐队列表')
+            logger.debug('从bestdori获取到了乐队列表')
 
     return band_list_data
 
@@ -148,8 +146,8 @@ async def get_event_archives() -> dict[str, Any]:
             # 从网页获取json
             r.encoding = 'utf-8'
             event_archives = await r.json()
-            log.debug('从bestdori获取到了活动基本数据')
-            log.debug(event_archives)
+            logger.debug('从bestdori获取到了活动基本数据')
+            logger.debug(event_archives)
 
     return event_archives
 
@@ -181,7 +179,7 @@ async def list_event(server: str) -> str:
         result.append(' '.join([event_id, event_type, event_name]))
         result.append(f'  {event_start}～{event_end}')
         i += 1
-    log.debug(f'已生成活动列表，活动总数：{i - 1}')
+    logger.debug(f'已生成活动列表，活动总数：{i - 1}')
 
     head = [f'活动列表 来源：bestdori.com', f'制图时间：{now_datetime()}', '']  # 添加描述头
 
@@ -212,7 +210,7 @@ async def list_track(event: int, server: str, rank: Union[str, int]) -> str:
         while str(i) in event_archives and event_archives[str(i)]['startAt'][server_dict[server]] is not None:
             i += 1
         event = i - 1
-        log.warn(f'event为0，查询最新一期，最新一期为{str(i - 1)}')
+        logger.warning(f'event为0，查询最新一期，最新一期为{str(i - 1)}')
 
     # 从bestdori获取数据
     event_archives = event_archives[str(event)]
@@ -222,7 +220,7 @@ async def list_track(event: int, server: str, rank: Union[str, int]) -> str:
     event_start = get_time("%Y-%m-%d %H:%M:%S", event_archives['startAt'][server_dict[server]][:-3])  # 活动开始时间
     event_end = get_time("%Y-%m-%d %H:%M:%S", event_archives['endAt'][server_dict[server]][:-3])  # 活动结束时间
     event_name = event_archives['eventName'][server_dict[server]]  # 活动名称
-    log.debug(f'活动基本信息解析完成，{event_type} {event_start} {event_end} {event_name}')
+    logger.debug(f'活动基本信息解析完成，{event_type} {event_start} {event_end} {event_name}')
 
     # 计算观测点密度
     observe_num = len(event_track)
@@ -267,7 +265,7 @@ async def list_track(event: int, server: str, rank: Union[str, int]) -> str:
         result.append('{:>3d}  {:>11s}   {:>5.1f}hr   {:>8d}pt   {:>7d}pt   {:>7d}pt/hr'.format(
             i + 1, get_time("%m-%d %H:%M", real_time[i] / 1000), past_time[i], event_pt[i], dx[i], int(spd[i])
         ))
-    log.debug(f'已计算完所有的数据，观测点数量：{len(result)}')
+    logger.debug(f'已计算完所有的数据，观测点数量：{len(result)}')
 
     savepath = os.path.join(temp_absdir, f'event_track_{event}{server}{rank}.jpg')
     await draw_image(head + result, savepath)
@@ -307,15 +305,15 @@ async def event_prediction(event: int, server: str, rank: Union[str, int]) -> st
         while str(i) in event_archives and event_archives[str(i)]['startAt'][server_dict[server]] is not None:
             i += 1
         event = i - 1
-        log.warn(f'event为0，查询最新一期，最新一期为{str(i - 1)}')
+        logger.warning(f'event为0，查询最新一期，最新一期为{str(i - 1)}')
 
     # 判断活动类型
     event_archives = list(event_archives.values())
     event_type = event_archives[event - 1]['eventType']
     event_name = event_archives[event - 1]['eventName'][server_dict[server]]
 
-    log.debug(f'将会对{event}{server}{rank}进行档线追踪与预测')
-    log.debug(f'活动类型是{event_type}')
+    logger.debug(f'将会对{event}{server}{rank}进行档线追踪与预测')
+    logger.debug(f'活动类型是{event_type}')
 
     # 找到同类型的最近5期有效活动数据
     history_track = []
@@ -332,20 +330,20 @@ async def event_prediction(event: int, server: str, rank: Union[str, int]) -> st
         if ea['eventType'] == event_type:
             t = await get_event_track(i + 1, server, rank)
             if not t:  # 当bestdori完全没有统计这期数据时，返回的是个空列表
-                log.warn(f'bestdori的{i + 1}{server}{rank}统计数据为空，跳过')
+                logger.warning(f'bestdori的{i + 1}{server}{rank}统计数据为空，跳过')
                 continue
             else:
                 # noinspection PyTypeChecker
                 t_end = int(event_archives[i]['endAt'][server_dict[server]]) + 1000  # 注意时间单位为ms
                 if t_end - t[-1]['time'] > 0:  # 当bestdori没有将这期数据统计完时，最后一个的时间戳和结活时间戳不相等
-                    log.warn(f'bestdori的{i + 1}{server}{rank}统计数据不完全，跳过')
+                    logger.warning(f'bestdori的{i + 1}{server}{rank}统计数据不完全，跳过')
                     continue
                 else:
-                    log.debug(f'bestdori的{i + 1}{server}{rank}统计数据有效')
+                    logger.debug(f'bestdori的{i + 1}{server}{rank}统计数据有效')
                     # noinspection PyTypeChecker
                     history_track.append(normalization(t, int(event_archives[i]['startAt'][server_dict[server]])))
 
-    log.debug(f'找到了{len(history_track)}期有效活动数据')
+    logger.debug(f'找到了{len(history_track)}期有效活动数据')
 
     event_point_list = await get_event_track(event, server, rank)
     event_time_start = int(event_archives[event - 1]['startAt'][server_dict[server]])
@@ -382,7 +380,7 @@ async def event_prediction(event: int, server: str, rank: Union[str, int]) -> st
             continue
         result.append({'time': single_point['time'], 'ep': int(point_ep / point_ep_nm)})
 
-    log.debug(f'所有点的预测线计算完成，理论计算{len(event_point_list)}个点，实际计算{len(result)}个点')
+    logger.debug(f'所有点的预测线计算完成，理论计算{len(event_point_list)}个点，实际计算{len(result)}个点')
 
     # 导出数据到数组，便于作图，时间单位为已经过小时，分数单位为万
     real_point_x = []
@@ -421,7 +419,7 @@ async def event_prediction(event: int, server: str, rank: Union[str, int]) -> st
     # 生成图片
     savepath = os.path.join(temp_absdir, f'event_prediction_{event}{server}{rank}.jpg')
     plt.savefig(savepath)
-    log.debug(f'已生成图片，保存在{savepath}')
+    logger.debug(f'已生成图片，保存在{savepath}')
     plt.clf()
 
     return savepath
@@ -597,11 +595,11 @@ async def make_chart_excel() -> None:
         # 获取bestdori的歌曲meta列表，仅包含歌曲id，不包含其他任何信息，其json为 {"1":{},"2":{},"3":{}, ... }
         async with client.get(url='https://bestdori.com/api/songs/all.0.json', timeout=5) as response:
             simple_song_list = await response.json()
-            log.info('已获取到bestdori的歌曲meta列表')
+            logger.info('已获取到bestdori的歌曲meta列表')
         # 获取bestdori的乐队名称
         async with client.get(url='https://bestdori.com/api/bands/all.1.json', timeout=5) as response:
             band_list = await response.json()
-            log.info('已获取到bestdori的乐队名称')
+            logger.info('已获取到bestdori的乐队名称')
         # 下载歌曲meta并格式化为谱面
         for song_id in simple_song_list:  # song_id:: str
             song_id: int = int(song_id)
@@ -613,12 +611,12 @@ async def make_chart_excel() -> None:
                 ex_info = BandoriChartInfo(song_meta, band_list, 3)
                 ex_chart_list.append(ex_info)
                 all_chart_list.append(ex_info)
-                log.info(f'歌曲{ex_info.title}，谱面id={ex_info.chart_id}的信息已获取')
+                logger.info(f'歌曲{ex_info.title}，谱面id={ex_info.chart_id}的信息已获取')
                 if song_meta.special:
                     sp_info = BandoriChartInfo(song_meta, band_list, 4)
                     sp_chart_list.append(sp_info)
                     all_chart_list.append(sp_info)
-                    log.info(f'歌曲{sp_info.title}，谱面id={sp_info.chart_id}的信息（SP）已获取')
+                    logger.info(f'歌曲{sp_info.title}，谱面id={sp_info.chart_id}的信息（SP）已获取')
                 # 其实先放到all_chart_list然后用两个filter，也行，但是没必要再去写个循环了
 
     # 把all、ex、sp列表分别写入三张表，注意row是行，col是列
@@ -634,5 +632,5 @@ async def make_chart_excel() -> None:
     savepath = os.path.join(temp_absdir, 'all_charts.xlsx')
     book.save(savepath)
 
-    log.info(f'乐曲列表已生成完毕，保存于{savepath}')
-    log.info('定时任务已处理完成 耗时%.3fs' % (time.time() - start))
+    logger.info(f'乐曲列表已生成完毕，保存于{savepath}')
+    logger.info('定时任务已处理完成 耗时%.3fs' % (time.time() - start))

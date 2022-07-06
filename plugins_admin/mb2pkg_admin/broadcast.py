@@ -3,15 +3,14 @@ import asyncio
 from nonebot import on_command
 from nonebot.adapters import Bot
 from nonebot.adapters.cqhttp import MessageEvent
+from nonebot.log import logger
 from nonebot.permission import SUPERUSER
 from nonebot.rule import to_me
 
-from utils.mb2pkg_mokalogger import getlog
 from .config import Config
 
 match_broadcast = on_command('群广播', aliases={'群公告'}, priority=5, permission=SUPERUSER, rule=to_me())
 
-log = getlog()
 broadcast_cd = Config().broadcast_cd
 
 
@@ -28,14 +27,14 @@ async def broadcast_receive(bot: Bot, event: MessageEvent):
     else:
         await match_broadcast.send('bot开始发送...')
         groups = await bot.get_group_list()
-        log.info(f'管理员<{event.user_id}>发送了一条公告：{event.raw_message}')
-        log.debug(groups)
+        logger.info(f'管理员<{event.user_id}>发送了一条公告：{event.raw_message}')
+        logger.debug(groups)
         for group in groups:
             group_id = group['group_id']
             try:  # 防止被禁言后无法继续发
                 await bot.send_group_msg(group_id=group_id, message=broadcast)
             except Exception as senderror:
                 await match_broadcast.send(f'发往<{group_id}>时发送失败，原因：{senderror}')
-                log.error(f'发往<{group_id}>时发送失败，原因：{senderror}')
+                logger.error(f'发往<{group_id}>时发送失败，原因：{senderror}')
             await asyncio.sleep(broadcast_cd)
     await match_broadcast.finish('发送完成')

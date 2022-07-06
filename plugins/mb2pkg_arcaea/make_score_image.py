@@ -1,18 +1,17 @@
 import json
 import os
 import time
+from datetime import datetime
 from typing import Optional
 
 import nonebot
 from PIL import Image, ImageDraw, ImageFont, ImageOps, ImageFilter
-from datetime import datetime
-from utils.mb2pkg_mokalogger import getlog
+from nonebot.log import logger
+
 from utils.mb2pkg_public_plugin import get_time, now_datetime, datediff
 from utils.mb2pkg_text2pic import str_width, draw_image
 from .config import Config
 from .data_model import UniversalProberResult, Score
-
-log = getlog()
 
 temp_absdir = nonebot.get_driver().config.temp_absdir
 SONGLIST = Config().songlist_json_abspath
@@ -201,7 +200,7 @@ def moe_draw_recent(data: UniversalProberResult):
             'side': 0,
             'remote_dl': False
         }  # 未定位到歌曲，建立一个特殊的songtitle
-        log.warn(f'{recent_score.song_id}歌曲未找到')
+        logger.warning(f'{recent_score.song_id}歌曲未找到')
     side = 'hikari' if _songtitle['side'] == 0 else 'tairitsu'
 
     # 制图
@@ -229,7 +228,7 @@ def moe_draw_recent(data: UniversalProberResult):
         im.alpha_composite(partner_img, (partner.L, partner.T), (400, 0, 1888, 1888))
     except FileNotFoundError:
         # 搭档未找到直接跳过，因为没有替代品
-        log.warn(f'搭档{user_info.character}未找到')
+        logger.warning(f'搭档{user_info.character}未找到')
 
     # 画rating的背景
     bg_rating = Picture(0, 0, os.path.join(ARCLASTDIR, 'res_moe', 'bg_rating.png'))
@@ -272,7 +271,7 @@ def moe_draw_recent(data: UniversalProberResult):
         song_cover_img = Image.open(song_cover.path).convert('RGBA').resize((990, 990))
     except FileNotFoundError:
         song_cover_img = Image.open(default_song_cover_path).convert('RGBA').resize((990, 990))
-        log.warn('{}歌曲未找到，使用默认样式'.format(recent_score.song_id))
+        logger.warning('{}歌曲未找到，使用默认样式'.format(recent_score.song_id))
     im.alpha_composite(song_cover_img, (song_cover.L, song_cover.T))
 
     # 画歌曲角标（polygon方法生成三角形）（根据BYD、FTR、PRS、PST）
@@ -361,7 +360,7 @@ def guin_draw_recent(data: UniversalProberResult):
             'side': 0,
             'remote_dl': False
         }  # 未定位到歌曲，建立一个特殊的songtitle
-        log.warn(f'{recent_score.song_id}歌曲未找到')
+        logger.warning(f'{recent_score.song_id}歌曲未找到')
     user_rank_score = rank_score(recent_score.score).lower()  # 成绩评价（EX..AA....用于决定背景图）
 
     # 制图
@@ -381,7 +380,7 @@ def guin_draw_recent(data: UniversalProberResult):
         song_cover_img = Image.open(song_cover.path).convert('RGBA').resize((853, 853))
     except FileNotFoundError:
         song_cover_img = Image.open(default_song_cover_path).convert('RGBA').resize((853, 853))
-        log.warn(f'{recent_score.song_id}歌曲未找到，使用默认样式')
+        logger.warning(f'{recent_score.song_id}歌曲未找到，使用默认样式')
     im.alpha_composite(song_cover_img, (song_cover.L, song_cover.T))
 
     # 画歌曲角标（polygon方法生成三角形）（根据BYD、FTR、PRS、PST）
@@ -433,7 +432,7 @@ def guin_draw_recent(data: UniversalProberResult):
         partner_icon_img = Image.open(partner_icon.path).convert('RGBA').resize((161, 160))
     except FileNotFoundError:
         partner_icon_img = Image.open(default_partner_icon_path).convert('RGBA').resize((161, 160))
-        log.warn(f'搭档{user_info.character}未找到')
+        logger.warning(f'搭档{user_info.character}未找到')
     im.alpha_composite(partner_icon_img, (partner_icon.L, partner_icon.T))
 
     # 写用户名、游玩日期、游玩时间、UID、PTT
@@ -496,7 +495,7 @@ def bandori_draw_recent(data: UniversalProberResult):
             'side': 0,
             'remote_dl': False
         }  # 未定位到歌曲，建立一个特殊的songtitle
-        log.warn(f'{recent_score.song_id}歌曲未找到')
+        logger.warning(f'{recent_score.song_id}歌曲未找到')
     side = 'hikari' if _songtitle['side'] == 0 else 'tairitsu'
 
     # 若查询环节查询best失败，score会是一个空列表，则该flag为false，表明无需绘制NEW RECORD和highscore
@@ -504,7 +503,7 @@ def bandori_draw_recent(data: UniversalProberResult):
     try:
         best_score = data.scores[0]
     except IndexError:
-        log.warn(f'查询环节查询best失败，score返回空列表，用户查询的歌曲是：{recent_score.song_id}')
+        logger.warning(f'查询环节查询best失败，score返回空列表，用户查询的歌曲是：{recent_score.song_id}')
         best_score = recent_score
         best_probe_success = False
 
@@ -530,7 +529,7 @@ def bandori_draw_recent(data: UniversalProberResult):
         im.alpha_composite(partner_img, (partner.L, partner.T), (200, 0, 1888, 1888))
     except FileNotFoundError:
         # 搭档未找到直接跳过，因为没有替代品
-        log.warn(f'搭档{user_info.character}未找到')
+        logger.warning(f'搭档{user_info.character}未找到')
 
     # 画白色基础背景
     bg_white = Picture(0, 0, os.path.join(ARCLASTDIR, 'res_bandori', 'bg.png'))
@@ -704,7 +703,7 @@ async def draw_b30(data: UniversalProberResult):
                 '以Best前10作为Top10时的潜力值：%.5f' % top_limit_ptt,
                 '考虑误差后估计Top10的上/下界：%.5f / %.5f' % (t10_max, t10_min),
                 ]
-    log.debug('用户信息（head）已正常生成')
+    logger.debug('用户信息（head）已正常生成')
 
     # STEP2: 生成最近游玩数据，即recent_score_info和recent_description
 
@@ -718,11 +717,11 @@ async def draw_b30(data: UniversalProberResult):
                 'side': 0,
                 'remote_dl': False
             }
-            log.warning(f'{score_song_id}歌曲未找到')
+            logger.warning(f'{score_song_id}歌曲未找到')
 
     # 准备最近一次游玩的数据
     recent_score_info = gen_score_info(recent_score)
-    log.debug('recent_score_info已正常生成')
+    logger.debug('recent_score_info已正常生成')
 
     # 计算最近一次游玩在score中的位置，寻找方式为歌曲名+难度
     lastsong = songtitle[recent_score.song_id]['en'] + difficulty[recent_score.difficulty]
@@ -749,7 +748,7 @@ async def draw_b30(data: UniversalProberResult):
     # 成绩不在best内，best中也没有相同难度和歌名的谱面
     else:
         recent_description = ['', '', '上次游玩：（该谱面的定数在定数搜索范围之外，故无法在best列表中定位）', '']
-    log.debug(f'recent_description已正常生成：{recent_description[2]}')
+    logger.debug(f'recent_description已正常生成：{recent_description[2]}')
 
     # STEP3: 生成Best30数据，即best30_scores_info和b30_description
 
@@ -757,12 +756,12 @@ async def draw_b30(data: UniversalProberResult):
     best30_scores_info = []
     for index, score in enumerate(scores[:30], start=1):
         best30_scores_info.extend(gen_score_info(score, index))
-    log.debug('b30已正常生成')
+    logger.debug('b30已正常生成')
 
     floor = scores[0].rating
     ceiling = scores[min(29, len(scores) - 1)].rating
     b30_description = ['', 'Best 30：（天花板：%.5f  地板：%.5f）' % (floor, ceiling), '']
-    log.debug('b30_description正常计算完毕，天花板：%.5f，地板：%.5f' % (floor, ceiling))
+    logger.debug('b30_description正常计算完毕，天花板：%.5f，地板：%.5f' % (floor, ceiling))
 
     # STEP4: 生成Best31至Best35的数据，即b31_split_line和b31Tob35_scores_info
 
@@ -771,7 +770,7 @@ async def draw_b30(data: UniversalProberResult):
     for index, score in enumerate(scores[30:35], start=31):
         b31Tob35_scores_info.extend(gen_score_info(score, index))
     b31_split_line = ['  ==================== Best 31 ====================', ''] if b31Tob35_scores_info else []
-    log.debug('b31-b35已正常生成')
+    logger.debug('b31-b35已正常生成')
 
     result = head + recent_description + recent_score_info + b30_description + best30_scores_info + b31_split_line + b31Tob35_scores_info
 

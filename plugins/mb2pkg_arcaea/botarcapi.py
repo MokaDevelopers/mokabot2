@@ -6,10 +6,8 @@ import aiofiles
 import aiohttp
 import httpx
 
-from utils.mb2pkg_mokalogger import getlog
+from nonebot.log import logger
 from .exceptions import BotArcAPIError
-
-log = getlog()
 
 
 class BotArcAPIEndpoint:
@@ -92,15 +90,15 @@ class BotArcAPIClient:
         except httpx.ReadTimeout:
             raise BotArcAPIError(-503, 'timeout')
 
-        log.debug(f'{method} {endpoint} with '
+        logger.debug(f'{method} {endpoint} with '
                   f'{json.dumps(data, indent=4)}')
-        log.debug(f'response after {int((time.time() - start_time) * 1000)}ms '
+        logger.debug(f'response after {int((time.time() - start_time) * 1000)}ms '
                   f'{json.dumps(response_json, indent=4)}')
 
         if response_json['status'] < 0:
-            log.error(f'{method} {endpoint} with '
+            logger.error(f'{method} {endpoint} with '
                       f'{json.dumps(data, indent=4)}')
-            log.error(response_json)
+            logger.error(response_json)
             raise BotArcAPIError(response_json['status'], response_json['message'])
 
         return response_json

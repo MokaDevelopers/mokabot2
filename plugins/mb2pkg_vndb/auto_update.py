@@ -4,11 +4,9 @@ import time
 from sys import platform
 
 from nonebot import require
+from nonebot.log import logger
 
-from utils.mb2pkg_mokalogger import getlog
 from .config import Config
-
-log = getlog()
 
 scheduler = require('nonebot_plugin_apscheduler').scheduler
 res_absdir = Config().res_absdir
@@ -22,12 +20,12 @@ async def vndb_update() -> None:
     # proc = await asyncio.create_subprocess_shell(update_cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
     proc = await asyncio.create_subprocess_shell(update_cmd, stderr=asyncio.subprocess.PIPE)
     await proc.communicate()
-    log.info(f'{update_cmd!r} exited with {proc.returncode}')
+    logger.info(f'{update_cmd!r} exited with {proc.returncode}')
     # if stderr.decode():
     #     log.error(f'[stderr]\n{stderr.decode()}')
 
-    log.info('vndb资源已自动更新')
-    log.info('定时任务已处理完成 耗时%.3fs' % (time.time() - start))
+    logger.info('vndb资源已自动更新')
+    logger.info('定时任务已处理完成 耗时%.3fs' % (time.time() - start))
 
 
 if platform == 'linux':

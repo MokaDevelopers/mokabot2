@@ -14,11 +14,11 @@ from nonebot import permission as su
 from nonebot import require
 from nonebot.adapters.cqhttp import Bot, Event, GroupMessageEvent, permission
 from nonebot.adapters.cqhttp import MessageSegment, Message
+from nonebot.log import logger
 from nonebot.typing import T_State
 from wordcloud import WordCloud
 
 from utils.mb2pkg_database import Group
-from utils.mb2pkg_mokalogger import getlog
 from .TextRank4ZH import TextRank4Keyword
 from .config import Config
 
@@ -26,8 +26,6 @@ global_config = nonebot.get_driver().config
 config = Config()
 scheduler = require("nonebot_plugin_apscheduler").scheduler
 dictFlags: dict[int, Optional[str]] = {}
-
-log = getlog()
 
 
 def is_group_message(bot: Bot, event: Event, state: T_State) -> bool:
@@ -61,7 +59,7 @@ async def match_switch_wc_handle(bot: Bot, event: GroupMessageEvent):
         msg = f'已{event.raw_message}，群组<{group_id}>的云图设置已设为{enable}'
         if enable == '1':
             msg += '，将在每天23点准时发送该群云图，管理员可通过发送"立即显示云图"来提前查看云图'
-        log.info(msg)
+        logger.info(msg)
 
         await bot.send(event, msg)
 
@@ -120,8 +118,8 @@ class DailyConlusion:
                         chatFreq[hr] += 1
 
         except Exception as e:
-            log.error(e)
-            log.exception(e)
+            logger.error(e)
+            logger.exception(e)
 
         return chatlog, chatFreq
 
@@ -153,8 +151,8 @@ class DailyConlusion:
                 report += 'Top' + str(i + 1) + '：' + list(wordDic.keys())[i] + '\n'
             return MessageSegment.image(file=f'file:///{savepath}'), report
         except Exception as e:
-            log.error(e)
-            log.exception(e)
+            logger.error(e)
+            logger.exception(e)
             return None
 
     def __generateHistogram(self) -> MessageSegment:
@@ -204,8 +202,8 @@ async def handleTimer():
                     pass
 
         except Exception as e:
-            log.error(e)
-            log.exception(e)
+            logger.error(e)
+            logger.exception(e)
 
 
 _hours, _minutes = config.auto_send_time

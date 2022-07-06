@@ -7,8 +7,8 @@ import nonebot
 from nonebot import on_command
 from nonebot.adapters import Bot
 from nonebot.adapters.cqhttp import MessageSegment, MessageEvent
+from nonebot.log import logger
 
-from utils.mb2pkg_mokalogger import getlog
 from utils.mb2pkg_public_plugin import now_datetime
 from utils.mb2pkg_text2pic import draw_image
 from .config import Config
@@ -17,8 +17,6 @@ temp_absdir = nonebot.get_driver().config.temp_absdir
 score_res_absdir = Config().score_res_absdir
 score_data_absdir = Config().score_data_absdir
 song_map_path = os.path.join(score_data_absdir, 'song_map.json')
-
-log = getlog()
 
 match_score_list = on_command('谱面列表', aliases={'铺面列表', '谱面列表ex', '铺面列表ex'}, priority=5)
 match_score_find = on_command('查询谱面', aliases={'铺面查询', '谱面查询', '查询铺面'}, priority=5)
@@ -72,16 +70,16 @@ async def read_map(song_name: str) -> str:
 
     # 如果映射表不存在
     if not os.path.isfile(song_map_path):
-        log.warn('映射表不存在，重新创建')
+        logger.warning('映射表不存在，重新创建')
         await (await aiofiles.open(song_map_path, 'w', encoding='utf-8')).close()
     else:
         async with aiofiles.open(song_map_path, 'r+', encoding='utf-8') as f2:
             song_map = json.loads(await f2.read())
             if song_name in song_map:
                 result = song_map[song_name]['id']
-                log.debug(f'映射已找到：{song_map[song_name]}')
+                logger.debug(f'映射已找到：{song_map[song_name]}')
             else:
-                log.warn(f'{song_name}的映射未找到')
+                logger.warning(f'{song_name}的映射未找到')
 
     return result
 
@@ -96,7 +94,7 @@ async def add_map(song_name: str, song_id: str, provider: int) -> str:
     :return: 反馈消息
     """
 
-    log.info(f'{song_name}将会映射到{song_id}，提供者：{provider}')
+    logger.info(f'{song_name}将会映射到{song_id}，提供者：{provider}')
     async with aiofiles.open(song_map_path, 'a+', encoding='utf-8') as f1:
         await f1.seek(0, 0)
         song_map = json.loads(await f1.read())
@@ -139,10 +137,10 @@ async def find_score(info: str) -> str:
             break
     # 复查一遍，因为如果未找到会返回最后一个谱面
     if score_dir_name[:3] != num:
-        log.error('未找到谱面：' + num)
+        logger.error('未找到谱面：' + num)
         return ''
     else:
-        log.debug(f'已找到谱面：{score_file_name}')
+        logger.debug(f'已找到谱面：{score_file_name}')
 
     # 第二步，在该文件夹中，找到ex或sp正向谱面
     score_files = os.listdir(os.path.join(score_res_absdir, score_dir_name))
@@ -155,7 +153,7 @@ async def find_score(info: str) -> str:
             # 正则表达式含义：匹配同时包含diff和mirror的文件名
             if re.search(r'.*(%s).*(mirror)' % diff_dict[diff[:2]], score_file_name):
                 break
-    log.debug(f'已找到谱面：{score_file_name}')
+    logger.debug(f'已找到谱面：{score_file_name}')
 
     return os.path.join(score_res_absdir, score_dir_name, score_file_name)
 
@@ -189,14 +187,14 @@ async def list_score(by_ex: bool = False) -> str:
     score_number = len(os.listdir(score_res_absdir))
     # 如果数据库文件或列表图片不存在
     if not (os.path.isfile(score_data) and os.path.isfile(score_pic)):
-        log.warn('数据库文件或列表图片不存在，重新生成列表图片')
+        logger.warning('数据库文件或列表图片不存在，重新生成列表图片')
         await remake()
 
     async with aiofiles.open(score_data, 'r+') as f1:
         score_number_saved = await f1.read()
         # 当歌曲目录情况不一致时。重写数据库文件，重新生成图像
         if score_number_saved == '' or int(score_number_saved) != score_number:
-            log.warn('歌曲目录情况不一致。重写数据库文件，重新生成图像')
+            logger.warning('歌曲目录情况不一致。重写数据库文件，重新生成图像')
             await remake()
 
     return score_pic

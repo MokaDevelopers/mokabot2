@@ -15,10 +15,10 @@ from brotli import decompress
 from nonebot import on_command
 from nonebot.adapters import Bot
 from nonebot.adapters.cqhttp import MessageSegment, MessageEvent
+from nonebot.log import logger
 from nonebot.permission import SUPERUSER
 
 from utils.mb2pkg_database import QQ
-from utils.mb2pkg_mokalogger import getlog
 from .arcaea_lib import APP_VERSION, Arcaea
 from .bind import return_this_prober_user_me
 from .botarcapi import BotArcAPIClient
@@ -31,8 +31,6 @@ from .make_score_image import moe_draw_last, guin_draw_last, bandori_draw_last, 
 match_arc_probe = on_command('arc查询', aliases={'ARC查询', 'av查询', '查询arc', '查询ARC', 'arc强制查询', 'arc最近', 'arc最近查询', 'arc查询最近'}, priority=5)
 match_arc_result_setting = on_command('arc查分样式', priority=5)
 match_arc_switch_probe = on_command('开启查分器', aliases={'关闭查分器'}, priority=5, permission=SUPERUSER)
-
-log = getlog()
 
 QUIRE_ACT = Config().prober_username
 QUIRE_PWD = Config().prober_password
@@ -88,16 +86,16 @@ async def arc_probe_handle(bot: Bot, event: MessageEvent):
             msg = MessageSegment.at(user_id=s.user_id) + msg
     except (timeout, aiohttp.WSServerHandshakeError):
         msg = '连接查分器时超时，请稍后查询'
-        log.error(msg)
+        logger.error(msg)
     except ClientConnectionError:
         msg = '查分器已强迫中止本次查询，请再试一次'
-        log.error(msg)
+        logger.error(msg)
     except PotentialHiddenError as e:
         msg = f'该玩家<{e}>已隐藏ptt'
-        log.warn(msg)
+        logger.warning(msg)
     except PlayerNotFoundError as e:
         msg = f'好友码<{e}>查无此人'
-        log.warn(msg)
+        logger.warning(msg)
     except NotBindError:
         msg = f'{s.user_id}未绑定arcaea，请使用\narc绑定 <好友码>\n来绑定好友码，详情请使用man指令查看帮助'
     except SameRatioError as e:
@@ -106,10 +104,10 @@ async def arc_probe_handle(bot: Bot, event: MessageEvent):
         msg = f'找不到成绩或找不到歌曲：{e}'
     except InvalidResultStyleError as e:
         msg = f'错误的格式：{e}，仅能使用{ARC_RESULT_LIST}中的样式'
-        log.warn(msg)
+        logger.warning(msg)
     except FileNotFoundError as e:
         msg = f'某个素材文件未找到：{e}'
-        log.warn(msg)
+        logger.warning(msg)
     except ArcaeaVersionError as e:
         msg = 'Arcaea版本未更新'
         if str(e) == 'estertion':
@@ -119,10 +117,10 @@ async def arc_probe_handle(bot: Bot, event: MessageEvent):
             enable_probe_force = False
             msg = f'本地查分器未更新Arcaea版本，目前的版本是{APP_VERSION}。\n' \
                   f'已从主查分器切换为第三备用查分器，再次发送该指令以继续'
-        log.error(msg)
+        logger.error(msg)
     except EstertionServerError as e:
         msg = f'estertion服务器端发生错误：{e}'
-        log.error(msg)
+        logger.error(msg)
     except NotFindFriendError as e:
         close_str = f'你的实际好友名是{" ".join(e.close_name)}吗？\n' if e.close_name else ''
         msg = f'在所有的查询用账号中都找不到该用户{e.friend_name}，请确认您的用户名输入正确（包括大小写）。\n' \
@@ -130,7 +128,7 @@ async def arc_probe_handle(bot: Bot, event: MessageEvent):
               f'另外请确认你的好友码是{e.arc_friend_id}，如果该好友码和你的用户名不对应甚至查无此人，开发者将没有任何办法添加你为好友\n。' \
               f'{close_str}' \
               f'欲重新绑定好友名，请使用"arc绑定用户名"指令'
-        log.error(msg)
+        logger.error(msg)
     except NotBindFriendNameError:
         msg = f'{s.user_id}未设置用于备用查分器的用户名（注意是用户名而非好友码），请使用\narc绑定用户名 <用户名>\n来绑定你的用户名，设置后请等待开发者人工添加好友。详情请使用man指令查看帮助。'
     except AllProberUnavailableError as e:
@@ -143,7 +141,7 @@ async def arc_probe_handle(bot: Bot, event: MessageEvent):
         msg = f'查分器不可用：{e}'
     except Exception as e:
         msg = f'查询以异常状态结束（{e}），本次错误已经被记录，请重新查询。若反复出现此异常，可暂时先用查分器本体查询'
-        log.exception(e)
+        logger.exception(e)
 
     await bot.send(event, msg)
 
@@ -155,10 +153,10 @@ async def arc_result_setting_handle(bot: Bot, event: MessageEvent):
     if arg in ARC_RESULT_LIST:
         myQQ.arc_result_type = arg
         msg = f'QQ<{event.user_id}>的arcaea最近成绩图的样式已设置为<{arg}>'
-        log.info(msg)
+        logger.info(msg)
     else:
         msg = f'错误的格式：{arg}，仅能使用{ARC_RESULT_LIST}中的样式'
-        log.warn(msg)
+        logger.warning(msg)
 
     await bot.send(event, msg)
 
@@ -218,11 +216,11 @@ async def arc_probe_estertion(userid: Union[str, int],
                 if not s:
                     break
                 elif s.data == 'bye':
-                    log.debug('查卡器返回bye')
+                    logger.debug('查卡器返回bye')
                     break
                 elif s.data == 'queried':
-                    log.debug('已连接到查卡器')
-                    log.debug('查卡器返回queried')
+                    logger.debug('已连接到查卡器')
+                    logger.debug('查卡器返回queried')
                     i += 1
                     continue
                 elif s.data == 'invalid id':
@@ -236,16 +234,16 @@ async def arc_probe_estertion(userid: Union[str, int],
                     else:
                         try:
                             result['userinfo'] = json.loads(decompress(s.data).decode('utf-8'))['data']
-                            log.debug('查卡器返回userinfo')
-                            log.debug(result['userinfo'])
+                            logger.debug('查卡器返回userinfo')
+                            logger.debug(result['userinfo'])
                             i += 1
                             if last:
                                 return result
                         except Exception as e:
-                            log.exception(e)
-                            log.error('返回userinfo时发生错误：' + str(e))
-                            log.error('查分器返回数据是' + str(s.data))
-                            log.error('查分器返回数据类型是' + str(type(s.data)))
+                            logger.exception(e)
+                            logger.error('返回userinfo时发生错误：' + str(e))
+                            logger.error('查分器返回数据是' + str(s.data))
+                            logger.error('查分器返回数据类型是' + str(type(s.data)))
                             raise EstertionServerError(e)
                 # 从第三次开始，请求都返回score
                 elif i >= 3:
@@ -256,18 +254,18 @@ async def arc_probe_estertion(userid: Union[str, int],
                     try:
                         r = json.loads(decompress(s.data).decode('utf-8'))['data']
                         result['scores'].extend(r)
-                        log.debug('查卡器返回score')
-                        log.debug(r)
+                        logger.debug('查卡器返回score')
+                        logger.debug(r)
                         i += 1
                     except Exception as e:
-                        log.exception(e)
-                        log.error('返回scores时发生错误：' + str(e))
-                        log.error('查分器返回数据是' + str(s.data))
-                        log.error('查分器返回数据类型是' + str(type(s.data)))
+                        logger.exception(e)
+                        logger.error('返回scores时发生错误：' + str(e))
+                        logger.error('查分器返回数据是' + str(s.data))
+                        logger.error('查分器返回数据类型是' + str(type(s.data)))
                         raise EstertionServerError(e)
 
             await ws.close()
-    log.debug('查分器返回结束')
+    logger.debug('查分器返回结束')
     return result
 
 
@@ -301,7 +299,7 @@ async def arc_probe_force(friend_id: Union[str, int],
     try:
         login_json = await quire_man.user_login(QUIRE_ACT, QUIRE_PWD)
     except Exception as e:
-        log.exception(e)
+        logger.exception(e)
         raise RuntimeError(e)
     if not login_json['success']:
         if login_json['error_code'] == 5:
@@ -361,7 +359,7 @@ async def arc_probe_force(friend_id: Union[str, int],
         for _item in friend_list:
             _friend_id = _item['user_id']
             await quire_man.friend_del(_friend_id)
-            log.info('自动修复：好友已清理完成')
+            logger.info('自动修复：好友已清理完成')
 
     # STEP1: 定数表生成
 
@@ -380,8 +378,8 @@ async def arc_probe_force(friend_id: Union[str, int],
     # 添加好友后返回一个字典，success键表明了添加是否成功，不成功则返回原因
     friend_add_json: dict = await quire_man.friend_add(friend_id)
     if not friend_add_json['success']:
-        log.error('添加好友时登录成功，但添加好友发生错误')
-        log.error(friend_add_json)
+        logger.error('添加好友时登录成功，但添加好友发生错误')
+        logger.error(friend_add_json)
         error_code = friend_add_json['error_code']
         error_info = error.get(error_code, f'未知的错误代码：{error_code}')
         # 自行处理以下错误
@@ -454,7 +452,7 @@ async def arc_probe_force(friend_id: Union[str, int],
         # 因est查分器也不再提供songtitle，因此决定将score列表复查合并到制图功能make_score_image
 
     except Exception as e:
-        log.exception(e)
+        logger.exception(e)
 
     finally:
         # 清理工作，删除好友
@@ -487,7 +485,7 @@ async def arc_probe_webapi(friend_name: str, arc_friend_id: str, myqq: QQ) -> Pr
             # 2、如果用户名不再在射表中，那么会逐个查询查分用账号，同时更新用户名到查分用账号的映射表
             if friend_name in webapi_user2acc_map:
                 if _username != webapi_user2acc_map[friend_name]:
-                    log.debug(f'已发现{friend_name}用户在查分器{webapi_user2acc_map[friend_name]}，将会跳过{_username}查分器')
+                    logger.debug(f'已发现{friend_name}用户在查分器{webapi_user2acc_map[friend_name]}，将会跳过{_username}查分器')
                     continue
 
             user_me_json = await return_this_prober_user_me(_username, _password, session)
@@ -497,19 +495,19 @@ async def arc_probe_webapi(friend_name: str, arc_friend_id: str, myqq: QQ) -> Pr
                 webapi_user2acc_map[_item['name']] = _username  # 更新用户名到查分用账号的映射表
                 if friend_name == _item['name']:
                     result['userinfo'] = _item
-                    log.debug(result)
+                    logger.debug(result)
                     if myqq.arc_uid is None:  # 用户名存在，但是uid不存在，此时应当补充uid
                         myqq.arc_uid = _item['user_id']
-                        log.info(f'由于数据库内没有uid，已将用户{friend_name}缺失的uid更新为{myqq.arc_uid}')
+                        logger.info(f'由于数据库内没有uid，已将用户{friend_name}缺失的uid更新为{myqq.arc_uid}')
                     elif int(myqq.arc_uid) != _item['user_id']:  # 用户名存在，但uid却不同，则认为换过绑定，此时此时应当更新uid
                         myqq.arc_uid = _item['user_id']
-                        log.info(f'由于用户更换绑定，已将用户{friend_name}的uid更新为{myqq.arc_uid}')
+                        logger.info(f'由于用户更换绑定，已将用户{friend_name}的uid更新为{myqq.arc_uid}')
                     return result
                 elif myqq.arc_uid is not None and int(myqq.arc_uid) == _item['user_id']:  # uid相同，但用户名却不存在，则认为改名了，此时应当更新用户名
                     result['userinfo'] = _item
-                    log.debug(result)
+                    logger.debug(result)
                     myqq.arc_friend_name = _item['name']
-                    log.info(f'已将用户{friend_name}（uid:{myqq.arc_uid}）的用户名更新为{_item["name"]}')
+                    logger.info(f'已将用户{friend_name}（uid:{myqq.arc_uid}）的用户名更新为{_item["name"]}')
                     return result
                 elif Levenshtein.distance(friend_name, _item['name']) <= 2:
                     close_name_list.append(_item['name'])
@@ -580,10 +578,10 @@ def qq_to_userid(qq: int) -> str:
     arc_friend_id = myqq.arc_friend_id
 
     if arc_friend_id:
-        log.debug('QQ<%d>已经绑定过Arcaea' % qq)
+        logger.debug('QQ<%d>已经绑定过Arcaea' % qq)
         return arc_friend_id
     else:
-        log.warn('QQ<%d>未与Arcaea绑定' % qq)
+        logger.warning('QQ<%d>未与Arcaea绑定' % qq)
         raise NotBindError
 
 

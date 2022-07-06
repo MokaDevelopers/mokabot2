@@ -9,8 +9,8 @@ import nonebot
 from nonebot import on_command
 from nonebot.adapters import Bot
 from nonebot.adapters.cqhttp import MessageSegment, MessageEvent
+from nonebot.log import logger
 
-from utils.mb2pkg_mokalogger import getlog
 from utils.mb2pkg_text2pic import draw_image
 from .client import VNDB
 from .config import Config
@@ -18,8 +18,6 @@ from .data_model import SearchResult, StaffItemsBasic, CharItemsBasic, VNItemsBa
 from .exceptions import *
 
 match_vndb = on_command('vndb', priority=5)
-
-log = getlog()
 
 temp_absdir = nonebot.get_driver().config.temp_absdir
 vndb_username, vndb_password = Config().vndb_account
@@ -107,7 +105,7 @@ with open(Config().chars_vns_csv, 'r', encoding='utf-8') as f:
 async def vndb_handle(bot: Bot, event: MessageEvent):
     args = str(event.get_message()).strip().split(' ', 2)
     try:
-        log.debug(args)
+        logger.debug(args)
         stype = args[0]
         cmd = args[1]
         info = args[2]
@@ -115,7 +113,7 @@ async def vndb_handle(bot: Bot, event: MessageEvent):
     except VndbError as e:
         msg = f'VNDB返回错误：msg={e.err_msg}, id={e.err_id}'
     except (IndexError, KeyError) as e:  # 即解析参数顺序的时候发生错误
-        log.exception(e)
+        logger.exception(e)
         msg = '参数异常，请参考"man vndb"帮助'
     except ParamError as e:
         msg = f'参数使用错误：{e}'
@@ -123,7 +121,7 @@ async def vndb_handle(bot: Bot, event: MessageEvent):
         msg = str(e)
     except Exception as e:
         msg = f'未知的错误发生：{e}'
-        log.exception(e)
+        logger.exception(e)
 
     await bot.send(event, msg)
 
@@ -665,4 +663,4 @@ def add_description(description: str) -> list[str]:
     return [_ for _ in description.split('\n') if _]
 
 
-log.debug(f'本地vid、cid和aid已加载，版本{return_local_vndb_timestamp()}')
+logger.debug(f'本地vid、cid和aid已加载，版本{return_local_vndb_timestamp()}')

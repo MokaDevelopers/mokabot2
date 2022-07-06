@@ -4,11 +4,9 @@ from typing import Union
 from nonebot import on_command
 from nonebot.adapters import Bot
 from nonebot.adapters.cqhttp import MessageEvent
+from nonebot.log import logger
 
-from utils.mb2pkg_mokalogger import getlog
 from .exceptions import ConstError
-
-log = getlog()
 
 match_arc_calc = on_command('arc计算', priority=5)
 
@@ -34,8 +32,8 @@ async def arc_calc_handle(bot: Bot, event: MessageEvent):
         except ConstError as e:
             msg = str(e)
         except Exception as e:
-            log.exception(e)
-            log.error(f'计算分数发生错误，其参数const={const}，score={score}，rating={rating}')
+            logger.exception(e)
+            logger.error(f'计算分数发生错误，其参数const={const}，score={score}，rating={rating}')
     # 以ptt、b30、r10作为计算目标
     elif re.search(r'^(ptt|b|r)', args) is not None:
         ptt = re.match(r'.*ptt([0-9.]*)', args)
@@ -51,8 +49,8 @@ async def arc_calc_handle(bot: Bot, event: MessageEvent):
         except ConstError as e:
             msg = str(e)
         except Exception as e:
-            log.exception(e)
-            log.error(f'计算定数发生错误，其参数ptt={ptt}，b30={b30}，r10={r10}')
+            logger.exception(e)
+            logger.error(f'计算定数发生错误，其参数ptt={ptt}，b30={b30}，r10={r10}')
 
     await bot.send(event, msg)
 
@@ -74,7 +72,7 @@ def calc_score(const: Union[float, int] = None,
     # 判断计算类型，看哪个是None类型就知道
     # ptt具体计算方式参考arcaea中文维基
     if rating is None:
-        log.debug('进行评价计算，分数%f 定数%f' % (score, const))
+        logger.debug('进行评价计算，分数%f 定数%f' % (score, const))
         if score > 1001:
             raise ConstError('计算分数时的分数单位为万，即上限为1000(万)，允许有小数点，如999.2，请输入一个更加合理的分数')
         elif score >= 1000:
@@ -87,7 +85,7 @@ def calc_score(const: Union[float, int] = None,
                 result = 0
         result = '评价：%.2f' % result
     elif score is None:
-        log.debug('进行分数计算，定数%f 评价%f' % (const, rating))
+        logger.debug('进行分数计算，定数%f 评价%f' % (const, rating))
         if rating > const + 2:
             raise ConstError('评价不能大于定数+2')
         elif rating >= const + 1:
@@ -98,7 +96,7 @@ def calc_score(const: Union[float, int] = None,
             raise ConstError('分数计算结果小于0')
         result = '分数：%.1f' % result
     elif const is None:
-        log.debug('进行定数计算，分数%f 评价%f' % (score, rating))
+        logger.debug('进行定数计算，分数%f 评价%f' % (score, rating))
         if score > 1001:
             raise ConstError('计算分数时的分数单位为万，即上限为1000(万)，允许有小数点，如999.2，请输入一个更加合理的分数')
         elif score >= 1000:
@@ -128,15 +126,15 @@ def calc_ptt(ptt: Union[float, int] = None,
     result = '输入格式不正确，请使用help'
     try:
         if ptt is None:
-            log.debug('进行ptt计算，b30:%f t10:%f' % (b30, r10))
+            logger.debug('进行ptt计算，b30:%f t10:%f' % (b30, r10))
             result = 'ptt %.5f' % (0.75 * b30 + 0.25 * r10)
         elif b30 is None:
-            log.debug('进行b30计算，ptt:%f t10:%f' % (ptt, r10))
+            logger.debug('进行b30计算，ptt:%f t10:%f' % (ptt, r10))
             result = 'best30 %.5f' % ((4 * ptt - r10) / 3)
         elif r10 is None:
-            log.debug('进行t10计算，ptt:%f b30:%f' % (ptt, b30))
+            logger.debug('进行t10计算，ptt:%f b30:%f' % (ptt, b30))
             result = 'recent10 %.5f' % (4 * ptt - 3 * b30)
     except Exception as e:
-        log.exception(e)
-        log.error('计算定数发生错误，其参数ptt=%s，b30=%s，r10=%s' % (str(ptt), str(b30), str(r10)))
+        logger.exception(e)
+        logger.error('计算定数发生错误，其参数ptt=%s，b30=%s，r10=%s' % (str(ptt), str(b30), str(r10)))
     return result

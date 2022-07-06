@@ -12,10 +12,10 @@ from nonebot import permission as su
 from nonebot import require, on_command
 from nonebot.adapters import Bot
 from nonebot.adapters.cqhttp import MessageSegment, GroupMessageEvent, permission
+from nonebot.log import logger
 from selenium import webdriver
 
 from utils.mb2pkg_database import Group
-from utils.mb2pkg_mokalogger import getlog
 from utils.mb2pkg_public_plugin import get_time
 from .config import Config
 
@@ -25,8 +25,6 @@ match_enable_notice = on_command('关闭国服公告',
                                  aliases={'关闭日服公告', '开启国服公告', '开启日服公告'},
                                  priority=5,
                                  permission=su.SUPERUSER | permission.GROUP_ADMIN | permission.GROUP_OWNER,)
-
-log = getlog()
 
 temp_absdir = nonebot.get_driver().config.temp_absdir
 env = nonebot.get_driver().config.environment
@@ -47,7 +45,7 @@ async def enable_notice_handle(bot: Bot, event: GroupMessageEvent):
         mygroup.__setattr__(news_xx, enable)
 
         msg = f'已{event.raw_message}，群组<{group_id}>的设置{news_xx}已设为{enable}'
-        log.info(msg)
+        logger.info(msg)
 
         await bot.send(event, msg)
 
@@ -59,7 +57,7 @@ async def job_send_game_notice():
     bot: Bot = list(bot_dict.values())[0]
     try:
         groups = await bot.get_group_list()
-        log.debug(groups)
+        logger.debug(groups)
 
         for XX, news_xx, Xfu, notices in [
             ('JP', 'news_jp', '日', await check_notice_update('JP')),
@@ -89,13 +87,13 @@ async def job_send_game_notice():
                         try:
                             await bot.send_group_forward_msg(group_id=group_id, messages=msg_list)
                         except Exception as senderror:
-                            log.error(f'发往<{group_id}>时发送失败，原因：{senderror}')
+                            logger.error(f'发往<{group_id}>时发送失败，原因：{senderror}')
                         await asyncio.sleep(10)
 
     except Exception as e:
-        log.exception(e)
+        logger.exception(e)
 
-    log.info('定时任务已处理完成 耗时%.3fs' % (time.time() - start))
+    logger.info('定时任务已处理完成 耗时%.3fs' % (time.time() - start))
 
 
 async def check_notice_update(server: str) -> list[dict[str, str]]:
@@ -119,11 +117,11 @@ async def check_notice_update(server: str) -> list[dict[str, str]]:
                 r.encoding = 'utf-8'
                 notice_json = await r.json()
                 remote_order = notice_json['NOTICE'][0]['viewOrder']
-                log.debug('从craftegg_api获取到了公告')
-                log.debug(f'远程日服（活动）公告最大order为：{remote_order}')
+                logger.debug('从craftegg_api获取到了公告')
+                logger.debug(f'远程日服（活动）公告最大order为：{remote_order}')
         async with aiofiles.open(JPNOTICE, mode='r') as f:
             local_order = int(await f.read())
-            log.debug(f'本地记录的日服（活动）公告最大order为：{local_order}')
+            logger.debug(f'本地记录的日服（活动）公告最大order为：{local_order}')
 
         # 下面算法解释：i代表新增的公告数量，若新公告order为1872、1871、1868、1860、1845...，本地最大order为1860，则i=3
         # i=3，即获取数组中的第0、1、2个公告，即order为1872、1871、1868的公告
@@ -136,20 +134,20 @@ async def check_notice_update(server: str) -> list[dict[str, str]]:
                 notice_title = f'{obj["informationType"]} {obj["title"]}'
                 notice_time = get_time('%Y-%m-%d %H:%M:%S', obj['viewStartAt'] / 1000) + ' (UTC+8)'
                 savepath = capture(f'https://web.star.craftegg.jp/information/{obj["linkUrl"]}', obj['linkUrl'])
-                log.info(f'获取到新的公告，标题：{notice_title}，时间：{notice_time}')
+                logger.info(f'获取到新的公告，标题：{notice_title}，时间：{notice_time}')
                 result.append({'title': notice_title, 'time': notice_time, 'savepath': savepath})
                 i -= 1
             # 修改本地数值
             async with aiofiles.open(JPNOTICE, mode='w') as f:
                 await f.write(str(remote_order))
-                log.info(f'本地日服（活动）公告最大order已修改为：{remote_order}')
+                logger.info(f'本地日服（活动）公告最大order已修改为：{remote_order}')
 
         # 分别从本地和远程查看日服（BUG）公告最大order
         remote_order = notice_json['BUG'][0]['viewOrder']
-        log.debug(f'远程日服（BUG）公告最大order为：{remote_order}')
+        logger.debug(f'远程日服（BUG）公告最大order为：{remote_order}')
         async with aiofiles.open(JPBUG, mode='r') as f:
             local_order = int(await f.read())
-            log.debug(f'本地记录的日服（BUG）公告最大order为：{local_order}')
+            logger.debug(f'本地记录的日服（BUG）公告最大order为：{local_order}')
 
         if remote_order > local_order:
             i = 0
@@ -160,26 +158,26 @@ async def check_notice_update(server: str) -> list[dict[str, str]]:
                 notice_title = f'{obj["informationType"]} {obj["title"]}'
                 notice_time = get_time('%Y-%m-%d %H:%M:%S', obj['viewStartAt'] / 1000) + ' (UTC+8)'
                 savepath = capture(f'https://web.star.craftegg.jp/information/{obj["linkUrl"]}', obj['linkUrl'])
-                log.info(f'获取到新的公告，标题：{notice_title}，时间：{notice_time}')
+                logger.info(f'获取到新的公告，标题：{notice_title}，时间：{notice_time}')
                 result.append({'title': notice_title, 'time': notice_time, 'savepath': savepath})
                 i -= 1
             # 修改本地数值
             async with aiofiles.open(JPBUG, mode='w') as f:
                 await f.write(str(remote_order))
-                log.info(f'本地日服（BUG）公告最大order已修改为：{remote_order}')
+                logger.info(f'本地日服（BUG）公告最大order已修改为：{remote_order}')
 
     elif server == 'CN':
 
         # 分别从本地和远程查看国服公告最大时间戳
         async with aiofiles.open(CNNOTICE, mode='r') as f:
             local_order = int(await f.read())
-            log.debug(f'本地记录的国服公告最大order为：{local_order}')
+            logger.debug(f'本地记录的国服公告最大order为：{local_order}')
         async with aiohttp.ClientSession() as session:
             async with session.get(url='https://l3-prod-all-web-bd.bilibiligame.net/web/notice/list', timeout=10) as r:
                 # 从网页获取json
                 r.encoding = 'utf-8'
                 notice_json = await r.json()
-                log.debug('从bilibiligame获取到了公告')
+                logger.debug('从bilibiligame获取到了公告')
                 remote_order = 0
                 ids = []
                 # 列表ids用于记录notice_json中第几个的时间比local_order大
@@ -189,7 +187,7 @@ async def check_notice_update(server: str) -> list[dict[str, str]]:
                     remote_order = max(remote_order, t)
                     if t > local_order:
                         ids.append(i)
-                log.debug(f'远程国服公告最大order为：{remote_order}')
+                logger.debug(f'远程国服公告最大order为：{remote_order}')
         if remote_order > local_order:
             for item in ids:
                 obj = notice_json[item]
@@ -198,14 +196,14 @@ async def check_notice_update(server: str) -> list[dict[str, str]]:
                 # 处理国服周年期间出现的空标题，仅图片公告
                 if notice_title:
                     savepath = capture(f'https://l3-prod-all-web-bd.bilibiligame.net/static/webview/information/{obj["path"]}', obj['path'])
-                    log.info(f'获取到新的公告，标题：{notice_title}，时间：{notice_time}')
+                    logger.info(f'获取到新的公告，标题：{notice_title}，时间：{notice_time}')
                     result.append({'title': notice_title, 'time': notice_time, 'savepath': savepath})
                 else:
-                    log.warn('无头公告，不处理')
+                    logger.warning('无头公告，不处理')
                 # 修改本地数值
             async with aiofiles.open(CNNOTICE, mode='w') as f:
                 await f.write(str(remote_order))
-                log.info(f'本地国服公告最大order已修改为：{remote_order}')
+                logger.info(f'本地国服公告最大order已修改为：{remote_order}')
 
     else:
         return []

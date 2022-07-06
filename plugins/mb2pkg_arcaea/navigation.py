@@ -6,9 +6,9 @@ import nonebot
 from nonebot import on_command
 from nonebot.adapters import Bot
 from nonebot.adapters.cqhttp import MessageSegment, MessageEvent
+from nonebot.log import logger
 
 from utils.mb2pkg_database import QQ
-from utils.mb2pkg_mokalogger import getlog
 from utils.mb2pkg_public_plugin import get_time, pct, datediff
 from utils.mb2pkg_text2pic import draw_image
 from .arc_client_dict import character_name, scenery, core
@@ -18,8 +18,6 @@ from .exceptions import *
 from .make_score_image import song_list as raw_song_list
 
 match_arc_map = on_command('arc地图', aliases={'arc世界地图', 'arc世界', 'arc导航'}, priority=5)
-
-log = getlog()
 
 temp_absdir = nonebot.get_driver().config.temp_absdir
 PACKLIST = Config().packlist_json_abspath
@@ -37,16 +35,16 @@ async def arc_world_map_cmd(bot: Bot, event: MessageEvent):
         msg = MessageSegment.image(file=f'file:///{make_path}')
     except ArcaeaVersionError:
         msg = '未更新Arcaea版本，目前的版本是' + APP_VERSION
-        log.error(msg)
+        logger.error(msg)
     except NoBindError:
         msg = '这是一个非常危险的功能，请与维护者联系获取帮助'
-        log.error('该用户未绑定账号和密码')
+        logger.error('该用户未绑定账号和密码')
     except NotInMapError:
         msg = '在导航之前，你必须进入一个有进度的地图'
-        log.error(msg)
+        logger.error(msg)
     except Exception as e:
         msg = f'未知的失败原因'
-        log.exception(e)
+        logger.exception(e)
 
     await bot.send(event, msg)
 
@@ -82,7 +80,7 @@ async def arc_world_map(username: str, password: str) -> str:
         login_json = await myArc.user_login(username, password)
         user_info_json = await myArc.user_info()
     except Exception as e:
-        log.exception(e)
+        logger.exception(e)
         raise RuntimeError(e)
     if not login_json['success']:
         if login_json['error_code'] == 5:
@@ -181,7 +179,7 @@ async def arc_world_map(username: str, password: str) -> str:
                 elif 'restrict_id' in step:
                     step_info['restrict_packs'] = [step.get('restrict_id')]
             else:
-                log.warning(f'未知的限制条件：{step}')
+                logger.warning(f'未知的限制条件：{step}')
             step_info['is_normal'] = False  # 标记为非普通层
         if 'items' in step:  # 掉落物品
             for item in step['items']:
