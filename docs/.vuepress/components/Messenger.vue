@@ -81,9 +81,6 @@
                   data-wow-duration="0.7s"
               >
                 <div class="notify-box">
-                  <span style="display: inline; white-space: nowrap">
-                    <v-icon x-small color="blue" left>fa-info-circle</v-icon>
-                  </span>
                   <span
                       v-html="
                       item.msg.replace(/\n/g, '<br/>').replace(/ /g, '&nbsp;')
@@ -230,6 +227,7 @@ export default {
   border-radius: 10px;
   padding: 5px 12px;
   font-size: 12px;
+  margin-bottom: 16px;
 }
 </style>
 
