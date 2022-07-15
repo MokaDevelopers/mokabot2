@@ -71,6 +71,7 @@ fi
 # mv assets/char/* > save_dir/char/$1
 mkdir -p "${save_dir}/char"
 mv -f "${temp_dir}/${remote_version}/assets/char/"* "${save_dir}/char/"
+cp "${save_dir}/char/5.png" "${save_dir}/char/5u.png"
 echo -e "${info}Successfully moved character files."
 
 # mv assets/songs/*/base.jpg > save_dir/songs/$1.jpg
