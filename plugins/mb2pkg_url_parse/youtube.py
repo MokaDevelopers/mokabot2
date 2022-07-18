@@ -1,5 +1,6 @@
 import json
 import re
+import textwrap
 import time
 from datetime import datetime
 from typing import Union, Any, Type, Optional
@@ -156,7 +157,6 @@ async def formatter_video(data: dict) -> Union[str, Message, MessageSegment]:
     stat = response.statistics
     video.description = video.description.replace('\n', ' ')
 
-    dotx3_description = '...' if len(video.description) > 60 else ''
     if 'standard' in video.thumbnails:
         pic = MessageSegment.image(video.thumbnails['standard'].url)
     else:  # thumbnails字典没有standard大小封面的时候直接用剩余最大的那个作为封面
@@ -172,7 +172,7 @@ async def formatter_video(data: dict) -> Union[str, Message, MessageSegment]:
     text = f'标题：{video.title}\n' \
            f'时间：{publish_time}({publish_delta})\n' \
            f'频道：{video.channelTitle}\n' \
-           f'描述：{video.description[:60]}{dotx3_description}\n' \
+           f'描述：{textwrap.shorten(video.description, width=60, placeholder=" ...")}\n' \
            f'▶:{stat.viewCount} 👍:{stat.likeCount or estimate_likes} 👎: {estimate_dislikes} 💬:{stat.commentCount}'
 
     if video.tags is not None:

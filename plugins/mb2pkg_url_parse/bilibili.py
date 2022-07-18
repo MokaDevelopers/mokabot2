@@ -1,6 +1,7 @@
 import abc
 import json
 import re
+import textwrap
 import time
 import urllib.parse
 from datetime import datetime
@@ -225,8 +226,7 @@ async def dynamic_detail(url: str) -> str:  # from mengshouer/nonebot_plugin_ana
     if not content:
         content = item.content
     content = content.replace('\r', '\n')
-    if len(content) > 250:
-        content = content[:250] + '……'
+    content = textwrap.shorten(content, width=250, placeholder='……')
     pics = item.pictures_count
     if pics:
         content += f'动态中包含{pics}张图片\n'

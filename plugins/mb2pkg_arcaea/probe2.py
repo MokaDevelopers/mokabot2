@@ -308,6 +308,14 @@ def get_song_alias() -> dict[str, str]:
     return result
 
 
+def find_const(song_id: str, difficulty: int):
+    conn = sqlite3.connect(SONGDB)
+    cursor = conn.cursor()
+    cursor.execute(f"SELECT * FROM `charts` WHERE `song_id` = '{song_id}' AND `rating_class` = '{difficulty}'")
+    result = cursor.fetchone()
+    return result[16]
+
+
 def get_close_matches(
         word: str,
         possibilities: list[str],

@@ -48,6 +48,13 @@ for item in song_list:
     song_info['difficulties'] = item['difficulties']
     songtitle[song_id] = song_info
 
+song_dict_new = {}
+for item in song_list:
+    song_id: str = item['id']
+    song_info = item
+    song_info['remote_dl'] = item.get('remote_dl', False)
+    song_dict_new[song_id] = song_info
+
 
 class Picture:
     def __init__(self, L, T, path):
