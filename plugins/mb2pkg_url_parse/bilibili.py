@@ -227,6 +227,7 @@ async def dynamic_detail(url: str) -> str:  # from mengshouer/nonebot_plugin_ana
         content = item.content
     content = content.replace('\r', '\n')
     content = textwrap.shorten(content, width=250, placeholder='……')
+    content += '\n'
     pics = item.pictures_count
     if pics:
         content += f'动态中包含{pics}张图片\n'
