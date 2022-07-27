@@ -50,7 +50,11 @@ arc绑定 <好友码> <用户名>
 
 未设置这一项之前，你使用`arc最近`时，mokabot返回的成绩图是一个随机样式。设置之后，将会变更为一个确定的样式。
 
-目前有三个样式：`moe`、`guin`、`bandori`
+目前有六个样式：`moe`、`guin`、`bandori`、`andreal1`、`andreal2`、`andreal3`。
+
+::: tip 提示
+使用 `andreal` 系列样式后，你的 best35 成绩图也会变更为 andreal 样式
+:::
 
 ::: details 查看样式示例
 1、moe
@@ -67,6 +71,20 @@ arc绑定 <好友码> <用户名>
 ```
 arc查分样式 样式
 ```
+
+## Arcaea谱面预览
+
+使用 [Arcaea-Infinity/ArcaeaChartRender](https://github.com/Arcaea-Infinity/ArcaeaChartRender) 进行谱面渲染。
+
+```
+arc谱面 <谱面名称> [难度]
+```
+
+::: details 查看返回样例
+![](https://chart.arisa.moe/testify/3.webp)
+:::
+
+事实上，你也可以直接访问 https://chart.arisa.moe/testify/3.webp 来查看谱面预览。
 
 ## Arcaea各种表
 
@@ -151,7 +169,9 @@ arc计算  b10.11    r11.5
     { position: 'right', msg: 'arc最近' },
     { position: 'left', msg: '【Tempestissimo (BYD 11) 10001540 FPM.jpg】' }, 
     { position: 'right', msg: 'arc查分样式 guin' },
-    { position: 'left', msg: 'QQ 12345678 的arcaea最近成绩图的样式已设置为 guin' }, 
+    { position: 'left', msg: 'QQ 12345678 的arcaea最近成绩图的样式已设置为 guin' },
+    { position: 'right', msg: 'arc谱面 testify byd' },
+    { position: 'left', msg: '【testify_3.webp】' }, 
     { position: 'right', msg: 'const10' },
     { position: 'left', msg: '【const10.jpg】' }, 
     { position: 'right', msg: '定数表' },
