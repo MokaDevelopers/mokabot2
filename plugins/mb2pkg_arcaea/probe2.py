@@ -1,7 +1,4 @@
-import difflib
 import random
-import sqlite3
-from heapq import nlargest
 from typing import Callable
 
 from nonebot import on_command
@@ -15,8 +12,7 @@ from .data_model import UniversalProberResult, ArcaeaBind
 from .exceptions import *
 from .make_score_image import (
     moe_draw_recent, guin_draw_recent, bandori_draw_recent,
-    andreal_v1_draw_recent, andreal_v2_draw_recent, andreal_v3_draw_recent, andreal_draw_b30,
-    song_list, draw_b30,
+    andreal_v1_draw_recent, andreal_v2_draw_recent, andreal_v3_draw_recent, andreal_draw_b30, draw_b30,
 )
 from .probers import BotArcAPIProber, BaseProber
 
@@ -292,94 +288,6 @@ def select_draw_style(arc_result_type: str) -> Callable[[UniversalProberResult],
         return andreal_v2_draw_recent
     elif arc_result_type == 'andreal3':
         return andreal_v3_draw_recent
-
-
-def get_song_alias() -> dict[str, str]:
-    """根据数据库返回一个alias表，键是别名，值是song_id"""
-    result = {}
-    conn = sqlite3.connect(SONGDB)
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM `alias`')
-    # alias_list: [('sayonarahatsukoi', '再见初恋'), ('sayonarahatsukoi', '失恋'), ('lostcivilization', 'LC'), ('lostcivilization', '失落的文明'), ...]
-    alias_list: list[(str, str)] = cursor.fetchall()
-    for song_id, alias in alias_list:
-        result[alias] = song_id
-
-    return result
-
-
-def find_const(song_id: str, difficulty: int):
-    conn = sqlite3.connect(SONGDB)
-    cursor = conn.cursor()
-    cursor.execute(f"SELECT * FROM `charts` WHERE `song_id` = '{song_id}' AND `rating_class` = '{difficulty}'")
-    result = cursor.fetchone()
-    return result[16]
-
-
-def get_close_matches(
-        word: str,
-        possibilities: list[str],
-        n: int = 5,
-        cutoff: int = 0
-) -> list[tuple[float, str, int]]:
-    """
-    重写difflib.get_close_matches模块
-    返回由最佳“近似”匹配构成的列表，每个元素是一个序列，元素包含了匹配的相似度、匹配到的字符串和该字符串在 possibilities 中的索引。
-
-    :param word: 一个指定目标近似匹配的序列（通常为字符串）
-    :param possibilities: 一个由用于匹配 word 的序列构成的列表（通常为字符串列表）
-    :param n: 指定最多返回多少个近似匹配
-    :param cutoff: 与 word 相似度得分未达到该值的候选匹配将被忽略
-    """
-
-    if not n > 0:
-        raise ValueError("n must be > 0: %r" % (n,))
-    if not 0.0 <= cutoff <= 1.0:
-        raise ValueError("cutoff must be in [0.0, 1.0]: %r" % (cutoff,))
-    result = []
-    s = difflib.SequenceMatcher()
-    s.set_seq2(word)
-    for i, x in enumerate(possibilities):
-        s.set_seq1(x)
-        if s.real_quick_ratio() >= cutoff and s.quick_ratio() >= cutoff and s.ratio() >= cutoff:
-            result.append((s.ratio(), x, i))
-
-    return nlargest(n, result)
-
-
-def parse_song_name(song_name: str) -> str:
-    """
-    传入一个近似的歌曲名或者歌曲别名，返回正确的song_id。
-    注意：无法处理近似的歌曲别名或近似的歌曲id
-
-    :param song_name: 近似的歌曲名或者近似的song_id
-    :raise NoSuchScoreError: 找不到对应的歌曲（最大的相似度为0）
-    :raise SameRatioError: 匹配到两个（或以上）相似度相同的歌名
-    """
-
-    song_name_list = []
-    for item in song_list:
-        song_name_list.append(item['title_localized']['en'])
-
-    # 首先从arcsong.db中查alias
-    song_id = get_song_alias().get(song_name, None)
-    if song_id is not None:
-        return song_id
-
-    # 按照歌曲原名匹配一次
-    name_close_matches = get_close_matches(song_name, song_name_list, n=5, cutoff=0)
-    # 按照歌曲名被切片至欲搜索字符串相同长度后再匹配一次
-    slice_close_matches = get_close_matches(song_name, [item[0:len(song_name)] for item in song_name_list], n=5, cutoff=0)
-    # 按相似度降序排序
-    result = sorted(name_close_matches + slice_close_matches, key=lambda d: d[0], reverse=True)
-
-    # 如果匹配结果第一名和第二名的相似度相同而索引不同，此时无法分辨结果
-    if result[0][0] == result[1][0] and result[0][2] != result[1][2]:
-        if result[0][0] == 0:
-            raise NoSuchScoreError(song_name)
-        raise SameRatioError(f'匹配到两个相似度相同的歌名："{song_name_list[result[0][2]]}", "{song_name_list[result[1][2]]}"，请更加详细地输入歌名')
-
-    return song_list[result[0][2]]['id']
 
 
 def parse_chart_spilt_name_difficulty(chart: str) -> tuple[str, int]:
