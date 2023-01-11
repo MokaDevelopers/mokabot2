@@ -280,9 +280,9 @@ async def get_tweet_image_url(tweet_id: str) -> Optional[dict[str, str]]:
                 logger.info(f'已将{tweet_id}作为最新置顶推文id写入last_pinned_id文件保存')
             logger.info(f'目前作者置顶推文媒体内容为{data["includes"]["media"]}')
             return {
-                'const8': data['includes']['media'][1]['url'] + ':orig',  # 第二张图
-                'const9': data['includes']['media'][2]['url'] + ':orig',  # 第三张图
-                'const10': data['includes']['media'][3]['url'] + ':orig',  # 第四张图
+                'const8': data['includes']['media'][0]['url'] + ':orig',  # 第一张图
+                'const9': data['includes']['media'][1]['url'] + ':orig',  # 第二张图
+                'const10': data['includes']['media'][2]['url'] + ':orig',  # 第三张图
             }
         else:
             return None
