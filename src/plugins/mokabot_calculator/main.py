@@ -1,5 +1,4 @@
 from nonebot import on_command
-
 from nonebot.adapters.onebot.v11 import MessageEvent, MessageSegment, Message
 from nonebot.params import CommandArg
 
@@ -19,7 +18,6 @@ namespace = {}
 
 @calc.handle()
 async def _(event: MessageEvent, args: Message = CommandArg()):
-
     if not is_user_banned(event.user_id):
         await calc.finish(
             MessageSegment.reply(event.message_id) +
@@ -28,7 +26,6 @@ async def _(event: MessageEvent, args: Message = CommandArg()):
 
 
 def is_user_banned(user_id: int) -> bool:
-
     if user_id not in ban_user:
         ban_user[user_id] = 0
 
