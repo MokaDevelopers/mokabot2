@@ -139,7 +139,6 @@ other/
 bin/
 logs/
 assets/
-test*.py
 
 # config
 config.py
