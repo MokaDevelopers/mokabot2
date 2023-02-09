@@ -26,11 +26,11 @@ class TestMain:
         user_id = 1
 
         assert is_user_banned(user_id) is False
-        assert execute(user_id, 'import os') == '1 警告次数：1/3'
+        assert execute(user_id, 'import os') == '警告次数：1/3'
         assert is_user_banned(user_id) is False
-        assert execute(user_id, 'from os import system') == '1 警告次数：2/3'
+        assert execute(user_id, 'from os import system') == '警告次数：2/3'
         assert is_user_banned(user_id) is False
-        assert execute(user_id, '__import__("os")') == '1 警告次数：3/3'
+        assert execute(user_id, '__import__("os")') == '警告次数：3/3'
         assert is_user_banned(user_id) is True
 
     def test_execute_namespace(self, app: App, load_plugin):
@@ -46,14 +46,12 @@ class TestMain:
 @pytest.mark.asyncio
 async def test_calc_handle(app: App, load_plugin):
     from src.plugins.mokabot_calculator.main import calc
-    from helper import MessageSegment, Message, TestMatcherSession
-
-    user_id = 1
+    from helper import Message, TestMatcherSession
 
     async with TestMatcherSession(app, matcher=calc) as session:
-        await session.test_reply(Message('calc 1 + 1'), MessageSegment.at(user_id) + '> 2')
-        await session.test_reply(Message('calc import os'), MessageSegment.at(user_id) + '> 1 警告次数：1/3')
-        await session.test_reply(Message('calc import os'), MessageSegment.at(user_id) + '> 1 警告次数：2/3')
-        await session.test_reply(Message('calc import os'), MessageSegment.at(user_id) + '> 1 警告次数：3/3')
-        await session.test_reply(Message('calc import os'))
-        await session.test_reply(Message('calc 1 + 1'))
+        await session.test_send(Message('calc 1 + 1'), '2', is_reply=True)
+        await session.test_send(Message('calc import os'), '警告次数：1/3', is_reply=True)
+        await session.test_send(Message('calc import os'), '警告次数：2/3', is_reply=True)
+        await session.test_send(Message('calc import os'), '警告次数：3/3', is_reply=True)
+        await session.test_send(Message('calc import os'))
+        await session.test_send(Message('calc 1 + 1'))

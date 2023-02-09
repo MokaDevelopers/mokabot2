@@ -22,8 +22,8 @@ async def _(event: MessageEvent, args: Message = CommandArg()):
 
     if not is_user_banned(event.user_id):
         await calc.finish(
-            MessageSegment.at(event.user_id) +
-            f'> {execute(event.user_id, args.extract_plain_text())}'
+            MessageSegment.reply(event.message_id) +
+            execute(event.user_id, args.extract_plain_text())
         )
 
 
@@ -39,7 +39,7 @@ def execute(user_id: int, cmd: str) -> str:
     for word in banned_words:
         if word in cmd:
             ban_user[user_id] += 1
-            return f'{user_id} 警告次数：{ban_user[user_id]}/3'
+            return f'警告次数：{ban_user[user_id]}/3'
 
     try:
         return str(eval(cmd, {'__builtins__': namespace_builtins}, {'__builtins__': namespace_builtins}))
