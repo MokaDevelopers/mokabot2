@@ -33,8 +33,8 @@ async def generate_status(bot: Bot) -> str:
          - Swap：{get_system_swap_memory_percent()}
          
         统计信息：
-         - 数据包发送/接收/丢失：{stat.packet_received} / {stat.packet_sent} / {stat.packet_lost}
-         - 消息发送/接收：{stat.message_received} / {stat.message_sent}
+         - 数据包接收/发送/丢失：{stat.packet_received} / {stat.packet_sent} / {stat.packet_lost}
+         - 消息接收/发送：{stat.message_received} / {stat.message_sent}
          - TCP 链接断开次数：{stat.disconnect_times}
          - 账号掉线次数：{stat.lost_times}
     ''')
