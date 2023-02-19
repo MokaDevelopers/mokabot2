@@ -1,0 +1,3 @@
+[submodule "src/plugins/mokabot_arcaea/auapy"]
+	path = src/plugins/mokabot_arcaea/auapy
+	url = https://github.com/zhanbao2000/auapy
