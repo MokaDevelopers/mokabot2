@@ -57,9 +57,9 @@ def split_long_line(s: str, max_width: int) -> str:
     return result
 
 
-def to_image(s: str, max_width: int = 0) -> BytesIO:
+def to_image(s: str, max_width: int = 0) -> Image.Image:
     """
-    将字符串转换成图片
+    将字符串转换成 Pillow Image 实例
 
     :param s: 需要转换的字符串
     :param max_width: 每行允许的最大宽度，为 0 时不限制
@@ -74,8 +74,19 @@ def to_image(s: str, max_width: int = 0) -> BytesIO:
     draw = ImageDraw.Draw(im)
     draw.text((25, 25), s, font=font, fill=(0, 0, 0))
 
-    buf = BytesIO()
-    im.save(buf, format='PNG')
-    buf.seek(0)
+    return im
 
-    return buf
+
+def to_bytes_io(s: str, max_width: int = 0) -> BytesIO:
+    """
+    将字符串转换成 BytesIO
+
+    :param s: 需要转换的字符串
+    :param max_width: 每行允许的最大宽度，为 0 时不限制
+    """
+
+    bio = BytesIO()
+    to_image(s, max_width).save(bio, format='PNG')
+    bio.seek(0)
+
+    return bio
