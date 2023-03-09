@@ -143,3 +143,45 @@ class TestQQ:
 
         with Connect(database_path) as conn:
             assert conn.execute(f'DROP TABLE IF EXISTS {test_table_name}')
+
+
+class TestPlugin:
+
+    def test_get_config_on_new_plugin(self, app: App, load_plugin):
+        from src.utils.mokabot_database import Plugin
+
+        assert Plugin(test_table_name).get_config('test_key_1') is None
+
+    def test_set_config_on_new_plugin(self, app: App, load_plugin):
+        from src.utils.mokabot_database import Plugin
+
+        Plugin.drop()
+
+        assert Plugin(test_table_name).set_config('test_key_1', 'test_value_1') is True
+        assert Plugin(test_table_name).get_config('test_key_1') == 'test_value_1'
+
+    def test_set_and_get_config_on_exist_plugin(self, app: App, load_plugin):
+        from src.utils.mokabot_database import Plugin
+
+        assert Plugin(test_table_name).set_config('test_key_1', 'test_value_1_new') is True
+        assert Plugin(test_table_name).get_config('test_key_1') == 'test_value_1_new'
+
+    def test_set_and_get_config_on_exist_plugin_new_line(self, app: App, load_plugin):
+        from src.utils.mokabot_database import Plugin
+
+        assert Plugin(test_table_name).get_config('test_key_2') is None
+        assert Plugin(test_table_name).set_config('test_key_2', 'test_value_2') is True
+        assert Plugin(test_table_name).get_config('test_key_2') == 'test_value_2'
+
+    def test_keep_type(self, app: App, load_plugin):
+        from src.utils.mokabot_database import Plugin
+
+        assert Plugin(test_table_name).set_config('test_key_3', 3) is True
+        assert Plugin(test_table_name).get_config('test_key_3') == 3
+        assert Plugin(test_table_name).set_config('test_key_3', 3.1) is True
+        assert Plugin(test_table_name).get_config('test_key_3') == 3.1
+
+    def test_delete_test_table(self, app: App, load_plugin):
+        from src.utils.mokabot_database import Plugin
+
+        Plugin.drop()

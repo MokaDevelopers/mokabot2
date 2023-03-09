@@ -3,8 +3,9 @@ mokabot 数据库插件
 包装了 sqlite3 的连接和初始化数据库的操作
 """
 
+import shelve
 import sqlite3
-from typing import Optional, Union
+from typing import Optional, Union, Any
 
 from nonebot import get_driver
 
@@ -74,3 +75,25 @@ class Group(QQ):
     def __init__(self, group_id: int):
         super().__init__(group_id)
         self.db_path = global_config.groups_db
+
+
+class Plugin:
+    """实现一个简单的 k-v 对"""
+    db_path = global_config.plugins_db
+
+    def __init__(self, plugin_name: str):
+        self.plugin_name = plugin_name
+
+    @classmethod
+    def drop(cls):
+        with shelve.open(cls.db_path) as db:
+            db.clear()
+
+    def get_config(self, key: str) -> Any:
+        with shelve.open(self.db_path) as db:
+            return db.get(f'{self.plugin_name}.{key}', None)
+
+    def set_config(self, key: str, value: Any) -> bool:
+        with shelve.open(self.db_path) as db:
+            db[f'{self.plugin_name}.{key}'] = value
+            return True
