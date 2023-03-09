@@ -86,3 +86,33 @@ class TestMatcherSession:
             if msg_send_by_bot:
                 ctx.should_call_send(event, msg_send_by_bot, result=True)
                 ctx.should_finished()
+
+
+def check_exist(cls, startwith: str = '') -> None:
+    """
+    将对象所有具有特定前缀的属性视为文件路径，并检查对应文件是否存在
+
+    :param cls: 对象或其实例
+    :param startwith: 需要检查的属性的前缀
+    """
+
+    assert all(
+        getattr(cls, path).exists()
+        for path in dir(cls)
+        if path.startswith(startwith)
+    )
+
+
+def check_superfluous(cls, root_attr: str, startwith: str = '') -> None:
+    """
+    将对象所有具有特定前缀的属性视为文件路径，并在指定的根目录下检查除了上述文件外是否还存在多余的文件
+
+    :param cls: 对象或其实例
+    :param root_attr: 对象或实例中指示根目录的属性名
+    :param startwith: 需要检查的属性的前缀
+    """
+
+    files_in_class = set(getattr(cls, path) for path in dir(cls) if path.startswith(startwith))
+    files_in_disk = set(getattr(cls, root_attr).glob('*'))
+    print(files_in_disk - files_in_class)
+    assert not files_in_disk - files_in_class
