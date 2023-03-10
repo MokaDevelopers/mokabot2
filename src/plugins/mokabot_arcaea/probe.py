@@ -4,14 +4,8 @@ from typing import Optional
 
 from .auapy.model import UserBest, UserInfo
 from .bind import get_user_friend_code, get_user_result_type
-from .image import BaseSingleStyle, BaseBest35Style, Best35StyleEstertion, SingleStyleMoe, SingleStyleGuin, SingleStyleBandori
+from .image import BaseSingleStyle, BaseBest35Style, Best35StyleEstertion, single_image_makers
 from .utils import split_song_and_difficulty, client
-
-single_image_makers = {
-    'moe': SingleStyleMoe,
-    'guin': SingleStyleGuin,
-    'bandori': SingleStyleBandori,
-}
 
 
 async def generate_arcaea_best35_image(user_id: int, specific_user: Optional[str] = None) -> BytesIO:

@@ -3,11 +3,12 @@ from nonebot.adapters.onebot.v11 import MessageEvent, MessageSegment, Message
 from nonebot.params import CommandArg
 
 from .auapy.exception import ArcaeaUnlimitedAPIError
-from .bind import bind
+from .bind import bind, set_user_result_type
 from .calc import get_calc_result
 from .chart import get_chart_image
 from .const import get_downloaded_const_image
 from .exception import NoBindError
+from .image import single_image_makers
 from .probe import get_arcaea_probe_result_image
 from .random import get_random_song
 from .song_info import get_song_info
@@ -19,6 +20,7 @@ arc_calc = on_command('arc计算', priority=5)
 arc_random = on_command('arc随机', priority=5)
 arc_song_info = on_command('arc歌曲', priority=5)
 arc_const = on_command('arc定数表', aliases={'const'}, priority=5)
+arc_type = on_command('arc查分样式', priority=5)
 
 
 @arc_probe.handle()
@@ -122,3 +124,16 @@ async def _(event: MessageEvent, args: Message = CommandArg()):
         logger.exception(e)
 
     await arc_chart.finish(MessageSegment.reply(event.message_id) + msg)
+
+
+@arc_type.handle()
+async def _(event: MessageEvent, args: Message = CommandArg()):
+    result_type = args.extract_plain_text().strip()
+    available_types = set(single_image_makers.keys())
+    if result_type in available_types:
+        set_user_result_type(event.user_id, result_type)
+        msg = f'已将您的查分样式设置为 {result_type}'
+    else:
+        msg = f'查分样式应为以下之一：{", ".join(available_types)}'
+
+    await arc_type.finish(MessageSegment.reply(event.message_id) + msg)

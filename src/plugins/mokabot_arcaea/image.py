@@ -22,7 +22,6 @@ from .utils import (
     save_to_bytesio
 )
 
-
 WHITE = (255, 255, 255, 255)
 LIGHT = (210, 210, 210, 255)
 DARK = (80, 80, 80, 255)
@@ -125,7 +124,6 @@ class VancedImage(Image.Image):
 
 
 class Best35StyleEstertion(BaseBest35Style):
-
     clear_type = ['Track Lost', 'Normal Clear', 'Full Recall', 'Pure Memory', 'Easy Clear', 'Hard Clear']
     difficulty = ['PST', 'PRS', 'FTR', 'BYD']
 
@@ -472,7 +470,8 @@ class SingleStyleGuin(BaseSingleStyle):
     def _write_pure_far_lost_text(self):  # PURE FAR LOST 这三个单词
         self.im.add_text((243, 836), 'PURE', (137, 214, 255, 255), Fonts.font_noto_sans_cjk_sc_regular, 76, anchor='rm', with_shadow=True)
         self.im.add_text((243, 836 + 100), 'FAR', WHITE, Fonts.font_noto_sans_cjk_sc_regular, 76, anchor='rm', with_shadow=True, stroke_width=1)
-        self.im.add_text((243, 836 + 100 * 2), 'LOST', WHITE, Fonts.font_noto_sans_cjk_sc_regular, 76, anchor='rm', with_shadow=True, stroke_width=1)
+        self.im.add_text((243, 836 + 100 * 2), 'LOST', WHITE, Fonts.font_noto_sans_cjk_sc_regular,
+                         76, anchor='rm', with_shadow=True, stroke_width=1)
 
     def _write_pure_far_lost_count(self):  # PURE FAR LOST 的数量（以及大 P）
         self.im.add_text((287, 836), self.d_record.perfect_count, WHITE, Fonts.font_noto_sans_cjk_sc_regular, 76,
@@ -574,8 +573,10 @@ class SingleStyleBandori(BaseSingleStyle):
                 self.recent_score.near_count,
                 self.recent_score.miss_count
         )):
-            self.im.add_text((1700, 816 + index * 66), data, DARK, Fonts.font_a_otf_shingopro_medium_2, 45, anchor='rs')  # PURE，FAR，LOST 的具体数值
-            self.im.add_text((1564, 816 + index * 66), get_left_zero(4, data), LIGHT, Fonts.font_a_otf_shingopro_medium_2, 45, anchor='ls')  # 向左补零
+            self.im.add_text((1700, 816 + index * 66), data, DARK,
+                             Fonts.font_a_otf_shingopro_medium_2, 45, anchor='rs')  # PURE，FAR，LOST 的具体数值
+            self.im.add_text((1564, 816 + index * 66), get_left_zero(4, data), LIGHT,
+                             Fonts.font_a_otf_shingopro_medium_2, 45, anchor='ls')  # 向左补零
 
     def _write_rating(self):  # 写成绩评价
         self.im.add_text((1916, 947), f'{self.recent_score.rating:.2f}', DARK, Fonts.font_a_otf_shingopro_medium_2, 46, anchor='mm')
@@ -610,3 +611,10 @@ class SingleStyleBandori(BaseSingleStyle):
         self._draw()
         self._write()
         return save_to_bytesio(self.im)
+
+
+single_image_makers = {
+    'moe': SingleStyleMoe,
+    'guin': SingleStyleGuin,
+    'bandori': SingleStyleBandori,
+}
