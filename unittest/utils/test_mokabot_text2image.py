@@ -37,3 +37,6 @@ def test_split_long_line():
         'shdkjfhsjklhfgdkjdh\n上岛咖啡后就开始房价开始\nsdjkfhsjkdfhjk\n收到回复即可的时间考虑分手快乐的\nfhhf\n速度很快就发货是开发商尽快恢复健康是就开始\nksjhfjkshdgjdlsfhiul\n速度发货就看撒回\n\n复\n客户是快乐\n后就开始地方',
         max_width=10
     ) == 'shdkjfhsjk\nlhfgdkjdh\n上岛咖啡后\n就开始房价\n开始\nsdjkfhsjkd\nfhjk\n收到回复即\n可的时间考\n虑分手快乐\n的\nfhhf\n速度很快就\n发货是开发\n商尽快恢复\n健康是就开\n始\nksjhfjkshd\ngjdlsfhiul\n速度发货就\n看撒回\n\n复\n客户是快乐\n后就开始地\n方\n'
+    assert split_long_line(
+        'shdkjfhsjklhfgdkjdh', 10, 4
+    ) == 'shdkjfhsjk\n    lhfgdkjdh\n'

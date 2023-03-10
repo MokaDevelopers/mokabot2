@@ -32,12 +32,13 @@ def get_image_size(s: str) -> tuple[int, int]:
     )
 
 
-def split_long_line(s: str, max_width: int) -> str:
+def split_long_line(s: str, max_width: int, indent: int = 0) -> str:
     """
     将过长的字符串分割成多行
 
     :param s: 需要分割的字符串
     :param max_width: 每行允许的最大宽度
+    :param indent: 换行时每行的缩进宽度
     """
 
     result = ''
@@ -47,28 +48,29 @@ def split_long_line(s: str, max_width: int) -> str:
         else:
             temp = ''
             for c in line:
-                if get_str_width(temp + c) <= max_width:
+                if get_str_width(temp + c) <= max_width - indent:
                     temp += c
                 else:
-                    result += temp + '\n'
+                    result += temp + '\n' + ' ' * indent
                     temp = c
             result += temp + '\n'
 
     return result
 
 
-def to_image(s: str, max_width: int = 0) -> Image.Image:
+def to_image(s: str, max_width: int = 0, indent: int = 0) -> Image.Image:
     """
     将字符串转换成 Pillow Image 实例
 
     :param s: 需要转换的字符串
     :param max_width: 每行允许的最大宽度，为 0 时不限制
+    :param indent: 换行时每行的缩进宽度
     """
 
     s = s + copyright_
 
     if max_width > 0:
-        s = split_long_line(s, max_width)
+        s = split_long_line(s, max_width, indent)
 
     im = Image.new('RGB', get_image_size(s), (255, 255, 255))
     draw = ImageDraw.Draw(im)
@@ -77,16 +79,17 @@ def to_image(s: str, max_width: int = 0) -> Image.Image:
     return im
 
 
-def to_bytes_io(s: str, max_width: int = 0) -> BytesIO:
+def to_bytes_io(s: str, max_width: int = 0, indent: int = 0) -> BytesIO:
     """
     将字符串转换成 BytesIO
 
     :param s: 需要转换的字符串
     :param max_width: 每行允许的最大宽度，为 0 时不限制
+    :param indent: 换行时每行的缩进宽度
     """
 
     bio = BytesIO()
-    to_image(s, max_width).save(bio, format='PNG')
+    to_image(s, max_width, indent).save(bio, format='PNG')
     bio.seek(0)
 
     return bio
