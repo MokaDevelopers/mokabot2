@@ -51,7 +51,7 @@ fi
 # aria2c and unzip the apk
 mkdir -p $temp_dir
 apk_url=$(jq -r "${json_value_url}" <<< "${webapi_apk_response}")
-aria2c --dir="${temp_dir}" --out="${remote_version}.apk" --max-connection-per-server=16 --split=16 --min-split-size=1M "${apk_url}"
+aria2c --dir="${temp_dir}" --out="${remote_version}.apk" --quiet --max-connection-per-server=16 --split=16 --min-split-size=1M "${apk_url}"
 # if apk is not downloaded then exit 1 else continue
 if [ -e "${temp_dir}/${remote_version}.apk" ]; then
   echo -e "${info}Download complete, please wait for unzip ..."
