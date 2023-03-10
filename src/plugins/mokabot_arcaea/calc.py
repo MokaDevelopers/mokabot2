@@ -72,20 +72,20 @@ def get_calc_result(message: str) -> str:
     if re.search(r'(定数|分数|评价)', message) is not None:
         const, score, rating = tuple(search_args_in_message(message, ('定数', '分数', '评价')))
         calc_args_checker(const, score, rating)
-        if not const:
+        if const is None:
             return f'定数：{calc_const(score, rating):.2f}'
-        elif not score:
+        elif score is None:
             return f'分数：{calc_score(rating, const):.2f}'
-        elif not rating:
+        elif rating is None:
             return f'评价：{calc_rating(score, const):.2f}'
     elif re.search(r'(ptt|b|r)', message) is not None:
         potential, best30_avg, recent10_avg = tuple(search_args_in_message(message, ('ptt', 'b', 'r')))
         calc_args_checker(potential, best30_avg, recent10_avg)
-        if not potential:
+        if potential is None:
             return f'潜力值：{calc_potential(best30_avg, recent10_avg):.2f}'
-        elif not best30_avg:
+        elif best30_avg is None:
             return f'Best30平均评价：{calc_best30_avg(potential, recent10_avg):.2f}'
-        elif not recent10_avg:
+        elif recent10_avg is None:
             return f'Recent10平均评价：{calc_recent10_avg(potential, best30_avg):.2f}'
     raise ValueError(
         '输入的参数不合法，不知道你要计算什么，请按照样例格式输入：\n'
