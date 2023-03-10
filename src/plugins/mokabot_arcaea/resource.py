@@ -208,4 +208,4 @@ class TwitterConstTable:
 
     @classmethod
     def get_const_table_image(cls, level: int) -> Path:
-        return cls.root / f'const_table_{level}.png'
+        return cls.root / f'const_table_{level}.jpg'

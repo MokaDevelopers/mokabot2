@@ -76,7 +76,7 @@ async def _(event: MessageEvent, args: Message = CommandArg()):
     try:
         level = args.extract_plain_text().strip()
         if level in ('8', '9', '10'):
-            msg = get_downloaded_const_image(int(level))
+            msg = MessageSegment.image(file=get_downloaded_const_image(int(level)))
         elif level.isdigit():
             msg = f'目前仅支持8-10级的定数表，而你输入的是{level}级'
         else:
