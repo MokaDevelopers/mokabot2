@@ -1,7 +1,7 @@
 from textwrap import dedent
 
-from nonebot import on_command
-from nonebot.adapters.onebot.v11 import Bot
+from nonebot import on_command, on_type
+from nonebot.adapters.onebot.v11 import Bot, PokeNotifyEvent
 from nonebot.rule import to_me
 
 from src.utils.mokabot_humanize import format_timestamp
@@ -9,9 +9,11 @@ from .onebot import get_onebot_status, get_bot_friend_count, get_bot_group_count
 from .system import get_bot_uptime, get_system_avgload, get_system_virtual_memory_percent, get_system_swap_memory_percent, get_system_uptime
 
 status = on_command('status', rule=to_me(), priority=5)
+poke = on_type(PokeNotifyEvent, rule=to_me(), priority=5)
 
 
 @status.handle()
+@poke.handle()
 async def _(bot: Bot):
     await status.finish(await generate_status(bot))
 
