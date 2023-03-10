@@ -6,6 +6,7 @@ from .auapy.exception import ArcaeaUnlimitedAPIError
 from .bind import bind
 from .calc import get_calc_result
 from .chart import get_chart_image
+from .const import get_downloaded_const_image
 from .exception import NoBindError
 from .probe import get_arcaea_probe_result_image
 from .random import get_random_song
@@ -73,14 +74,18 @@ async def _(event: MessageEvent, args: Message = CommandArg()):
 @arc_const.handle()
 async def _(event: MessageEvent, args: Message = CommandArg()):
     try:
-        msg = get_calc_result(args.extract_plain_text().strip())
-    except ValueError as e:
-        msg = str(e)
+        level = args.extract_plain_text().strip()
+        if level in ('8', '9', '10'):
+            msg = get_downloaded_const_image(int(level))
+        elif level.isdigit():
+            msg = f'目前仅支持8-10级的定数表，而你输入的是{level}级'
+        else:
+            msg = '使用格式：arc定数表 <8/9/10>'
     except Exception as e:
-        msg = f'计算时发生了意料之外的错误：{e}'
+        msg = f'查询定数表时发生了意料之外的错误：{e}'
         logger.exception(e)
 
-    await arc_calc.finish(MessageSegment.reply(event.message_id) + msg)
+    await arc_const.finish(MessageSegment.reply(event.message_id) + msg)
 
 
 @arc_chart.handle()

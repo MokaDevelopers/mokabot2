@@ -69,7 +69,7 @@ async def update_twitter_const_image(force: bool = False) -> bool:
         return False
 
 
-def get_downloaded_image(level: int) -> BytesIO:
+def get_downloaded_const_image(level: int) -> BytesIO:
     return save_to_bytesio(Image.open(TwitterConstTable.get_const_table_image(level)))
 
 
