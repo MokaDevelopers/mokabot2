@@ -34,7 +34,7 @@ async def ban_notification(bot: Bot, exception: Optional[Exception], api: str, d
     """连续 send_failed_max 次发送消息失败时，向管理员发送通知"""
     global send_failed_count
 
-    if isinstance(exception, ActionFailed):
+    if isinstance(exception, ActionFailed) and exception.info.get('msg') != 'MSG_NOT_FOUND':
         send_failed_count += 1
         logger.error(f'请求 API {api} 失败，原因：{exception.info.get("wording")}')
     else:
