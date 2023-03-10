@@ -3,7 +3,7 @@ from typing import Optional
 import httpx
 from bs4 import BeautifulSoup
 
-from .model import Brand, DeviceIndex, Device
+from .model import Brand, DeviceIndex, AppendableDict, DeviceInfo
 
 
 class Client:
@@ -83,16 +83,16 @@ class Client:
             raise ValueError(f'No device with id {id_} in cache, please use search() first')
         return self._cache_device[id_]
 
-    async def get_device_by_id(self, id_: int) -> Device[Device[str, str]]:
+    async def get_device_by_id(self, id_: int) -> DeviceInfo:
         return await self.get_device(self.get_device_index_by_id(id_).url)
 
-    async def get_device(self, url: str) -> Device[Device[str, str]]:
-        result = Device()
+    async def get_device(self, url: str) -> DeviceInfo:
+        result = AppendableDict()
         soup = await self.get_html_page(url)
 
         for spec in soup.find('div', id='specs-list').find_all('table'):
             category = spec.find('th').text
-            result[category] = Device()
+            result[category] = AppendableDict()
 
             for tr in spec.find_all('tr'):
                 if tr.find('td') is None:

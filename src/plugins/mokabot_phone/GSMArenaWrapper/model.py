@@ -19,10 +19,13 @@ class DeviceIndex(BaseModel):
     description: Optional[str]
 
 
-class Device(OrderedDict):
+class AppendableDict(OrderedDict):
 
     def append_str_to_last_value(self, value: str, separator: str = ' '):
-        k, v = self.popitem(last=True)
-        if not isinstance(v, str):
-            raise TypeError(f'Value of {k} is not a string')
-        self[k] = v + separator + value
+        last_key, last_value = self.popitem(last=True)
+        if not isinstance(last_value, str):
+            raise TypeError(f'Value of {last_key} is not a string')
+        self[last_key] = last_value + separator + value
+
+
+DeviceInfo = AppendableDict[str, AppendableDict[str, str]]
