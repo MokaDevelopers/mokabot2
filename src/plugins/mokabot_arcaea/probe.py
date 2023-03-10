@@ -76,8 +76,7 @@ def get_image_generator_single(result_type: Optional[str]) -> type[BaseSingleSty
 
 def get_image_generator_best35(result_type: Optional[str]) -> type[BaseBest35Style]:
     """获取该用户设定的 best35 图查样式"""
-    if result_type:
-        return Best35StyleEstertion  # 后期可能会添加其他样式，故保留此函数
+    return Best35StyleEstertion  # 后期可能会添加其他样式，故保留此函数
 
 
 def user_recent_best_transfer(user_info: UserInfo) -> UserBest:
