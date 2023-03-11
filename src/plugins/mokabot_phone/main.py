@@ -4,6 +4,7 @@ from nonebot.params import CommandArg
 
 from .info import get_device_by_id
 from .search import search
+from .translate import translate_brand
 
 phone_search = on_command('型号搜索', aliases={'phone search'}, priority=5)
 phone_id = on_command('型号查询', aliases={'phone id'}, priority=5)
@@ -15,7 +16,7 @@ async def _(event: MessageEvent, args: Message = CommandArg()):
     if not query:
         msg = '请输入型号关键词'
     else:
-        msg = await search(query)
+        msg = await search(translate_brand(query))
     await phone_search.finish(MessageSegment.reply(event.message_id) + msg)
 
 

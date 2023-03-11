@@ -1,0 +1,53 @@
+brand = {
+    '宏碁': 'Acer',
+    '亚马逊': 'Amazon',
+    '苹果': 'Apple',
+    '华硕': 'Asus',
+    '明基': 'BenQ',
+    '黑莓': 'BlackBerry',
+    '卡西欧': 'Casio',
+    '酷派': 'Coolpad',
+    '戴尔': 'Dell',
+    '爱立信': 'Ericsson',
+    '技嘉': 'Gigabyte',
+    '金立': 'Gionee',
+    '谷歌': 'Google',
+    '海尔': 'Haier',
+    '惠普': 'HP',
+    '华为': 'Huawei',
+    '乐视': 'LeEco',
+    '联想': 'Lenovo',
+    'LG': 'LG',
+    '魅族': 'Meizu',
+    '微软': 'Microsoft',
+    '三菱': 'Mitsubishi',
+    '摩托罗拉': 'Motorola',
+    '诺基亚': 'Nokia',
+    '英伟达': 'Nvidia',
+    '一加': 'OnePlus',
+    '松下': 'Panasonic',
+    '飞利浦': 'Philips',
+    '雷蛇': 'Razer',
+    '三星': 'Samsung',
+    '夏普': 'Sharp',
+    '西门子': 'Siemens',
+    '锤子': 'Smartisan',
+    '索尼': 'Sony',
+    '索爱': 'Sony Ericsson',
+    '索尼爱立信': 'Sony Ericsson',
+    '东芝': 'Toshiba',
+    '小米': 'Xiaomi',
+    '中兴': 'ZTE',
+    # 子品牌
+    '荣耀': 'Honor',
+    '努比亚': 'Nubia',
+    '红魔': 'Red Magic',
+    '红米': 'Redmi',
+    '真我': 'Realme',
+}
+
+
+def translate_brand(message: str) -> str:
+    for ch, en in brand.items():
+        message = message.replace(ch, en)
+    return message
