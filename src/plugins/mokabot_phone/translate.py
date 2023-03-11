@@ -49,5 +49,5 @@ brand = {
 
 def translate_brand(message: str) -> str:
     for ch, en in brand.items():
-        message = message.replace(ch, en)
+        message = message.replace(ch, en + ' ')  # 加一个空格以助于分词
     return message
