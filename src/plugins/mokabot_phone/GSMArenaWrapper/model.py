@@ -8,13 +8,13 @@ class Brand(BaseModel):
     id: int
     name: str
     devices_count: int
-    url: str
+    href: str
 
 
 class DeviceIndex(BaseModel):
     id: int
     name: str
-    url: str
+    href: str
     image_url: Optional[str]
     description: Optional[str]
 

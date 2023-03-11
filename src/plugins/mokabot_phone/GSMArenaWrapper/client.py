@@ -32,9 +32,10 @@ class Client:
             transport=httpx.AsyncHTTPTransport(retries=self.retries) if self.retries else None
         )
 
-    async def get_html_page(self, url: str) -> BeautifulSoup:
+    async def get_html_page(self, href: str) -> BeautifulSoup:
+        # url: https://www.gsmarena.com/apple-phones-48.php -> href: apple-phones-48.php
         async with self._get_client() as client:
-            response = await client.get(self.base_url + url, headers=self._headers)
+            response = await client.get(self.base_url + href, headers=self._headers)
             response.raise_for_status()
             return BeautifulSoup(response.text, 'html.parser')
 
@@ -49,14 +50,14 @@ class Client:
                 id=href.removesuffix('.php').split('-')[-1],
                 name=brand.text.removesuffix(span.text),
                 devices_count=int(span.text.removesuffix(' devices')),
-                url=href
+                href=href
             ))
 
         return result
 
-    async def get_all_devices_from_page(self, url: str) -> list[DeviceIndex]:
+    async def get_all_devices_from_page(self, href: str) -> list[DeviceIndex]:
         result = []
-        soup = await self.get_html_page(url)
+        soup = await self.get_html_page(href)
 
         for device in soup.find('div', class_='makers').find_all('a'):
             href = device['href']
@@ -64,7 +65,7 @@ class Client:
             device_index = DeviceIndex(
                 id=href.removesuffix('.php').split('-')[-1],
                 name=device.get_text(separator=' '),
-                url=href,
+                href=href,
                 image_url=img['src'] if img else None,
                 description=img['title'] if img else None
             )
@@ -84,11 +85,11 @@ class Client:
         return self._cache_device[id_]
 
     async def get_device_by_id(self, id_: int) -> DeviceInfo:
-        return await self.get_device(self.get_device_index_by_id(id_).url)
+        return await self.get_device(self.get_device_index_by_id(id_).href)
 
-    async def get_device(self, url: str) -> DeviceInfo:
+    async def get_device(self, href: str) -> DeviceInfo:
         result = AppendableDict()
-        soup = await self.get_html_page(url)
+        soup = await self.get_html_page(href)
 
         for spec in soup.find('div', id='specs-list').find_all('table'):
             category = spec.find('th').text
