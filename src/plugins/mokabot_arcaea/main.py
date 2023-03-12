@@ -36,7 +36,7 @@ async def _(event: MessageEvent, args: Message = CommandArg()):
         msg = f'查询成绩时发生了意料之外的错误：{e}'
         logger.exception(e)
 
-    await arc_probe.finish(MessageSegment.reply(event.message_id) + msg)
+    await arc_probe.finish(msg, reply_message=True)
 
 
 @arc_bind.handle()
@@ -57,11 +57,11 @@ async def _(event: MessageEvent, args_: Message = CommandArg()):
         msg = f'绑定Arcaea账号时发生了意料之外的错误：{e}'
         logger.exception(e)
 
-    await arc_bind.finish(MessageSegment.reply(event.message_id) + msg)
+    await arc_bind.finish(msg, reply_message=True)
 
 
 @arc_calc.handle()
-async def _(event: MessageEvent, args: Message = CommandArg()):
+async def _(args: Message = CommandArg()):
     try:
         msg = get_calc_result(args.extract_plain_text().strip())
     except ValueError as e:
@@ -70,11 +70,11 @@ async def _(event: MessageEvent, args: Message = CommandArg()):
         msg = f'计算时发生了意料之外的错误：{e}'
         logger.exception(e)
 
-    await arc_calc.finish(MessageSegment.reply(event.message_id) + msg)
+    await arc_calc.finish(msg, reply_message=True)
 
 
 @arc_const.handle()
-async def _(event: MessageEvent, args: Message = CommandArg()):
+async def _(args: Message = CommandArg()):
     try:
         level = args.extract_plain_text().strip()
         if level in ('8', '9', '10'):
@@ -87,11 +87,11 @@ async def _(event: MessageEvent, args: Message = CommandArg()):
         msg = f'查询定数表时发生了意料之外的错误：{e}'
         logger.exception(e)
 
-    await arc_const.finish(MessageSegment.reply(event.message_id) + msg)
+    await arc_const.finish(msg, reply_message=True)
 
 
 @arc_chart.handle()
-async def _(event: MessageEvent, args: Message = CommandArg()):
+async def _(args: Message = CommandArg()):
     try:
         image = await get_chart_image(args.extract_plain_text().strip())
         msg = MessageSegment.image(file=image)
@@ -99,11 +99,11 @@ async def _(event: MessageEvent, args: Message = CommandArg()):
         msg = f'查询谱面时发生了意料之外的错误：{e}'
         logger.exception(e)
 
-    await arc_chart.finish(MessageSegment.reply(event.message_id) + msg)
+    await arc_chart.finish(msg, reply_message=True)
 
 
 @arc_random.handle()
-async def _(event: MessageEvent, args: Message = CommandArg()):
+async def _(args: Message = CommandArg()):
     try:
         cover, description = await get_random_song(args.extract_plain_text().strip())
         msg = MessageSegment.image(file=cover) + description
@@ -111,11 +111,11 @@ async def _(event: MessageEvent, args: Message = CommandArg()):
         msg = f'选取随机谱面时发生了意料之外的错误：{e}'
         logger.exception(e)
 
-    await arc_chart.finish(MessageSegment.reply(event.message_id) + msg)
+    await arc_chart.finish(msg, reply_message=True)
 
 
 @arc_song_info.handle()
-async def _(event: MessageEvent, args: Message = CommandArg()):
+async def _(args: Message = CommandArg()):
     try:
         cover, description = await get_song_info(args.extract_plain_text().strip())
         msg = MessageSegment.image(file=cover) + description
@@ -123,7 +123,7 @@ async def _(event: MessageEvent, args: Message = CommandArg()):
         msg = f'查询歌曲时发生了意料之外的错误：{e}'
         logger.exception(e)
 
-    await arc_chart.finish(MessageSegment.reply(event.message_id) + msg)
+    await arc_chart.finish(msg, reply_message=True)
 
 
 @arc_type.handle()
@@ -136,4 +136,4 @@ async def _(event: MessageEvent, args: Message = CommandArg()):
     else:
         msg = f'查分样式应为以下之一：{", ".join(available_types)}'
 
-    await arc_type.finish(MessageSegment.reply(event.message_id) + msg)
+    await arc_type.finish(msg, reply_message=True)

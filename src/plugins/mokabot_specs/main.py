@@ -33,20 +33,20 @@ async def _(event: MessageEvent):
 @phone_search.handle()
 @cpu_search.handle()
 @gpu_search.handle()
-async def _(event: MessageEvent, args: Message = CommandArg(), cmd: tuple = Command()):
+async def _(args: Message = CommandArg(), cmd: tuple = Command()):
     query = args.extract_plain_text().strip()
     method = cmd[0].split()[0]
     if not query:
         msg = '请输入型号关键词'
     else:
         msg = await search(translate_brand(query), method)
-    await phone_search.finish(MessageSegment.reply(event.message_id) + msg)
+    await phone_search.finish(msg, reply_message=True)
 
 
 @phone_id.handle()
 @cpu_id.handle()
 @gpu_id.handle()
-async def _(event: MessageEvent, args: Message = CommandArg(), cmd: tuple = Command()):
+async def _(args: Message = CommandArg(), cmd: tuple = Command()):
     query = args.extract_plain_text().strip()
     method = cmd[0].split()[0]
     if not query:
@@ -62,4 +62,4 @@ async def _(event: MessageEvent, args: Message = CommandArg(), cmd: tuple = Comm
         except Exception as e:
             logger.exception(e)
             msg = f'查询型号时发生错误: {e}'
-    await phone_id.finish(MessageSegment.reply(event.message_id) + msg)
+    await phone_id.finish(msg, reply_message=True)

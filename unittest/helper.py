@@ -81,10 +81,8 @@ class TestMatcherSession:
             bot = ctx.create_bot()
             event = FakePrivateMessageEvent(user_id, msg_send_to_bot)
             ctx.receive_event(bot, event)
-            if is_reply and msg_send_by_bot is not None:
-                msg_send_by_bot = MessageSegment.reply(event.message_id) + msg_send_by_bot
             if msg_send_by_bot:
-                ctx.should_call_send(event, msg_send_by_bot, result=True)
+                ctx.should_call_send(event, msg_send_by_bot, result=True, reply_message=is_reply)
                 ctx.should_finished()
 
 

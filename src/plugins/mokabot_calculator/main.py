@@ -19,10 +19,7 @@ namespace = {}
 @calc.handle()
 async def _(event: MessageEvent, args: Message = CommandArg()):
     if not is_user_banned(event.user_id):
-        await calc.finish(
-            MessageSegment.reply(event.message_id) +
-            execute(event.user_id, args.extract_plain_text())
-        )
+        await calc.finish(execute(event.user_id, args.extract_plain_text()), reply_message=True)
 
 
 def is_user_banned(user_id: int) -> bool:
