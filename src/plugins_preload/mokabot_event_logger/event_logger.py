@@ -68,7 +68,7 @@ async def _(bot: Bot, event: GroupRequestEvent):
     )
 
     await asyncio.sleep(5)  # 等待5秒后再发送使用说明，以免发送失败
-    usage = dedent(f'''\
+    usage = dedent('''\
         使用帮助：help、man 或 manual
         请管理员注意：bot默认开启部分功能，请务必阅读该在线文档：
         https://docs-mokabot.arisa.moe/

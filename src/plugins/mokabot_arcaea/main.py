@@ -29,7 +29,7 @@ async def _(event: MessageEvent, args: Message = CommandArg()):
         image = await get_arcaea_probe_result_image(event.user_id, event.raw_message, args.extract_plain_text().strip())
         msg = MessageSegment.image(file=image)
     except NoBindError:
-        msg = f'您尚未绑定好友码，请使用\narc绑定 <好友码>\n或 arc绑定 <用户名> 绑定'
+        msg = '您尚未绑定好友码，请使用\narc绑定 <好友码>\n或 arc绑定 <用户名> 绑定'
     except ArcaeaUnlimitedAPIError as e:
         msg = f'查询成绩时发生错误：{e.message}'
     except Exception as e:
