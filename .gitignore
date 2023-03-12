@@ -147,7 +147,7 @@ config.py
 geckodriver.exe
 
 # mai-bot
-plugins/mai_bot/src/static
+src/plugins/mokabot_maimai/static/
 
 # Genshin_query
 res_honkai
