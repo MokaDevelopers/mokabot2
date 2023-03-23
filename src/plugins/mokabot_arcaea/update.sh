@@ -98,9 +98,9 @@ for song_name in $song_dir; do
     if [ ! -e "${save_dir}/songs/${song_name}" ]; then
       echo -e "${warn}New list file found: ${song_name}"
     # elif list exist then show diff (use diff -u --color)
-    elif ! cmp -s "${temp_dir}/${remote_version}/assets/songs/${song_name}" "${save_dir}/songs/${song_name}"; then
+    elif ! cmp -s "${save_dir}/songs/${song_name}" "${temp_dir}/${remote_version}/assets/songs/${song_name}"; then
       echo -e "${warn}List file updated: ${song_name}"
-      diff -u --color "${temp_dir}/${remote_version}/assets/songs/${song_name}" "${save_dir}/songs/${song_name}"
+      diff -u --color "${save_dir}/songs/${song_name}" "${temp_dir}/${remote_version}/assets/songs/${song_name}"
     fi
     # finally mv the file
     mv -f "${temp_dir}/${remote_version}/assets/songs/${song_name}" "${save_dir}/songs/"
