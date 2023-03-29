@@ -1,6 +1,7 @@
 from nonebot import on_command, logger
 from nonebot.adapters.onebot.v11 import MessageEvent, MessageSegment, Message
-from nonebot.params import CommandArg, Command
+from nonebot.matcher import Matcher
+from nonebot.params import CommandArg
 
 from .info import get_device
 from .search import search
@@ -33,22 +34,38 @@ async def _(event: MessageEvent):
 @phone_search.handle()
 @cpu_search.handle()
 @gpu_search.handle()
-async def _(args: Message = CommandArg(), cmd: tuple = Command()):
+async def _(matcher: Matcher, args: Message = CommandArg()):
     query = args.extract_plain_text().strip()
-    method = cmd[0].split()[0]
+    if type(matcher) is phone_search:
+        method = 'phone'
+    elif type(matcher) is cpu_search:
+        method = 'cpu'
+    elif type(matcher) is gpu_search:
+        method = 'gpu'
+    else:
+        raise ValueError(f'非法的Matcher: {matcher}')
+
     if not query:
         msg = '请输入型号关键词'
     else:
         msg = await search(translate_brand(query), method)
-    await phone_search.finish(msg, reply_message=True)
+    await matcher.finish(msg, reply_message=True)
 
 
 @phone_id.handle()
 @cpu_id.handle()
 @gpu_id.handle()
-async def _(args: Message = CommandArg(), cmd: tuple = Command()):
+async def _(matcher: Matcher, args: Message = CommandArg()):
     query = args.extract_plain_text().strip()
-    method = cmd[0].split()[0]
+    if type(matcher) is phone_id:
+        method = 'phone'
+    elif type(matcher) is cpu_id:
+        method = 'cpu'
+    elif type(matcher) is gpu_id:
+        method = 'gpu'
+    else:
+        raise ValueError(f'非法的Matcher: {matcher}')
+
     if not query:
         msg = '请输入型号编号'
     elif not query.isdigit():
@@ -62,4 +79,4 @@ async def _(args: Message = CommandArg(), cmd: tuple = Command()):
         except Exception as e:
             logger.exception(e)
             msg = f'查询型号时发生错误: {e}'
-    await phone_id.finish(msg, reply_message=True)
+    await matcher.finish(msg, reply_message=True)
