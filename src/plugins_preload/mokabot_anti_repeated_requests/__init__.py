@@ -28,7 +28,7 @@ async def main(matcher: Matcher, bot: Bot, event: Event) -> None:
             # 如果距离上一次指令发送还不到指定cd时间，并且两次发送的消息一致
             cd = default_cd - (time.time() - last_time)
             if cd > 0 and last_raw_message == raw_message:
-                logger.warning(msg := f'event被ARR拦截: event={event}, cd=<{cd}>')
+                logger.warning(msg := f'event被ARR拦截: event={event}, cd=<{cd}>, last_raw_message={last_raw_message}')
                 await bot.send(event, f'相同的指令请等待{round(cd, 1)}秒后再发送捏')
                 raise IgnoredException(msg)
 
