@@ -6,7 +6,8 @@ mokabot 反重复请求 (mokabot Anti Repeated Requests) 插件是部署于 moka
 
 import time
 
-from nonebot.adapters.onebot.v11 import MessageEvent, Bot, Event
+from nonebot import require
+from nonebot.adapters.onebot.v11 import MessageEvent, Bot, Event, GroupMessageEvent
 from nonebot.exception import IgnoredException
 from nonebot.log import logger
 from nonebot.matcher import Matcher
@@ -14,11 +15,17 @@ from nonebot.message import run_preprocessor
 
 from .config import default_cd
 
+require('mokabot_plugins_manager')
 arr_table: dict[int, tuple[float, str, int]] = {}  # {QQ号: (上一次发送的时间, 上一次发送的原始消息, 上一次发送的消息ID), ...}
+
+from src.plugins_preload.mokabot_plugins_manager import is_plugin_enabled
 
 
 @run_preprocessor
 async def main(matcher: Matcher, bot: Bot, event: Event) -> None:
+    if isinstance(event, GroupMessageEvent) and not is_plugin_enabled(event.group_id, matcher.plugin):
+        return  # 插件已被禁用，交给 mokabot 插件管理器处理
+
     if isinstance(event, MessageEvent) and matcher.priority <= 100:  # 理论上也可以通过 matcher.module 来过滤
         user_id = event.user_id
         raw_message = event.raw_message
