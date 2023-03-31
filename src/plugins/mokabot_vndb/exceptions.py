@@ -1,4 +1,4 @@
-class VndbError(RuntimeError):
+class VNDBError(RuntimeError):
     """when any method returned an error"""
     def __init__(self, err_msg: str, err_id: str):
         self.err_msg = err_msg

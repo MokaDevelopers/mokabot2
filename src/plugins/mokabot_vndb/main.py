@@ -1,116 +1,31 @@
 import asyncio
-import csv
 import math
-import os
 import re
 from typing import Union, Optional
 
-import nonebot
-from nonebot import on_command
-from nonebot.adapters import Bot
-from nonebot.adapters.cqhttp import MessageSegment, MessageEvent
-from nonebot.log import logger
+from nonebot import on_command, logger
+from nonebot.adapters.onebot.v11 import MessageSegment, Message
+from nonebot.params import CommandArg
 
-from utils.mb2pkg_text2pic import draw_image
-from .client import VNDB
-from .config import Config
-from .data_model import SearchResult, StaffItemsBasic, CharItemsBasic, VNItemsBasic, VNInfo, Char4VNsInfo, CharInfo, StaffInfo
-from .exceptions import *
+from src.utils.mokabot_text2image import to_bytes_io
+from .client import VNDBClient
+from .config import vndb_account
+from .exceptions import VNDBError, NoResultError, ParamError
+from .model import SearchResult, VNItemsBasic, StaffItemsBasic, CharItemsBasic, VNInfo, CharInfo, StaffInfo, Char4VNsInfo
+from .resource import get_local_vndb_timestamp, vn_title_table, staff_alias_table, char_role_table, char_name_table, vn_rating_table
 
-match_vndb = on_command('vndb', priority=5)
-
-temp_absdir = nonebot.get_driver().config.temp_absdir
-vndb_username, vndb_password = Config().vndb_account
-
-csv.register_dialect('vndb', delimiter='\t', quoting=csv.QUOTE_ALL)
-
-# 载入vn_titles表，以使用vid指向一个gal的名称
-vid: dict[str, str] = {}  # key: 'v12345', value: 'VNName'
-with open(Config().vn_titles_csv, 'r', encoding='utf-8') as f:
-    lines = csv.reader(f, dialect='vndb')
-    """
-    由于该csv内同一个vid会有多个lang对应的title，需要以下算法来实现筛选期待的title
-    筛选原则：对于同一个vid，如果lang有zh-Hans或zh，那么直接使用该title，
-    否则，如果lang有ja，那么直接使用该title，
-    否则，如果lang有en，那么直接使用该title，
-    否则，使用最后一个lang的title。
-    
-    vn_titles_csv 大概长这样（只选取有效部分）：
-    vid lang    title
-    ...
-    v6	en	Kira -snowdrop-
-    v6	ja	雪花 -きら-	Yukibana -Kira-
-    v7	ja	月姫	Tsukihime
-    v8	de	Nachklang eines Mittsommertags
-    v8	en	A Midsummer Day's Resonance
-    v8	es	La resonancia de un día de verano
-    v8	ja	夏の日のレザナンス	Natsu no Hi no Resonance
-    v8	ru	Летний Резонанс	Letnij Rezonans
-    v8	ta	Resonance sa Araw ng Tag-init
-    v9	en	Bible Black - The Game
-    v9	ja	Bible Black ～La noche de walpurgis～
-    v10	ja	narcissu
-    ...
-    """
-    last_vid, last_lang = '', ''
-    for line in lines:
-        this_vid, this_lang, this_title = line[0], line[1], line[2]
-        if (
-            this_vid != last_vid  # 新vid，直接存入字典
-            or this_vid == last_vid and (  # 和上一个一样的vid，此时应当筛选lang
-                this_lang in ['zh-Hans', 'zh']  # 遇见zh-Hans或zh，直接存入字典
-                or this_lang == 'ja' and last_lang not in ['zh-Hans', 'zh']  # 否则lang有ja的情况
-                or this_lang == 'en' and last_lang not in ['zh-Hans', 'zh', 'ja']  # 否则lang有en的情况
-            )
-        ):
-            vid[this_vid] = this_title
-            last_vid, last_lang = this_vid, this_lang
-        # 除此以外的其他情况一律不存入字典（else: continue）
-
-# 载入vn表，以使用vid指向一个gal的rating（网站显示评分为6.66时，表中的值将会是666，即乘以100）
-vid_rating: dict[str, int] = {}  # key: 'v12345', value: 666
-with open(Config().vn_csv, 'r', encoding='utf-8') as f:
-    lines = csv.reader(f, dialect='vndb')
-    for line in lines:
-        vid_rating[line[0]] = int(line[6]) if line[6].isdigit() else 0
-
-# 载入chars表，以使用cid指向一个角色名称
-cid: dict[str, str] = {}  # key: 'c12345', value: 'CharName'
-with open(Config().chars_csv, 'r', encoding='utf-8') as f:
-    lines = csv.reader(f, dialect='vndb')
-    for line in lines:
-        cid[line[0]] = line[17] or line[16]
-
-# 载入staff_alias表，以使用aid指向指定的马甲名称
-aid: dict[str, str] = {}  # key: '12345', value: 'AliasName'
-with open(Config().staff_alias_csv, 'r', encoding='utf-8') as f:
-    lines = csv.reader(f, dialect='vndb')
-    for line in lines:
-        aid[line[1]] = line[3] or line[2]
-
-# 载入chars_vns表，以使用给定的cid和vid，指向该gal中该角色的身份
-char2vn: dict[str, str] = {}  # key: 'c123v123', value: 1  其中的1是角色身份标记，见return_role_by_index_in_vn函数
-with open(Config().chars_vns_csv, 'r', encoding='utf-8') as f:
-    lines = csv.reader(f, dialect='vndb')
-    for line in lines:
-        char2vn[f'{line[0]}{line[1]}'] = {
-            'main': 0,
-            'primary': 1,
-            'side': 2,
-            'appears': 3,
-        }[line[3]]  # 使用int取代str以减小内存消耗
+vndb = on_command('vndb', priority=5)
 
 
-@match_vndb.handle()
-async def vndb_handle(bot: Bot, event: MessageEvent):
-    args = str(event.get_message()).strip().split(' ', 2)
+@vndb.handle()
+async def vndb_handle(args: Message = CommandArg()):
+    arg = args.extract_plain_text().strip().split(' ')
     try:
-        logger.debug(args)
-        stype = args[0]
-        cmd = args[1]
-        info = args[2]
+        stype = arg[0]
+        cmd = arg[1]
+        info = arg[2]
         msg = await vndb_probe(stype, cmd, info)
-    except VndbError as e:
+    except VNDBError as e:
         msg = f'VNDB返回错误：msg={e.err_msg}, id={e.err_id}'
     except (IndexError, KeyError) as e:  # 即解析参数顺序的时候发生错误
         logger.exception(e)
@@ -123,7 +38,7 @@ async def vndb_handle(bot: Bot, event: MessageEvent):
         msg = f'未知的错误发生：{e}'
         logger.exception(e)
 
-    await bot.send(event, msg)
+    await vndb.finish(msg)
 
 
 async def vndb_probe(stype: str, cmd: str, info: str) -> Union[str, MessageSegment]:
@@ -198,21 +113,20 @@ async def vndb_probe_id(stype: str, fin_stype: str, fin_flags: str, info: str) -
     if not id_result:
         raise NoResultError(f'在{stype}中没有id={info}的项目')
     elif stype == 'gal':
-        pic, details = await return_vn_details(id_result[0])
+        image_url, details = await return_vn_details(id_result[0])
     elif stype == 'char':
-        pic, details = await return_char_details(id_result[0])
+        image_url, details = await return_char_details(id_result[0])
     elif stype == 'cv':
-        pic = None
+        image_url = None
         details = await return_staff_details(id_result[0])
     else:
         raise ParamError
 
-    details_savepath = os.path.join(temp_absdir, f'{stype}{info}.jpg')
-    await draw_image(details, details_savepath, max_width=60)
-    if pic:
-        result = MessageSegment.image(file=pic) + MessageSegment.image(file=f'file:///{details_savepath}')
+    details_image = to_bytes_io('\n'.join(details), max_width=60)
+    if image_url:
+        result = MessageSegment.image(file=image_url) + MessageSegment.image(file=details_image)
     else:
-        result = MessageSegment.image(file=f'file:///{details_savepath}')
+        result = MessageSegment.image(file=details_image)
 
     return result
 
@@ -357,9 +271,10 @@ async def return_char_details(info: dict) -> tuple[Optional[str], list[str]]:
     for _vn_id, _release_id, _spoiler_level, _role in char.vns:
         cv_id, cv_aid = return_char_cvid_in_vn(char.voiced, _vn_id)
         if cv_id and cv_aid:
-            result_details.append(f' [{return_role_in_vn(_role)}] ({_vn_id}) {vid[f"v{_vn_id}"]}  (CV: {aid[str(cv_aid)]} ({cv_aid}))')
+            result_details.append(f' [{return_role_in_vn(_role)}] ({_vn_id}) {vn_title_table.get_title_by_vid_number(_vn_id)}'
+                                  f'  (CV: {staff_alias_table.get_alias_by_aid_number(cv_aid)} ({cv_aid}))')
         else:
-            result_details.append(f' [{return_role_in_vn(_role)}] ({_vn_id}) {vid[f"v{_vn_id}"]}')
+            result_details.append(f' [{return_role_in_vn(_role)}] ({_vn_id}) {vn_title_table.get_title_by_vid_number(_vn_id)}')
 
     return result_pic, result_details
 
@@ -401,7 +316,8 @@ async def return_staff_details(info: dict) -> list[str]:
         voiced_char_list = return_voiced_char_list(staff.voiced)[:50]  # 只选取前50个角色
         for char in voiced_char_list:
             result_details.append(f'（{char["vid"]}）《{char["vn_name"]}》')
-            result_details.append(f'  饰 [{return_role_by_index_in_vn(char["role"])}] {char["char_name"]}（{char["cid"]}）（AS: {char["alias_name"]}）')
+            result_details.append(f'  饰 [{return_role_by_index_in_vn(char["role"])}] {char["char_name"]}'
+                                  f'（{char["cid"]}）（AS: {char["alias_name"]}）')
     result_details.append('（只显示前50个）')
 
     return result_details
@@ -534,9 +450,9 @@ def return_language(language: str) -> str:
 
 async def get_vndb(stype: str, flags: str, filters: str, options: Optional[dict] = None) -> dict:
     """返回vndb的get的结果"""
-    async with VNDB() as vndb:
-        await vndb.login(vndb_username, vndb_password)
-        result = await vndb.get(stype, flags, filters, options)
+    async with VNDBClient() as client:
+        await client.login(*vndb_account)
+        result = await client.get(stype, flags, filters, options)
     return result
 
 
@@ -551,14 +467,14 @@ async def return_classified_chars_for_vn(vnid: int) -> dict[str, list[dict]]:
 
     for _char in await return_all_chars_for_vn(vnid):
         char = Char4VNsInfo(**_char)
-        # i表示该角色在voiced列表中的位置
+        # i 表示该角色在 voiced 列表中的位置
         for _vn_id, _release_id, _spoiler_level, _role in char.vns:
             if _vn_id == vnid:
                 cv_id, cv_aid = return_char_cvid_in_vn(char.voiced, vnid)
                 char_dict_by_role[_role].append({
                     'name': char.original or char.name,  # type: str
                     'id': char.id,  # type: int
-                    'cv_alias': aid[str(cv_aid)] if cv_aid else None,  # type: Optional[int]
+                    'cv_alias': staff_alias_table.get_alias_by_aid_number(cv_aid) if cv_aid else None,  # type: Optional[str]
                     'cv_id': cv_id  # type: Optional[int]
                 })
 
@@ -567,14 +483,14 @@ async def return_classified_chars_for_vn(vnid: int) -> dict[str, list[dict]]:
 
 async def return_all_chars_for_vn(vnid: int) -> list[dict]:
     """返回该vn中的所有角色的列表"""
-    async with VNDB() as vndb:
-        await vndb.login(vndb_username, vndb_password)
+    async with VNDBClient() as client:
+        await client.login(*vndb_account)
 
         char_list = []
         is_more = False
         page = 1
         while not char_list or is_more:
-            search_char_result_raw = await vndb.get('character', 'basic,voiced,vns', f'(vn={vnid})', {'results': 20, 'page': page})
+            search_char_result_raw = await client.get('character', 'basic,voiced,vns', f'(vn={vnid})', {'results': 20, 'page': page})
             search_char_result = SearchResult(**search_char_result_raw)
             char_list.extend(search_char_result.items)
             is_more = search_char_result.more
@@ -591,20 +507,24 @@ def return_voiced_char_list(voiced: list) -> list:
     """返回某个声优的配音角色列表（按照角色身份为主排序关键字，vn评分为第二排序关键字）"""
     result = []
     for _item in voiced:
-        _vid = f'v{_item.id}'
-        _cid = f'c{_item.cid}'
-        _aid = f'{_item.aid}'
-        _c_v_id = f'c{_item.cid}v{_item.id}'
-        if _c_v_id in char2vn and _vid in vid and _cid in cid and _aid in aid:  # 仅添加已经收录的
+        vid = _item.id
+        cid = _item.cid
+        aid = _item.aid
+        if all((
+                char_role := char_role_table.get_role_by_cid_vid_number(cid, vid),
+                vn_title := vn_title_table.get_title_by_vid_number(vid),
+                char_name := char_name_table.get_name_by_cid_number(cid),
+                alias_name := staff_alias_table.get_alias_by_aid_number(aid),
+        )):  # 仅添加已经收录的
             result.append({
                 'vid': _item.id,  # type: int
-                'vn_name': vid[_vid],  # type: str
+                'vn_name': vn_title,  # type: str
                 'cid': _item.cid,  # type: int
-                'char_name': cid[_cid],  # type: str
+                'char_name': char_name,  # type: str
                 'aid': _item.aid,  # type: int
-                'alias_name': aid[_aid],  # type: str
-                'role': char2vn[_c_v_id],  # type: int
-                'rating': vid_rating[_vid],  # type: int
+                'alias_name': alias_name,  # type: str
+                'role': char_role,  # type: int
+                'rating': vn_rating_table.get_rating_by_vid_number(vid),  # type: int
             })
 
     result = sorted(result, key=lambda _: _['rating'], reverse=True)  # 800, 700, 600, ...
@@ -634,12 +554,6 @@ def return_staff_alias_dict(aliases: list[list[Union[int, str]]]) -> dict[str, s
     return result
 
 
-def return_local_vndb_timestamp() -> str:
-    with open(Config().TIMESTAMP, 'r', encoding='utf-8') as f_timestamp:
-        local_vndb_timestamp = f_timestamp.read().strip()
-    return local_vndb_timestamp
-
-
 def add_result_details(stype: str) -> list[str]:
     """返回一个被共用的图片头部"""
     return [
@@ -649,7 +563,7 @@ def add_result_details(stype: str) -> list[str]:
             'char': '角色',
             'cv': '声优'
         }[stype] + '查询',
-        f'本地数据库版本：{return_local_vndb_timestamp()}',
+        f'本地数据库版本：{get_local_vndb_timestamp()}',
         ''
     ]
 
@@ -661,6 +575,3 @@ def add_description(description: str) -> list[str]:
     # 删除所有匹配的标签（除了剧透标签头[spoiler]）
     description = re.sub(r'\[/?(b|i|u|s|url[^]]*|quote|raw|code|/spoiler)]', '', description)
     return [_ for _ in description.split('\n') if _]
-
-
-logger.debug(f'本地vid、cid和aid已加载，版本{return_local_vndb_timestamp()}')

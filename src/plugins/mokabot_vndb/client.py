@@ -5,12 +5,12 @@ from typing import Optional, Union
 
 from nonebot.log import logger
 
-from .exceptions import VndbError
+from .exceptions import VNDBError
 
-__all__ = ['VNDB']
+__all__ = ['VNDBClient']
 
 
-class VNDB:
+class VNDBClient:
     """
     Create a ssl session with api.vndb.org to process the command.
     Author: AkibaArisa
@@ -71,7 +71,7 @@ class VNDB:
         login_json = json.dumps({
             'protocol': 1,
             'client': 'mokabot2',
-            'clientver': 200,
+            'clientver': 300,
             'username': username,
             'password': password
         })
@@ -119,6 +119,6 @@ class VNDB:
             error_result = json.loads(get_result.replace('error ', ''))
             err_msg = error_result['msg']
             err_id = error_result['id']
-            raise VndbError(err_msg, err_id)
+            raise VNDBError(err_msg, err_id)
 
         return json.loads(get_result.replace('results ', ''))
