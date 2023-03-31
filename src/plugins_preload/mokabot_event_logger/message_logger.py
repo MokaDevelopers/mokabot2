@@ -6,7 +6,8 @@ mokabot 消息记录器
 import re
 from typing import Optional, Any
 
-from nonebot.adapters.onebot.v11 import Bot, Event, MessageEvent
+from nonebot import require
+from nonebot.adapters.onebot.v11 import Bot, Event, MessageEvent, GroupMessageEvent
 from nonebot.internal.matcher import Matcher
 from nonebot.log import logger
 from nonebot.message import run_preprocessor
@@ -14,6 +15,10 @@ from nonebot.typing import T_State
 
 from .model import CallAPIData, MessageStatus
 from .utils import write_message_log
+
+require('mokabot_plugins_manager')
+
+from src.plugins_preload.mokabot_plugins_manager import is_plugin_enabled
 
 b64_image = re.compile(r'\[CQ:image,file=base64://\S+]')
 
@@ -37,6 +42,9 @@ async def _(bot: Bot, exception: Optional[Exception], api: str, data: dict[str, 
 
 @run_preprocessor
 async def _(matcher: Matcher, bot: Bot, event: Event, state: T_State):
+    if isinstance(event, GroupMessageEvent) and not is_plugin_enabled(event.group_id, matcher.plugin):
+        return  # 插件已被禁用，交给 mokabot 插件管理器处理
+
     if isinstance(event, MessageEvent) and matcher.priority <= 100:
         if event.message_type == 'private':
             event.group_id = None
