@@ -1,5 +1,3 @@
-import asyncio
-
 import pytest
 from nonebot.plugin import Plugin
 from nonebug import App

@@ -76,7 +76,7 @@ class TestImage:
         from src.plugins.mokabot_arcaea.image import Best35StyleEstertion
         from src.plugins.mokabot_arcaea.utils import client
 
-        TEMP = Path(get_driver().config.temp)
+        temp = Path(get_driver().config.temp)
 
         best35 = await client.get_user_best30(
             usercode='895532511',
@@ -85,7 +85,7 @@ class TestImage:
             withsonginfo=True,
         )
 
-        Image.open(Best35StyleEstertion(best35).generate()).save(path := TEMP / 'test_best35_estertion.png')
+        Image.open(Best35StyleEstertion(best35).generate()).save(path := temp / 'test_best35_estertion.png')
         warnings.warn(f'请手动检查图片是否正确：{path}')
 
     @pytest.mark.asyncio
@@ -95,7 +95,7 @@ class TestImage:
         from src.plugins.mokabot_arcaea.image import SingleStyleMoe
         from src.plugins.mokabot_arcaea.utils import client
 
-        TEMP = Path(get_driver().config.temp)
+        temp = Path(get_driver().config.temp)
 
         best = await client.get_user_best(
             usercode='895532511',
@@ -105,7 +105,7 @@ class TestImage:
             songid='ifi'
         )
 
-        Image.open(SingleStyleMoe(best).generate()).save(path := TEMP / 'test_single_moe_as_best.png')
+        Image.open(SingleStyleMoe(best).generate()).save(path := temp / 'test_single_moe_as_best.png')
         warnings.warn(f'请手动检查图片是否正确：{path}')
 
         recent = user_recent_best_transfer(await client.get_user_info(
@@ -114,7 +114,7 @@ class TestImage:
             withsonginfo=True,
         ))
 
-        Image.open(SingleStyleMoe(recent, is_recent=True).generate()).save(path := TEMP / 'test_single_moe_as_recent.png')
+        Image.open(SingleStyleMoe(recent, is_recent=True).generate()).save(path := temp / 'test_single_moe_as_recent.png')
         warnings.warn(f'请手动检查图片是否正确：{path}')
 
     @pytest.mark.asyncio
@@ -124,7 +124,7 @@ class TestImage:
         from src.plugins.mokabot_arcaea.image import SingleStyleGuin
         from src.plugins.mokabot_arcaea.utils import client
 
-        TEMP = Path(get_driver().config.temp)
+        temp = Path(get_driver().config.temp)
 
         best = await client.get_user_best(
             usercode='895532511',
@@ -134,7 +134,7 @@ class TestImage:
             songid='ifi'
         )
 
-        Image.open(SingleStyleGuin(best).generate()).save(path := TEMP / 'test_single_guin_as_best.png')
+        Image.open(SingleStyleGuin(best).generate()).save(path := temp / 'test_single_guin_as_best.png')
         warnings.warn(f'请手动检查图片是否正确：{path}')
 
         recent = user_recent_best_transfer(await client.get_user_info(
@@ -143,7 +143,7 @@ class TestImage:
             withsonginfo=True,
         ))
 
-        Image.open(SingleStyleGuin(recent, is_recent=True).generate()).save(path := TEMP / 'test_single_guin_as_recent.png')
+        Image.open(SingleStyleGuin(recent, is_recent=True).generate()).save(path := temp / 'test_single_guin_as_recent.png')
         warnings.warn(f'请手动检查图片是否正确：{path}')
 
     @pytest.mark.asyncio
@@ -154,7 +154,7 @@ class TestImage:
         from src.plugins.mokabot_arcaea.config import AUA_API_ENTRY, AUA_API_USER_AGENT, AUA_API_TOKEN
 
         client = ArcaeaUnlimitedAPIClient(AUA_API_ENTRY, AUA_API_USER_AGENT, AUA_API_TOKEN)
-        TEMP = Path(get_driver().config.temp)
+        temp = Path(get_driver().config.temp)
 
         # 查询历史最佳成绩
         best = await client.get_user_best(
@@ -168,7 +168,7 @@ class TestImage:
         best.content.recent_score = best.content.record
         best.content.recent_songinfo = best.content.songinfo[0]
 
-        Image.open(SingleStyleBandori(best).generate()).save(path := TEMP / 'test_single_bandori_as_best.png')
+        Image.open(SingleStyleBandori(best).generate()).save(path := temp / 'test_single_bandori_as_best.png')
         warnings.warn(f'请手动检查图片是否正确：{path}')
 
         # 查询最近成绩
@@ -185,7 +185,7 @@ class TestImage:
             songid=recent.content.recent_score[0].song_id,
         )
 
-        Image.open(SingleStyleBandori(best, is_recent=True).generate()).save(path := TEMP / 'test_single_bandori_as_recent.png')
+        Image.open(SingleStyleBandori(best, is_recent=True).generate()).save(path := temp / 'test_single_bandori_as_recent.png')
         warnings.warn(f'请手动检查图片是否正确：{path}')
 
 
@@ -323,11 +323,11 @@ class TestChart:
         from nonebot import get_driver
         from src.plugins.mokabot_arcaea.chart import get_chart_image
 
-        TEMP = Path(get_driver().config.temp)
+        temp = Path(get_driver().config.temp)
 
-        Image.open(await get_chart_image('gl', source='acr')).save(path := TEMP / 'test_chart_grievouslady_acr.png')
+        Image.open(await get_chart_image('gl', source='acr')).save(path := temp / 'test_chart_grievouslady_acr.png')
         warnings.warn(f'请手动检查图片是否正确：{path}')
-        Image.open(await get_chart_image('gl', source='a2f')).save(path := TEMP / 'test_chart_grievouslady_a2f.png')
+        Image.open(await get_chart_image('gl', source='a2f')).save(path := temp / 'test_chart_grievouslady_a2f.png')
         warnings.warn(f'请手动检查图片是否正确：{path}')
 
         with pytest.raises(ValueError):
@@ -413,9 +413,9 @@ class TestConst:
         from nonebot import get_driver
         from src.plugins.mokabot_arcaea.const import download_image
 
-        TEMP = Path(get_driver().config.temp)
+        temp = Path(get_driver().config.temp)
 
-        await download_image('https://pbs.twimg.com/media/FhcAdsLaUAINFCJ.jpg:orig', TEMP / 'test.jpg')
+        await download_image('https://pbs.twimg.com/media/FhcAdsLaUAINFCJ.jpg:orig', temp / 'test.jpg')
 
     @pytest.mark.asyncio
     async def test_update_twitter_const_image(self, app: App, load_plugin):
