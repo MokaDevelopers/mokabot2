@@ -14,7 +14,7 @@ from nonebot.message import run_preprocessor
 
 from .config import default_cd
 
-arr_table: dict[int, tuple[float, str]] = {}  # {QQ号: (上一次发送的时间, 上一次发送的原始消息), ...}
+arr_table: dict[int, tuple[float, str, int]] = {}  # {QQ号: (上一次发送的时间, 上一次发送的原始消息, 上一次发送的消息ID), ...}
 
 
 @run_preprocessor
@@ -24,12 +24,13 @@ async def main(matcher: Matcher, bot: Bot, event: Event) -> None:
         raw_message = event.raw_message
 
         if last := arr_table.get(user_id):
-            last_time, last_raw_message = last
-            # 如果距离上一次指令发送还不到指定cd时间，并且两次发送的消息一致
+            last_time, last_raw_message, last_message_id = last
+            # 如果距离上一次指令发送还不到指定cd时间，并且两次发送的消息一致，且两次发送的消息ID不一致，则认为是重复请求
+            # 注：当一条消息同时命中两个或以上的 matcher 时，会触发两次 on_message 事件，因此需要判断消息ID是否一致
             cd = default_cd - (time.time() - last_time)
-            if cd > 0 and last_raw_message == raw_message:
+            if cd > 0 and last_raw_message == raw_message and last_message_id != event.message_id:
                 logger.warning(msg := f'event被ARR拦截: event={event}, cd=<{cd}>, last_raw_message={last_raw_message}')
                 await bot.send(event, f'相同的指令请等待{round(cd, 1)}秒后再发送捏')
                 raise IgnoredException(msg)
 
-        arr_table[user_id] = (time.time(), raw_message)
+        arr_table[user_id] = (time.time(), raw_message, event.message_id)
