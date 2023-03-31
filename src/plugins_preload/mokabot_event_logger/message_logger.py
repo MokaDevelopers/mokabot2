@@ -23,7 +23,7 @@ async def _(bot: Bot, exception: Optional[Exception], api: str, data: dict[str, 
     if api in ['send_msg', 'send_private_msg', 'send_group_msg', 'send_group_forward_msg']:
         data = CallAPIData(**data)
 
-        raw_message = b64_image.sub('[base64 image]', str(data.message)).strip()
+        raw_message = b64_image.sub('[base64 image]', str(data.message or data.messages)).strip()
         # bot 被风控而无法发出消息时，result 为 None
         message_id = result.get('message_id', None) if isinstance(result, dict) else None
         status = MessageStatus.SENT_SUCCESS if message_id else MessageStatus.SENT_FAILED

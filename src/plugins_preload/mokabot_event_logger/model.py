@@ -9,7 +9,8 @@ class CallAPIData(BaseModel):
     user_id: Optional[int]
     group_id: Optional[int]
     message_type: Optional[str]
-    message: Message
+    message: Optional[Message]
+    messages: Optional[list[dict]]
 
 
 class UserInfo(BaseModel):
