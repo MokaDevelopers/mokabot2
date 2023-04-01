@@ -1,6 +1,6 @@
 """
 mokabot 事件记录器
-记录 好友申请、群邀请、被踢出群 的事件
+记录 好友申请、群邀请、被踢出群、禁言、解除禁言 的事件
 """
 
 import asyncio
@@ -9,11 +9,13 @@ from textwrap import dedent
 from nonebot import on_request, on_notice
 from nonebot.adapters.onebot.v11 import (
     Bot, Event,
-    FriendRequestEvent, GroupRequestEvent, GroupDecreaseNoticeEvent,
+    FriendRequestEvent,
+    GroupRequestEvent, GroupDecreaseNoticeEvent, GroupBanNoticeEvent,
     ActionFailed
 )
 from nonebot.log import logger
 
+from src.utils.mokabot_humanize import SecondHumanizeUtils
 from .model import EventType, EventStatus
 from .utils import send_to_superusers, write_event_log, get_user_info, get_group_info
 
@@ -28,6 +30,10 @@ def is_group_invite_event(event: Event) -> bool:
 
 def is_kick_me_event(event: Event) -> bool:
     return isinstance(event, GroupDecreaseNoticeEvent) and event.sub_type == 'kick_me'
+
+
+def is_group_ban_me_event(event: Event) -> bool:
+    return isinstance(event, GroupBanNoticeEvent) and event.notice_type == 'group_ban' and event.user_id != 0
 
 
 @on_request(is_friend_add_event).handle()
@@ -83,9 +89,32 @@ async def _(bot: Bot, event: GroupDecreaseNoticeEvent):
 
     msg = f'被踢出群 {group.group_name} ({group.group_id})，操作者 {kicker.nickname} ({kicker.user_id})'
     await send_to_superusers(bot, msg)
-    logger.info(msg)
+    logger.warning(msg)
     write_event_log(
         EventType.KICK_ME,
         kicker.user_id, kicker.nickname,
+        group.group_id, group.group_name,
+    )
+
+
+@on_notice(is_group_ban_me_event).handle()
+async def _(bot: Bot, event: GroupBanNoticeEvent):
+    banner = await get_user_info(bot, event.operator_id)
+    group = await get_group_info(bot, event.group_id)
+    duration = SecondHumanizeUtils(event.duration)
+
+    if event.sub_type == 'ban':
+        action = f'被禁言 {duration.to_datetime()}'
+        event_type = EventType.GROUP_BAN
+    else:
+        action = '被解除禁言'
+        event_type = EventType.GROUP_BAN_LIFT
+
+    msg = f'在群 {group.group_name} ({group.group_id}) 内{action}，操作者 {banner.nickname} ({banner.user_id})'
+    await send_to_superusers(bot, msg)
+    logger.warning(msg)
+    write_event_log(
+        event_type,
+        banner.user_id, banner.nickname,
         group.group_id, group.group_name,
     )

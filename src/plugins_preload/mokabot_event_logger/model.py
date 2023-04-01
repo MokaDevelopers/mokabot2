@@ -43,6 +43,8 @@ class EventType(IntEnum):
     FRIEND_ADD = 1
     GROUP_INVITE = 2
     KICK_ME = 3
+    GROUP_BAN = 4
+    GROUP_BAN_LIFT = 5
 
 
 class EventStatus(IntEnum):
