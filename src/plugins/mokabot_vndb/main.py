@@ -80,16 +80,16 @@ async def vndb_probe_search(stype: str, fin_stype: str, fin_flags: str, info: st
             raise NoResultError('搜索无结果，请注意当作品名带符号时，不要忽略夹杂在文字中间的符号，或者可以考虑输入在第一个符号之前出现的文字')
         raise NoResultError('搜索无结果')
     elif stype == 'gal':
-        for _item in search_result.items:
-            vn = VNItemsBasic(**_item)
+        for item in search_result.items:
+            vn = VNItemsBasic(**item)
             result += f'({vn.id}) {vn.original or vn.title}\n'
     elif stype == 'char':
-        for _item in search_result.items:
-            char = CharItemsBasic(**_item)
+        for item in search_result.items:
+            char = CharItemsBasic(**item)
             result += f'({char.id}) {char.original or char.name}\n'
     elif stype == 'cv':
-        for _item in search_result.items:
-            staff = StaffItemsBasic(**_item)
+        for item in search_result.items:
+            staff = StaffItemsBasic(**item)
             result += f'({staff.id}) {staff.original or staff.name}\n'
 
     if search_result.num == 1:
@@ -268,13 +268,13 @@ async def return_char_details(info: dict) -> tuple[Optional[str], list[str]]:
 
     # 相关作品
     result_details.append('相关作品')
-    for _vn_id, _release_id, _spoiler_level, _role in char.vns:
-        cv_id, cv_aid = return_char_cvid_in_vn(char.voiced, _vn_id)
+    for vn_id, release_id, spoiler_level, role in char.vns:
+        cv_id, cv_aid = return_char_cvid_in_vn(char.voiced, vn_id)
         if cv_id and cv_aid:
-            result_details.append(f' [{return_role_in_vn(_role)}] ({_vn_id}) {vn_title_table.get_title_by_vid_number(_vn_id)}'
+            result_details.append(f' [{return_role_in_vn(role)}] ({vn_id}) {vn_title_table.get_title_by_vid_number(vn_id)}'
                                   f'  (CV: {staff_alias_table.get_alias_by_aid_number(cv_aid)} ({cv_aid}))')
         else:
-            result_details.append(f' [{return_role_in_vn(_role)}] ({_vn_id}) {vn_title_table.get_title_by_vid_number(_vn_id)}')
+            result_details.append(f' [{return_role_in_vn(role)}] ({vn_id}) {vn_title_table.get_title_by_vid_number(vn_id)}')
 
     return result_pic, result_details
 
@@ -296,11 +296,11 @@ async def return_staff_details(info: dict) -> list[str]:
     result_details.append(f'语种 ：{return_language(staff.language)}')
     alias_dict = return_staff_alias_dict(staff.aliases)
     result_details.append('马甲 ：')
-    for _aid, _alias in alias_dict.items():
-        if _aid == staff.main_alias:
-            result_details.append(f' {_alias}  <本名>')
+    for aid, alias in alias_dict.items():
+        if aid == staff.main_alias:
+            result_details.append(f' {alias}  <本名>')
         else:
-            result_details.append(f' {_alias}')
+            result_details.append(f' {alias}')
     result_details.append('')
 
     # 描述信息
@@ -465,13 +465,13 @@ async def return_classified_chars_for_vn(vnid: int) -> dict[str, list[dict]]:
         'appears': [],
     }
 
-    for _char in await return_all_chars_for_vn(vnid):
-        char = Char4VNsInfo(**_char)
+    for char in await return_all_chars_for_vn(vnid):
+        char = Char4VNsInfo(**char)
         # i 表示该角色在 voiced 列表中的位置
-        for _vn_id, _release_id, _spoiler_level, _role in char.vns:
-            if _vn_id == vnid:
+        for vn_id, release_id, spoiler_level, role in char.vns:
+            if vn_id == vnid:
                 cv_id, cv_aid = return_char_cvid_in_vn(char.voiced, vnid)
-                char_dict_by_role[_role].append({
+                char_dict_by_role[role].append({
                     'name': char.original or char.name,  # type: str
                     'id': char.id,  # type: int
                     'cv_alias': staff_alias_table.get_alias_by_aid_number(cv_aid) if cv_aid else None,  # type: Optional[str]
@@ -506,10 +506,10 @@ async def return_all_chars_for_vn(vnid: int) -> list[dict]:
 def return_voiced_char_list(voiced: list) -> list:
     """返回某个声优的配音角色列表（按照角色身份为主排序关键字，vn评分为第二排序关键字）"""
     result = []
-    for _item in voiced:
-        vid = _item.id
-        cid = _item.cid
-        aid = _item.aid
+    for item in voiced:
+        vid = item.id
+        cid = item.cid
+        aid = item.aid
         if all((
                 char_role := char_role_table.get_role_by_cid_vid_number(cid, vid),
                 vn_title := vn_title_table.get_title_by_vid_number(vid),
@@ -517,11 +517,11 @@ def return_voiced_char_list(voiced: list) -> list:
                 alias_name := staff_alias_table.get_alias_by_aid_number(aid),
         )):  # 仅添加已经收录的
             result.append({
-                'vid': _item.id,  # type: int
+                'vid': item.id,  # type: int
                 'vn_name': vn_title,  # type: str
-                'cid': _item.cid,  # type: int
+                'cid': item.cid,  # type: int
                 'char_name': char_name,  # type: str
-                'aid': _item.aid,  # type: int
+                'aid': item.aid,  # type: int
                 'alias_name': alias_name,  # type: str
                 'role': char_role,  # type: int
                 'rating': vn_rating_table.get_rating_by_vid_number(vid),  # type: int
@@ -537,20 +537,20 @@ def return_char_cvid_in_vn(voiced: Optional[list], vnid: int) -> tuple[Optional[
     """返回某个角色在指定vn中的声优id和声优的aid"""
     if not voiced:
         return None, None
-    for _item in voiced:
-        if _item.vid == vnid:
-            return _item.id, _item.aid
+    for item in voiced:
+        if item.vid == vnid:
+            return item.id, item.aid
     return None, None
 
 
 def return_staff_alias_dict(aliases: list[list[Union[int, str]]]) -> dict[str, str]:
     """根据staff的alias表返回一个以aid为键，alias为值的字典"""
     result = {}
-    for _alias_id, _name, _original in aliases:
-        if _original:
-            result[_alias_id] = f'{_original} ({_name})'
+    for alias_id, name, original in aliases:
+        if original:
+            result[alias_id] = f'{original} ({name})'
         else:
-            result[_alias_id] = _name
+            result[alias_id] = name
     return result
 
 
