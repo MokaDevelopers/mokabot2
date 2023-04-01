@@ -11,8 +11,20 @@ from src.utils.mokabot_text2image import to_bytes_io
 from .client import VNDBClient
 from .config import vndb_account
 from .exceptions import VNDBError, NoResultError, ParamError
-from .model import SearchResult, VNItemsBasic, StaffItemsBasic, CharItemsBasic, VNInfo, CharInfo, StaffInfo, Char4VNsInfo
-from .resource import get_local_vndb_timestamp, vn_title_table, staff_alias_table, char_role_table, char_name_table, vn_rating_table
+from .model import (
+    SearchResult,
+    VNItemsBasic, StaffItemsBasic, CharItemsBasic,
+    StaffVoicedData, CharRoleData, StaffAlias,
+    VNInfo, CharInfo, StaffInfo, Char4VNsInfo,
+)
+from .resource import (
+    get_local_vndb_timestamp,
+    vn_title_table,
+    staff_alias_table,
+    char_role_table,
+    char_name_table,
+    vn_rating_table
+)
 
 vndb = on_command('vndb', priority=5)
 
@@ -180,10 +192,10 @@ async def return_vn_details(info: dict) -> tuple[Optional[str], list[str]]:
         if v:
             result_details.append(f'{role_name}')
             for char in v:
-                if char['cv_id']:
-                    result_details.append(f' ({char["id"]}) {char["name"]}  (CV: {char["cv_alias"]} ({char["cv_id"]}))')
+                if char.cv_id:
+                    result_details.append(f' ({char.id}) {char.name}  (CV: {char.cv_alias} ({char.cv_id}))')
                 else:
-                    result_details.append(f' ({char["id"]}) {char["name"]}')
+                    result_details.append(f' ({char.id}) {char.name}')
     result_details.append('')
 
     # 相关作品
@@ -268,13 +280,13 @@ async def return_char_details(info: dict) -> tuple[Optional[str], list[str]]:
 
     # 相关作品
     result_details.append('相关作品')
-    for vn_id, release_id, spoiler_level, role in char.vns:
-        cv_id, cv_aid = return_char_cvid_in_vn(char.voiced, vn_id)
-        if cv_id and cv_aid:
-            result_details.append(f' [{return_role_in_vn(role)}] ({vn_id}) {vn_title_table.get_title_by_vid_number(vn_id)}'
-                                  f'  (CV: {staff_alias_table.get_alias_by_aid_number(cv_aid)} ({cv_aid}))')
+    for vid, rid, spoiler_level, role in char.vns:
+        cv_id, aid = return_char_cvid_in_vn(char.voiced, vid)
+        if cv_id and aid:
+            result_details.append(f' [{return_role_in_vn(role)}] ({vid}) {vn_title_table.get_title_by_vid_number(vid)}'
+                                  f'  (CV: {staff_alias_table.get_alias_by_aid_number(aid)} ({aid}))')
         else:
-            result_details.append(f' [{return_role_in_vn(role)}] ({vn_id}) {vn_title_table.get_title_by_vid_number(vn_id)}')
+            result_details.append(f' [{return_role_in_vn(role)}] ({vid}) {vn_title_table.get_title_by_vid_number(vid)}')
 
     return result_pic, result_details
 
@@ -315,9 +327,9 @@ async def return_staff_details(info: dict) -> list[str]:
         result_details.append(f'配音角色（合计约{len(staff.voiced)}个角色）')
         voiced_char_list = return_voiced_char_list(staff.voiced)[:50]  # 只选取前50个角色
         for char in voiced_char_list:
-            result_details.append(f'（{char["vid"]}）《{char["vn_name"]}》')
-            result_details.append(f'  饰 [{return_role_by_index_in_vn(char["role"])}] {char["char_name"]}'
-                                  f'（{char["cid"]}）（AS: {char["alias_name"]}）')
+            result_details.append(f'（{char.vid}）《{char.vn_name}》')
+            result_details.append(f'  饰 [{return_role_by_index_in_vn(char.role)}] {char.char_name}'
+                                  f'（{char.cid}）（AS: {char.alias_name}）')
     result_details.append('（只显示前50个）')
 
     return result_details
@@ -456,7 +468,7 @@ async def get_vndb(stype: str, flags: str, filters: str, options: Optional[dict]
     return result
 
 
-async def return_classified_chars_for_vn(vnid: int) -> dict[str, list[dict]]:
+async def return_classified_chars_for_vn(vid: int) -> dict[str, list[CharRoleData]]:
     """返回一个该vn中按角色类型整理好的角色表"""
     char_dict_by_role = {
         'main': [],
@@ -465,23 +477,22 @@ async def return_classified_chars_for_vn(vnid: int) -> dict[str, list[dict]]:
         'appears': [],
     }
 
-    for char in await return_all_chars_for_vn(vnid):
-        char = Char4VNsInfo(**char)
+    for char in await return_all_chars_for_vn(vid):
         # i 表示该角色在 voiced 列表中的位置
-        for vn_id, release_id, spoiler_level, role in char.vns:
-            if vn_id == vnid:
-                cv_id, cv_aid = return_char_cvid_in_vn(char.voiced, vnid)
-                char_dict_by_role[role].append({
-                    'name': char.original or char.name,  # type: str
-                    'id': char.id,  # type: int
-                    'cv_alias': staff_alias_table.get_alias_by_aid_number(cv_aid) if cv_aid else None,  # type: Optional[str]
-                    'cv_id': cv_id  # type: Optional[int]
-                })
+        for linked_vn in char.vns:
+            if linked_vn.vid == vid:
+                cv_id, aid = return_char_cvid_in_vn(char.voiced, vid)
+                char_dict_by_role[linked_vn.role].append(CharRoleData(
+                    name=char.original or char.name,
+                    id=char.id,
+                    cv_alias=staff_alias_table.get_alias_by_aid_number(aid) if aid else None,
+                    cv_id=cv_id
+                ))
 
     return char_dict_by_role
 
 
-async def return_all_chars_for_vn(vnid: int) -> list[dict]:
+async def return_all_chars_for_vn(vnid: int) -> list[Char4VNsInfo]:
     """返回该vn中的所有角色的列表"""
     async with VNDBClient() as client:
         await client.login(*vndb_account)
@@ -492,7 +503,8 @@ async def return_all_chars_for_vn(vnid: int) -> list[dict]:
         while not char_list or is_more:
             search_char_result_raw = await client.get('character', 'basic,voiced,vns', f'(vn={vnid})', {'results': 20, 'page': page})
             search_char_result = SearchResult(**search_char_result_raw)
-            char_list.extend(search_char_result.items)
+            for item in search_char_result.items:
+                char_list.append(Char4VNsInfo(**item))
             is_more = search_char_result.more
             if is_more:  # 在下一轮查询之前先等待1s，以防止服务器sql报错
                 await asyncio.sleep(1)
@@ -503,7 +515,7 @@ async def return_all_chars_for_vn(vnid: int) -> list[dict]:
     return char_list
 
 
-def return_voiced_char_list(voiced: list) -> list:
+def return_voiced_char_list(voiced: list[StaffInfo.Voiced]) -> list[StaffVoicedData]:
     """返回某个声优的配音角色列表（按照角色身份为主排序关键字，vn评分为第二排序关键字）"""
     result = []
     for item in voiced:
@@ -516,19 +528,19 @@ def return_voiced_char_list(voiced: list) -> list:
                 char_name := char_name_table.get_name_by_cid_number(cid),
                 alias_name := staff_alias_table.get_alias_by_aid_number(aid),
         )):  # 仅添加已经收录的
-            result.append({
-                'vid': item.id,  # type: int
-                'vn_name': vn_title,  # type: str
-                'cid': item.cid,  # type: int
-                'char_name': char_name,  # type: str
-                'aid': item.aid,  # type: int
-                'alias_name': alias_name,  # type: str
-                'role': char_role,  # type: int
-                'rating': vn_rating_table.get_rating_by_vid_number(vid),  # type: int
-            })
+            result.append(StaffVoicedData(
+                vid=item.id,
+                vn_name=vn_title,
+                cid=item.cid,
+                char_name=char_name,
+                aid=item.aid,
+                alias_name=alias_name,
+                role=char_role,
+                rating=vn_rating_table.get_rating_by_vid_number(vid),
+            ))
 
-    result = sorted(result, key=lambda _: _['rating'], reverse=True)  # 800, 700, 600, ...
-    result = sorted(result, key=lambda _: _['role'])  # 0, 1, 2, 3
+    result = sorted(result, key=lambda staff_voiced_data: staff_voiced_data.rating, reverse=True)  # 800, 700, 600, ...
+    result = sorted(result, key=lambda staff_voiced_data: staff_voiced_data.role)  # 0, 1, 2, 3
 
     return result
 
@@ -543,14 +555,14 @@ def return_char_cvid_in_vn(voiced: Optional[list], vnid: int) -> tuple[Optional[
     return None, None
 
 
-def return_staff_alias_dict(aliases: list[list[Union[int, str]]]) -> dict[str, str]:
+def return_staff_alias_dict(aliases: list[StaffAlias]) -> dict[str, str]:
     """根据staff的alias表返回一个以aid为键，alias为值的字典"""
     result = {}
-    for alias_id, name, original in aliases:
+    for aid, name, original in aliases:
         if original:
-            result[alias_id] = f'{original} ({name})'
+            result[aid] = f'{original} ({name})'
         else:
-            result[alias_id] = name
+            result[aid] = name
     return result
 
 

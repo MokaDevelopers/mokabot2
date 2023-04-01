@@ -1,5 +1,6 @@
+from dataclasses import dataclass
 from datetime import date
-from typing import Optional, Union
+from typing import Optional, Union, NamedTuple
 
 from pydantic import BaseModel
 
@@ -38,8 +39,22 @@ class StaffItemsBasic(BaseModel):
     language: str
 
 
+class StaffAlias(NamedTuple):
+    aid: int  # Alias ID
+    name: str  # name (romaji)
+    original: str
+
+
+class LinkedVN(NamedTuple):
+    """(List of) VNs linked to this character."""
+    vid: int  # VN id
+    rid: int  # Release id
+    spoiler_level: int
+    role: str
+
+
 class VNInfo(BaseModel):
-    """flags=basic,details,relations,stats"""
+    """flags: basic,details,relations,stats"""
 
     class Links(BaseModel):
         wikipedia: Optional[str]  # name of the related article on the English Wikipedia (deprecated, use wikidata instead).
@@ -87,7 +102,7 @@ class VNInfo(BaseModel):
 
 
 class CharInfo(BaseModel):
-    """flags=basic,details,meas,vns,voiced"""
+    """flags: basic,details,meas,vns,voiced"""
 
     class ImageFlagging(BaseModel):
         votecount: int  # number of flagging votes.
@@ -125,14 +140,14 @@ class CharInfo(BaseModel):
     cup_size: Optional[str]
 
     # vns
-    vns: list[list[Union[int, str]]]  # List of VNs linked to this character.
+    vns: list[LinkedVN]  # List of VNs linked to this character.
 
     # voiced
     voiced: list[Voiced]  # List of voice actresses (staff) that voiced this character
 
 
 class StaffInfo(BaseModel):
-    """flags=basic,details,aliases,vns,voiced"""
+    """flags: basic,details,aliases,vns,voiced"""
 
     class Voiced(BaseModel):
         id: int  # staff ID
@@ -157,7 +172,7 @@ class StaffInfo(BaseModel):
     description: Optional[str]  # Description/notes of the staff, can contain formatting codes as described in d9#3
 
     # aliases
-    aliases: list[list[Union[int, str]]]  # List of names and aliases.
+    aliases: list[StaffAlias]  # List of names and aliases.
     main_alias: int  # ID of the alias that is the "primary" name of the entry
 
     # vns
@@ -168,7 +183,7 @@ class StaffInfo(BaseModel):
 
 
 class Char4VNsInfo(BaseModel):
-    """flags=basic,voiced,vns"""
+    """flags: basic,voiced,vns"""
 
     class Voiced(BaseModel):
         id: int  # staff ID
@@ -189,4 +204,26 @@ class Char4VNsInfo(BaseModel):
     voiced: list[Voiced]  # List of voice actresses (staff) that voiced this character
 
     # vns
-    vns: list[list[Union[int, str]]]  # List of VNs linked to this character.
+    vns: list[LinkedVN]  # List of VNs linked to this character.
+
+
+@dataclass
+class StaffVoicedData:
+    """记录某个声优在某个视觉小说中为某个角色配音的信息"""
+    vid: int
+    vn_name: str
+    cid: int
+    char_name: str
+    aid: int
+    alias_name: str
+    role: int
+    rating: int
+
+
+@dataclass
+class CharRoleData:
+    """记录某个角色在某个视觉小说中的角色身份和声优"""
+    name: str
+    id: int
+    cv_alias: Optional[str]
+    cv_id: Optional[int]

@@ -1,6 +1,6 @@
 __author__ = '秋葉亜里沙 https://github.com/zhanbao2000'
 
-__version__ = '3.0.1'
+__version__ = '3.1.0'
 
 __all__ = ['main', 'auto_update']
 
@@ -13,3 +13,7 @@ __plugin_meta__ = PluginMetadata(
     usage='',
     extra={'enable_on_default': True}
 )
+
+
+# 解决潜在的 coroutine ignored GeneratorExit 问题
+# 需要详细 code review
