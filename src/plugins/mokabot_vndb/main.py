@@ -324,13 +324,13 @@ async def return_staff_details(info: dict) -> list[str]:
 
     # 配音角色
     if staff.voiced:
-        result_details.append(f'配音角色（合计约{len(staff.voiced)}个角色）')
+        result_details.append(f'配音角色（合计{len(staff.voiced)}个角色）')
         voiced_char_list = return_voiced_char_list(staff.voiced)[:50]  # 只选取前50个角色
         for char in voiced_char_list:
             result_details.append(f'（{char.vid}）《{char.vn_name}》')
             result_details.append(f'  饰 [{return_role_by_index_in_vn(char.role)}] {char.char_name}'
                                   f'（{char.cid}）（AS: {char.alias_name}）')
-    result_details.append('（只显示前50个）')
+    result_details.append('（只显示最常见的前50个）')
 
     return result_details
 
@@ -569,7 +569,7 @@ def return_staff_alias_dict(aliases: list[StaffAlias]) -> dict[str, str]:
 def add_result_details(stype: str) -> list[str]:
     """返回一个被共用的图片头部"""
     return [
-        '数据来源：the visual novel database (vndb.org)',
+        '数据来源：The Visual Novel Database (vndb.org)',
         {
             'gal': '作品',
             'char': '角色',
