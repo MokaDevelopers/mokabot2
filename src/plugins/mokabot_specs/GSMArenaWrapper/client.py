@@ -29,6 +29,7 @@ class Client:
         return httpx.AsyncClient(
             proxies=self.proxies,
             timeout=self.timeout,
+            follow_redirects=True,
             transport=httpx.AsyncHTTPTransport(retries=self.retries) if self.retries else None
         )
 
