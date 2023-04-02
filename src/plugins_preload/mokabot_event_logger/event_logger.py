@@ -33,7 +33,12 @@ def is_kick_me_event(event: Event) -> bool:
 
 
 def is_group_ban_me_event(event: Event) -> bool:
-    return isinstance(event, GroupBanNoticeEvent) and event.notice_type == 'group_ban' and event.user_id != 0
+    return (
+            isinstance(event, GroupBanNoticeEvent) and
+            event.notice_type == 'group_ban' and
+            event.user_id != 0 and
+            event.user_id == event.self_id
+    )
 
 
 @on_request(is_friend_add_event).handle()
