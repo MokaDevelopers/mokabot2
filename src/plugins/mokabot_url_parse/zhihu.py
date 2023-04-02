@@ -16,22 +16,20 @@ https://jsontopydantic.com/
 目前没有发现Optional[int]
 """
 
-
-import json
 import re
 import time
 from typing import Union, Any, Type, Optional
 
-import aiohttp
 from nonebot import on_regex
-from nonebot.adapters.cqhttp import Message, MessageSegment
+from nonebot.adapters.onebot.v11 import Message, MessageSegment
 from nonebot.log import logger
 from nonebot.matcher import Matcher
 from pydantic import BaseModel
 
-from utils.mb2pkg_public_plugin import get_time, datediff
+from src.utils.mokabot_humanize import format_timestamp, SecondHumanizeUtils
 from .base import BaseParse
-from .exceptions import *
+from .exceptions import NoSuchTypeError
+from .utils import get_client
 
 
 class ZhihuParse(BaseParse):
@@ -62,13 +60,13 @@ class ZhihuParse(BaseParse):
     async def fetch(subtype: str, suburl: str) -> Union[str, Message, MessageSegment]:
         if subtype == 'answer':
             return formatter_answer(await zhihu_api(
-                url=f'https://www.zhihu.com/api/v4/answers/{suburl}',
+                url=f'https://api.zhihu.com/answers/{suburl}',
                 method='GET',
                 params={'include': 'comment_count,voteup_count,content'},
             ))
         elif subtype == 'question':
             return formatter_question(await zhihu_api(
-                url=f'https://www.zhihu.com/api/v4/questions/{suburl}',
+                url=f'https://api.zhihu.com/questions/{suburl}',
                 method='GET',
                 params={'include': 'comment_count,answer_count'},
             ))
@@ -87,29 +85,9 @@ class ZhihuParse(BaseParse):
 
 
 async def zhihu_api(url: str, method: str, params: Optional[dict[str, str]] = None) -> dict[str, Any]:
-    """其实就是aiohttp"""
-
-    if method == 'POST':
-        kwargs = {'data': params}
-    elif method == 'GET':
-        kwargs = {'params': params}
-    else:
-        kwargs = {}
-
-    start_time = time.time()
-    async with aiohttp.request(method, url, **kwargs) as r:
-        response_json = await r.json()
-        response_code = r.status
-
-    logger.debug(f'response after {int((time.time() - start_time) * 1000)}ms '
-              f'{json.dumps(response_json, indent=4)}'
-              f'code: {response_code}')
-
-    if response_code != 200:
-        logger.error(f'请求zhihuapiv4失败，响应 {response_code}：\n{response_json}')
-        raise RuntimeError
-
-    return response_json
+    async with get_client() as client:
+        resp = await client.request(method, url, params=params)
+        return resp.json()
 
 
 def convert_short_text(text: str) -> str:
@@ -117,19 +95,22 @@ def convert_short_text(text: str) -> str:
 
 
 def format_time(_time: Union[int, float]) -> str:
-    fmted_time = get_time('%Y-%m-%d %H:%M:%S', _time)
-    time_delta = datediff(time.time(), _time)
-    return f'{fmted_time}（{time_delta}）'
+    fmted_time = format_timestamp('%Y-%m-%d %H:%M:%S', _time)
+    time_delta = SecondHumanizeUtils(time.time() - _time)
+    return f'{fmted_time}（{time_delta.to_datediff_approx()}）'
 
 
 def formatter_answer(data: dict) -> Union[str, Message, MessageSegment]:
     response = ZhihuSingleAnswerResponse(**data)
 
-    text = f'问题：{response.question.title}\n' \
-           f'答主：{response.author.name}（{response.author.badge_v2.title}）\n' \
-           f'回答：{convert_short_text(response.content)}\n' \
-           f'👍:{response.voteup_count} 💬:{response.comment_count}\n' \
-           f'回答时间：{format_time(response.created_time)}'
+    text = (
+        f'问题：{response.question.title}\n'
+        f'答主：{response.author.name}（{response.author.badge_v2.title}）\n'
+        f'回答：{convert_short_text(response.content)}\n'
+        f'👍:{response.voteup_count} 💬:{response.comment_count}\n'
+        f'回答时间：{format_time(response.created_time)}'
+    )
+
     if response.created_time != response.updated_time:
         text += f'\n更新时间：{format_time(response.updated_time)}'
 
@@ -139,10 +120,12 @@ def formatter_answer(data: dict) -> Union[str, Message, MessageSegment]:
 def formatter_question(data: dict) -> Union[str, Message, MessageSegment]:
     response = ZhihuQuestionResponse(**data)
 
-    # TODO 此处用 response.comment_count 可以得到评论数，但是找不到合适的emoji来显示，因此先搁置
-    text = f'标题：{response.title}\n' \
-           f'💬：{response.answer_count}\n' \
-           f'提问时间：{format_time(response.created)}'
+    text = (
+        f'标题：{response.title}\n'
+        f'💬：{response.answer_count}\n'
+        f'提问时间：{format_time(response.created)}'
+    )
+
     if response.created != response.updated_time:
         text += f'\n更新时间：{format_time(response.updated_time)}'
 
@@ -152,11 +135,13 @@ def formatter_question(data: dict) -> Union[str, Message, MessageSegment]:
 def formatter_zhuanlan(data: dict) -> Union[str, Message, MessageSegment]:
     response = ZhihuArticleResponse(**data)
 
-    # TODO 因内容（response.excerpt或response.content）可能包含大量html标签，因此先不考虑加入该项
-    text = f'标题：{response.title}\n' \
-           f'作者：{response.author.name}（{response.author.badge_v2.title}）\n' \
-           f'👍:{response.voteup_count} 💬:{response.comment_count}\n' \
-           f'发布时间：{format_time(response.created)}'
+    text = (
+        f'标题：{response.title}\n'
+        f'作者：{response.author.name}（{response.author.badge_v2.title}）\n'
+        f'👍:{response.voteup_count} 💬:{response.comment_count}\n'
+        f'发布时间：{format_time(response.created)}'
+    )
+
     if response.created != response.updated:
         text += f'\n更新时间：{format_time(response.updated)}'
 
@@ -168,10 +153,14 @@ def formatter_zvideo(data: dict) -> Union[str, Message, MessageSegment]:
 
     pic = MessageSegment.image(file=response.image_url)
 
-    text = f'标题：{response.title}\n' \
-           f'作者：{response.author.name}（{response.author.badge_v2.title}）\n' \
-           f'▶:{response.play_count} 👍:{response.voteup_count} 💬:{response.comment_count} ⭐:{response.favlists_count} ❤:{response.liked_count}\n' \
-           f'发布时间：{format_time(response.published_at)}'
+    text = (
+        f'标题：{response.title}\n'
+        f'作者：{response.author.name}（{response.author.badge_v2.title}）\n'
+        f'▶:{response.play_count} 👍:{response.voteup_count} 💬:{response.comment_count} '
+        f'⭐:{response.favlists_count} ❤:{response.liked_count}\n'
+        f'发布时间：{format_time(response.published_at)}'
+    )
+
     if response.published_at != response.updated_at:
         text += f'\n更新时间：{format_time(response.updated_at)}'
 
@@ -199,10 +188,9 @@ def parse_zvideo(url: str) -> str:
 
 
 class ZhihuSingleAnswerResponse(BaseModel):
-    """https://www.zhihu.com/api/v4/answers/{aid}"""
+    """https://api.zhihu.com/answers/{aid}"""
 
     class Author(BaseModel):
-
         class BadgeV2(BaseModel):
             title: str
 
@@ -222,7 +210,7 @@ class ZhihuSingleAnswerResponse(BaseModel):
 
 
 class ZhihuQuestionResponse(BaseModel):
-    """https://www.zhihu.com/api/v4/questions/{qid}"""
+    """https://api.zhihu.com/questions/{qid}"""
 
     title: str
     question_type: str
@@ -236,7 +224,6 @@ class ZhihuArticleResponse(BaseModel):
     """https://www.zhihu.com/api/v4/articles/{zid}"""
 
     class Author(BaseModel):
-
         class BadgeV2(BaseModel):
             title: str
 
@@ -255,7 +242,6 @@ class ZhihuVideoResponse(BaseModel):
     """https://www.zhihu.com/api/v4/zvideos/{vid}"""
 
     class Author(BaseModel):
-
         class BadgeV2(BaseModel):
             title: str
 

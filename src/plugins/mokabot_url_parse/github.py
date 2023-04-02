@@ -5,15 +5,15 @@ from datetime import datetime
 from typing import Type, Optional, Union
 from urllib import parse
 
-import aiohttp
 from nonebot import on_regex
-from nonebot.adapters.cqhttp import Message, MessageSegment
+from nonebot.adapters.onebot.v11 import Message, MessageSegment
 from nonebot.log import logger
 from nonebot.matcher import Matcher
 from pydantic import BaseModel
 
-from utils.mb2pkg_public_plugin import get_time, datediff
+from src.utils.mokabot_humanize import format_timestamp, SecondHumanizeUtils
 from .base import BaseParse
+from .utils import get_client
 from .exceptions import StatusCodeError, NoSuchTypeError
 
 headers = {'Accept': 'application/vnd.github.v3+json'}
@@ -114,40 +114,45 @@ class CommitModel(BaseModel):
 
 
 async def get_user_model(username: str) -> UserModel:
-    async with aiohttp.request('GET', f'https://api.github.com/users/{username}', headers=headers) as resp:
-        if resp.status != 200:
-            async with aiohttp.request('GET', f'https://api.github.com/orgs/{username}', headers=headers) as resp2:
-                return UserModel(**(json.loads(await resp2.text(encoding='UTF-8'))))
-        return UserModel(**(json.loads(await resp.text(encoding='UTF-8'))))
+    async with get_client() as client:
+        resp = await client.get(f'https://api.github.com/users/{username}', headers=headers)
+        if resp.status_code != 200:
+            resp2 = await client.get(f'https://api.github.com/orgs/{username}', headers=headers)
+            return UserModel(**(json.loads(resp2.text)))
+
+        return UserModel(**(json.loads(resp.text)))
 
 
 async def get_repo_model(fullname: str) -> RepoModel:
-    async with aiohttp.request('GET', f'https://api.github.com/repos/{fullname}', headers=headers) as resp:
-        if resp.status != 200:
-            raise StatusCodeError(f'url:https://api.github.com/repos/{fullname} Status:{resp.status}')
-        return RepoModel(**(json.loads(await resp.text(encoding='UTF-8'))))
+    async with get_client() as client:
+        resp = await client.get(f'https://api.github.com/repos/{fullname}', headers=headers)
+        if resp.status_code != 200:
+            raise StatusCodeError(f'url:https://api.github.com/repos/{fullname} Status:{resp.status_code}')
+        return RepoModel(**(json.loads(resp.text)))
 
 
 async def get_issues_model(issues_url: str) -> IssuesModel:
-    async with aiohttp.request('GET', f'https://api.github.com/repos/{issues_url}', headers=headers) as resp:
-        if resp.status != 200:
-            raise StatusCodeError(f'url:https://api.github.com/repos/{issues_url} Status:{resp.status}')
-        return IssuesModel(**(json.loads(await resp.text(encoding='UTF-8'))))
+    async with get_client() as client:
+        resp = await client.get(f'https://api.github.com/repos/{issues_url}', headers=headers)
+        if resp.status_code != 200:
+            raise StatusCodeError(f'url:https://api.github.com/repos/{issues_url} Status:{resp.status_code}')
+        return IssuesModel(**(json.loads(resp.text)))
 
 
 async def get_commit_model(commit_url: str) -> CommitModel:
-    async with aiohttp.request('GET', f'https://api.github.com/repos/{commit_url}', headers=headers) as resp:
-        if resp.status != 200:
-            raise StatusCodeError(f'url:https://api.github.com/repos/{commit_url} Status:{resp.status}')
-        return CommitModel(**(json.loads(await resp.text(encoding='UTF-8'))))
+    async with get_client() as client:
+        resp = await client.get(f'https://api.github.com/repos/{commit_url}', headers=headers)
+        if resp.status_code != 200:
+            raise StatusCodeError(f'url:https://api.github.com/repos/{commit_url} Status:{resp.status_code}')
+        return CommitModel(**(json.loads(resp.text)))
 
 
 def format_time(_time: datetime) -> str:
     utc_now_stamp = time.mktime(datetime.utcnow().timetuple())
     publish_time_stamp = time.mktime(_time.timetuple())
-    local_time = get_time("%Y-%m-%d %H:%M:%S", publish_time_stamp + 8 * 60 * 60)  # 把时间转换为北京时间，加上8小时
-    time_delta = datediff(utc_now_stamp, publish_time_stamp)
-    return f'{local_time}（{time_delta}）'
+    local_time = format_timestamp("%Y-%m-%d %H:%M:%S", publish_time_stamp + 8 * 60 * 60)  # 把时间转换为北京时间，加上8小时
+    time_delta = SecondHumanizeUtils(utc_now_stamp - publish_time_stamp)
+    return f'{local_time}（{time_delta.to_datediff_approx()}）'
 
 
 class GithubParse(BaseParse):
@@ -161,7 +166,7 @@ class GithubParse(BaseParse):
     async def preprocesse(self, url: str) -> tuple[str, str]:
         try:
             real_url: str = re.findall(r'(github\.com/.+)', url)[0]  # github.com/user/repo/path/to/file
-            path_list = parse.urlparse(real_url).path.split('/')[1:]  # ['user', 'repo', 'path', 'to', 'file']
+            path_list = parse.urlparse(real_url.removesuffix('/')).path.split('/')[1:]  # ['user', 'repo', 'path', 'to', 'file']
             if len(path_list) == 1:
                 return 'user', path_list[0]
             elif len(path_list) == 2:
@@ -201,13 +206,15 @@ async def user_details(suburl: str) -> Message:
     final_name = user.login if user.login == user.name else f'{user.name} (aka. {user.login})'
     final_type = '' if user.type == 'User' else ' (Organization)'
 
-    text = f'用户名：{final_name}{final_type}\n' \
-           f'❤:{user.following} 💚:{user.followers} 📦:{user.public_repos}\n' \
-           f'个性签名：{user.bio or "无"}\n' \
-           f'邮箱：{user.email or "无"}\n' \
-           f'公司：{user.company or "无"}\n' \
-           f'地址：{user.location or "无"}\n' \
-           f'博客：{user.blog or "无"}'
+    text = (
+        f'用户名：{final_name}{final_type}\n'
+        f'❤:{user.following} 💚:{user.followers} 📦:{user.public_repos}\n'
+        f'个性签名：{user.bio or "无"}\n'
+        f'邮箱：{user.email or "无"}\n'
+        f'公司：{user.company or "无"}\n'
+        f'地址：{user.location or "无"}\n'
+        f'博客：{user.blog or "无"}'
+    )
 
     return MessageSegment.image(user.avatar_url) + text
 
@@ -228,16 +235,18 @@ async def repo_details(suburl: str) -> Message:
     else:
         license_ = '无'
 
-    text = f'项目：{repo.name}\n' \
-           f'作者：{owner}\n' \
-           f'大小：{repo.size} KB\n' \
-           f'语言：{repo.language or "无"}\n' \
-           f'许可证：{license_}\n' \
-           f'🐞:{repo.open_issues_count} ⭐:{repo.stargazers_count} 🍴:{repo.forks_count}\n' \
-           f'创建时间：{format_time(repo.created_at)}\n' \
-           f'上次提交：{format_time(repo.pushed_at)}\n' \
-           f'描述：{repo.description or "无"}\n' \
-           f'标签：{tags}'
+    text = (
+        f'项目：{repo.name}\n'
+        f'作者：{owner}\n'
+        f'大小：{repo.size} KB\n'
+        f'语言：{repo.language or "无"}\n'
+        f'许可证：{license_}\n'
+        f'🐞:{repo.open_issues_count} ⭐:{repo.stargazers_count} 🍴:{repo.forks_count}\n'
+        f'创建时间：{format_time(repo.created_at)}\n'
+        f'上次提交：{format_time(repo.pushed_at)}\n'
+        f'描述：{repo.description or "无"}\n'
+        f'标签：{tags}'
+    )
 
     return MessageSegment.image(file=await get_og_image_url(repo.html_url)) + text
 
@@ -248,11 +257,13 @@ async def issues_details(suburl: str) -> Message:
     final_type = '' if issues.user.type == 'User' else ' (Organization)'
     labels_list = [f'[{label.name}]' for label in issues.labels] if issues.labels else []
 
-    text = f'标题：[{issues.state.title()}] {issues.title}\n' \
-           f'发起者：{issues.user.login}{final_type}\n' \
-           f'标签：{" ".join(labels_list)}\n' \
-           f'创建时间：{format_time(issues.created_at)}\n' \
-           f'修改时间：{format_time(issues.updated_at)}'
+    text = (
+        f'标题：[{issues.state.title()}] {issues.title}\n'
+        f'发起者：{issues.user.login}{final_type}\n'
+        f'标签：{" ".join(labels_list)}\n'
+        f'创建时间：{format_time(issues.created_at)}\n'
+        f'修改时间：{format_time(issues.updated_at)}'
+    )
 
     if issues.closed_at:
         text += f'\n关闭时间：{format_time(issues.closed_at)}'
@@ -269,15 +280,17 @@ async def commit_details(suburl: str) -> Message:
     for file in commit.files:
         file_changes.append(f'{file.status} {file.filename} [+{file.additions} -{file.deletions}]')
 
-    text = f'标题：[{commit.sha[:7]}] {commit.commit.message}\n' \
-           f'提交者：{final_name}\n' \
-           f'提交时间：{format_time(commit.commit.committer.date)}\n' \
-           f'文件变更：\n'
+    text = (
+        f'标题：[{commit.sha[:7]}] {commit.commit.message}\n'
+        f'提交者：{final_name}\n'
+        f'提交时间：{format_time(commit.commit.committer.date)}\n'
+        f'文件变更：\n'
+    )
 
     return MessageSegment.image(file=await get_og_image_url(commit.html_url)) + text + '\n'.join(file_changes)
 
 
 async def get_og_image_url(url: str) -> str:
-    async with aiohttp.request('GET', url) as r:
-        text = await r.text()
-    return re.search(r'(https://opengraph\.githubassets\.com[^"]+)', text).groups()[0]
+    async with get_client() as client:
+        resp = await client.get(url)
+    return re.search(r'(https://opengraph\.githubassets\.com[^"]+)', resp.text).groups()[0]

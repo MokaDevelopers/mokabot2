@@ -1,23 +1,20 @@
-import json
 import re
 import textwrap
 import time
 from datetime import datetime
-from typing import Union, Any, Type, Optional
+from typing import Union, Type, Optional
 
-import aiohttp
 from nonebot import on_regex
-from nonebot.adapters.cqhttp import Message, MessageSegment
+from nonebot.adapters.onebot.v11 import Message, MessageSegment
 from nonebot.log import logger
 from nonebot.matcher import Matcher
 from pydantic import BaseModel
 
-from utils.mb2pkg_public_plugin import get_time, datediff
+from src.utils.mokabot_humanize import format_timestamp, SecondHumanizeUtils
 from .base import BaseParse
-from .config import Config
-from .exceptions import *
-
-gcp_youtube_apikey = Config().gcp_youtube_apikey
+from .config import gcp_youtube_apikey
+from .exceptions import NoSuchTypeError
+from .utils import get_client
 
 
 class YouTubeParse(BaseParse):
@@ -55,61 +52,32 @@ class YouTubeParse(BaseParse):
                 'id': suburl,
                 'key': gcp_youtube_apikey
             }
-            return await formatter_video(await youtube_api('https://youtube.googleapis.com/youtube/v3/videos', 'GET', video_params))
+            async with get_client() as client:
+                resp = await client.get('https://youtube.googleapis.com/youtube/v3/videos', params=video_params)
+                return await formatter_video(resp.json())
         elif subtype == 'channel':
             channel_params = {
                 'part': 'snippet,statistics,brandingSettings',
                 'id': suburl,
                 'key': gcp_youtube_apikey
             }
-            return formatter_channel(await youtube_api('https://www.googleapis.com/youtube/v3/channels', 'GET', channel_params))
+            async with get_client() as client:
+                resp = await client.get('https://youtube.googleapis.com/youtube/v3/channels', params=channel_params)
+                return formatter_channel(resp.json())
         else:
             raise NoSuchTypeError
 
 
-async def youtube_api(url: str, method: str, params: dict[str, str]) -> dict[str, Any]:
-    """
-    向 youtube.googleapis.com 发起一个API请求
-
-    :param url: 请求url
-    :param method: 请求方法，例如 GET
-    :param params: 请求参数，key字段将会自动补充因此无需添加
-    :return: 返回 googleapis 请求结果
-    """
-
-    params['key'] = gcp_youtube_apikey
-
-    if method == 'POST':
-        kwargs = {'data': params}
-    elif method == 'GET':
-        kwargs = {'params': params}
-    else:
-        kwargs = {}
-
-    start_time = time.time()
-    async with aiohttp.request(method, url, **kwargs) as r:
-        response_json = await r.json()
-        response_code = r.status
-
-    logger.debug(f'response after {int((time.time() - start_time) * 1000)}ms '
-              f'{json.dumps(response_json, indent=4)}'
-              f'code: {response_code}')
-
-    if response_code != 200:
-        logger.error(f'请求youtube.googleapis.com失败，响应 {response_code}：\n{response_json}')
-        raise RuntimeError
-
-    return response_json
-
-
-async def get_estimate_stat_result(video_id: str) -> tuple[Optional[int], Optional[int]]:
+async def get_estimate_dislike_count(video_id: str) -> tuple[Optional[int], Optional[int]]:
     """通过 Return YouTube Dislike API 估计视频的（不）喜欢数"""
     request_url = 'https://returnyoutubedislikeapi.com/Votes'
     params = {'videoId': video_id}
 
-    async with aiohttp.request('GET', request_url, params=params) as r:
-        if r.status == 200:
-            response = ReturnYouTubeDislikeAPIVotesResponse(**await r.json())
+    # async with aiohttp.request('GET', request_url, params=params) as r:
+    async with get_client() as client:
+        resp = await client.get(request_url, params=params)
+        if resp.status_code == 200:
+            response = ReturnYouTubeDislikeAPIVotesResponse(**resp.json())
             return response.likes, response.dislikes
         return None, None
 
@@ -133,9 +101,9 @@ def utc_trans(utc_time: datetime) -> tuple[str, str]:
     """将UTC时间转换为北京时间"""
     utc_now_stamp = time.mktime(datetime.utcnow().timetuple())
     utc_time_stamp = time.mktime(utc_time.timetuple())
-    beijing_time = get_time("%Y-%m-%d %H:%M:%S", utc_time_stamp + 8 * 60 * 60)  # 把utc_time_stamp转换为北京时间，即加上8小时
-    time_delta = datediff(utc_now_stamp, utc_time_stamp)
-    return beijing_time, time_delta
+    beijing_time = format_timestamp("%Y-%m-%d %H:%M:%S", utc_time_stamp + 8 * 60 * 60)  # 把utc_time_stamp转换为北京时间，即加上8小时
+    time_delta = SecondHumanizeUtils(utc_now_stamp - utc_time_stamp)
+    return beijing_time, time_delta.to_datediff_approx()
 
 
 def subscriber_count_round_significant_figures(count: int) -> str:
@@ -167,17 +135,19 @@ async def formatter_video(data: dict) -> Union[str, Message, MessageSegment]:
     # 去掉描述中所有的\n，由于f-string中的表达式片段不能包含反斜杠，因此放到外面事先处理
     video.description = video.description.replace('\n', '')
 
-    estimate_likes, estimate_dislikes = await get_estimate_stat_result(response.id)
+    estimate_likes, estimate_dislikes = await get_estimate_dislike_count(response.id)
 
-    text = f'标题：{video.title}\n' \
-           f'时间：{publish_time}({publish_delta})\n' \
-           f'频道：{video.channelTitle}\n' \
-           f'描述：{textwrap.shorten(video.description, width=60, placeholder=" ...")}\n' \
-           f'▶:{stat.viewCount} 👍:{stat.likeCount or estimate_likes} 👎: {estimate_dislikes} 💬:{stat.commentCount}'
+    text = (
+        f'标题：{video.title}\n'
+        f'时间：{publish_time}（{publish_delta}）\n'
+        f'频道：{video.channelTitle}\n'
+        f'描述：{textwrap.shorten(video.description, width=60, placeholder=" ...")}\n'
+        f'▶:{stat.viewCount} 👍:{stat.likeCount or estimate_likes} 👎: {estimate_dislikes} 💬:{stat.commentCount}'
+    )
 
     if video.tags is not None:
-        dotx3_tags = '...' if len(video.tags) > 12 else ''
-        tags = f'\n标签：{";".join(video.tags[:12])}{dotx3_tags}'
+        dotx3_tags = '...' if len(video.tags) > 5 else ''
+        tags = f'\n标签：{";".join(video.tags[:5])}{dotx3_tags}'
     else:
         tags = ''
 
@@ -191,7 +161,6 @@ def formatter_channel(data: dict) -> Union[str, Message, MessageSegment]:
     branding = response.brandingSettings
     channel.description = channel.description.replace('\n', ' ')
 
-    dotx3_description = '...' if len(channel.description) > 60 else ''
     if branding.image is not None:
         pic = MessageSegment.image(branding.image.bannerExternalUrl)
     else:  # 未设置频道banner时，使用频道默认头像作为频道banner
@@ -201,12 +170,14 @@ def formatter_channel(data: dict) -> Union[str, Message, MessageSegment]:
     # 去掉描述中所有的\n，由于f-string中的表达式片段不能包含反斜杠，因此放到外面事先处理
     channel.description = channel.description.replace('\n', '')
     # subscriberCount的值只有三位有效数字，那我们也只保留三位有效数字好了
-    sigfig_subscriberCount = subscriber_count_round_significant_figures(stat.subscriberCount)
+    sigfig_subscriber_count = subscriber_count_round_significant_figures(stat.subscriberCount)
 
-    text = f'名称：{channel.title}\n' \
-           f'建立：{publish_time}({publish_delta})\n' \
-           f'🔔:{sigfig_subscriberCount} 🎞:{stat.videoCount} 👀:{stat.viewCount}\n' \
-           f'简介：{channel.description[:60]}{dotx3_description}'
+    text = (
+        f'名称：{channel.title}\n'
+        f'建立：{publish_time}（{publish_delta}）\n'
+        f'🔔:{sigfig_subscriber_count} 🎞:{stat.videoCount} 👀:{stat.viewCount}\n'
+        f'简介：{textwrap.shorten(channel.description, width=60, placeholder=" ...")}'
+    )
 
     return pic + text
 
@@ -215,7 +186,6 @@ class YouTubeVideoListResponse(BaseModel):
     """https://developers.google.com/youtube/v3/docs/videos/list?hl=zh_CN"""
 
     class PageInfo(BaseModel):
-
         totalResults: int
         resultsPerPage: int
 
@@ -223,7 +193,6 @@ class YouTubeVideoListResponse(BaseModel):
         """https://developers.google.com/youtube/v3/docs/videos?hl=zh_CN#properties"""
 
         class Snippet(BaseModel):
-
             class Thumbnail(BaseModel):
                 url: str
                 width: int
@@ -277,7 +246,6 @@ class YouTubeChannelListResponse(BaseModel):
         """https://developers.google.com/youtube/v3/docs/channels?hl=zh_CN#properties"""
 
         class Snippet(BaseModel):
-
             class Thumbnail(BaseModel):
                 url: str
                 width: int
@@ -302,7 +270,6 @@ class YouTubeChannelListResponse(BaseModel):
             videoCount: str
 
         class BrandingSettings(BaseModel):
-
             class Channel(BaseModel):
                 title: str
                 description: str
