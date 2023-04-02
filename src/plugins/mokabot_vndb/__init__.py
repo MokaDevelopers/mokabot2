@@ -15,5 +15,5 @@ __plugin_meta__ = PluginMetadata(
 )
 
 
-# 解决潜在的 coroutine ignored GeneratorExit 问题
-# 需要详细 code review
+# TODO 解决潜在的 coroutine ignored GeneratorExit 问题
+# TODO 单元测试 need
