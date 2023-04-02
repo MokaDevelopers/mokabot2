@@ -68,6 +68,17 @@
                 </v-avatar>
                 <div
                     class="message-box"
+                    v-if="item.msg.startsWith('image:')"
+                >
+                  <v-img
+                      :src="item.msg.replace('image:', '')"
+                      max-width="400"
+                      max-height="400"
+                  ></v-img>
+                </div>
+                <div
+                    class="message-box"
+                    v-else
                     v-html="
                     item.msg.replace(/\n/g, '<br/>').replace(/ /g, '&nbsp;')
                   "
