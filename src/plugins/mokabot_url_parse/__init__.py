@@ -11,7 +11,7 @@ __plugin_meta__ = PluginMetadata(
     name='URL解析',
     description='解析哔哩哔哩、YouTube、GitHub等网站的链接',
     usage='',
-    extra={'enable_on_default': True}
+    extra={'enable_on_default': False}
 )
 
 
