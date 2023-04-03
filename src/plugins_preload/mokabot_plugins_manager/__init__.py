@@ -22,7 +22,7 @@ from .utils import (
 
 plugin_enable = on_command('启用', aliases={'开启'}, priority=5, permission=SUPERUSER | is_group_admin)
 plugin_disable = on_command('禁用', aliases={'关闭'}, priority=5, permission=SUPERUSER | is_group_admin)
-plugin_status = on_command('插件状态', aliases={'查看插件状态'}, priority=5)
+plugin_status = on_command('插件状态', aliases={'查看插件状态', '插件列表', '查看插件列表'}, priority=5)
 
 
 @run_preprocessor
