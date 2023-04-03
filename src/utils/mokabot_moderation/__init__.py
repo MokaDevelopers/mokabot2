@@ -82,3 +82,6 @@ class ModerationClient:
 
     async def moderate_simple(self, message: str) -> ModerationResult:
         return (await self.moderate(message)).conclusionType
+
+
+moderation_client = ModerationClient(API_KEY, SECRET_KEY)
