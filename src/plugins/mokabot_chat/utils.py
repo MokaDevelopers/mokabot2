@@ -64,7 +64,7 @@ async def chat_say_safe(user_id: int, message: str, bot_name: str = 'capybara') 
     result_chat = await chat_say(message, bot_name)
     result_moderation = await moderation_client.moderate(result_chat)
 
-    if result_moderation == ModerationResult.VALID:
+    if result_moderation.conclusionType in (ModerationResult.VALID, ModerationResult.FAILED):
         return result_chat
     else:
         await bot_reset(bot_name)
