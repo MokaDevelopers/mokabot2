@@ -1,12 +1,12 @@
 name: Build and Deploy
 on: [push]
 jobs:
+
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
       uses: actions/checkout@master
-
     - name: vuepress-deploy
       uses: jenkey2011/vuepress-deploy@master
       env:
@@ -17,6 +17,11 @@ jobs:
         BUILD_DIR: docs/.vuepress/dist
         CNAME: https://docs-mokabot.arisa.moe
 
+  Qodana:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@master
     - name: 'Qodana Scan'
       uses: JetBrains/qodana-action@main
       env:
