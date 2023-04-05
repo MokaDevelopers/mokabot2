@@ -19,10 +19,6 @@ def sync_chat_say(message: str, bot_name: str) -> Optional[str]:
 
 
 async def chat_say(message: str, bot_name: str = 'capybara'):
-    # https://github.com/ading2210/poe-api/issues/9
-    if not client.ws_connected:
-        client.connect_ws()
-
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(None, sync_chat_say, message, bot_name)
 
