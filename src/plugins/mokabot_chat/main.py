@@ -13,7 +13,7 @@ async def _(event: MessageEvent, args: Message = CommandArg()):
     arg = args.extract_plain_text().strip()
     current_bot = QQ(event.user_id).get_config('chat', 'current_bot') or 'capybara'
 
-    if arg.startswith('reset'):
+    if arg.startswith('reset') or arg.startswith('clear'):
         await bot_reset(current_bot)
         msg = '当前会话已重置'
 
