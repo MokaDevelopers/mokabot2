@@ -12,7 +12,7 @@ client = Client(TOKEN)
 def sync_chat_say(message: str, bot_name: str) -> Optional[str]:
     chunk = None
 
-    for chunk in client.send_message(bot_name, message):
+    for chunk in client.send_message(bot_name, message, timeout=120):
         ...
 
     return chunk['text']
