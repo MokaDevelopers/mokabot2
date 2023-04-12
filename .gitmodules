@@ -7,3 +7,6 @@
 [submodule "src/plugins/mokabot_maimai"]
 	path = src/plugins/mokabot_maimai
 	url = https://github.com/Yuri-YuzuChaN/maimaiDX.git
+[submodule "src/plugins/mokabot_bandori/BandoriChartRender"]
+	path = src/plugins/mokabot_bandori/BandoriChartRender
+	url = https://github.com/zhanbao2000/BandoriChartRender.git
