@@ -13,12 +13,11 @@ from nonebot.log import logger
 from nonebot.matcher import Matcher
 from nonebot.message import run_preprocessor
 
+from src.plugins_preload.mokabot_plugins_manager import is_plugin_enabled
 from .config import default_cd
 
 require('mokabot_plugins_manager')
 arr_table: dict[int, tuple[float, str, int]] = {}  # {QQ号: (上一次发送的时间, 上一次发送的原始消息, 上一次发送的消息ID), ...}
-
-from src.plugins_preload.mokabot_plugins_manager import is_plugin_enabled
 
 
 @run_preprocessor
