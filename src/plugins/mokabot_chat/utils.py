@@ -1,11 +1,14 @@
 import asyncio
 from typing import Optional
 
+from nonebot import require, logger
 from poe import Client
+
 from src.utils.mokabot_moderation import moderation_client, ModerationResult
 from .ban import BanUserManager
 from .config import TOKEN
 
+scheduler = require('nonebot_plugin_apscheduler').scheduler
 client = Client(TOKEN)
 
 
@@ -73,3 +76,12 @@ async def chat_say_safe(user_id: int, message: str, bot_name: str = 'capybara') 
             f'模型将要发送的消息包含明确违规内容，mokabot已终止当前会话，若多次尝试诱导模型发送违规内容，你将被永久禁止使用该功能。'
             f'当前你剩余{2 - ban_count}条命'
         )
+
+
+@scheduler.scheduled_job('interval', hours=1)
+def _():
+    # 每1小时重新创建client对象
+    # https://github.com/ading2210/poe-api/issues/33#issuecomment-1504493132
+    global client
+    client = Client(TOKEN)
+    logger.info('已重新创建poe-api client对象')
