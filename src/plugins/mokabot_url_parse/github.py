@@ -13,8 +13,8 @@ from pydantic import BaseModel
 
 from src.utils.mokabot_humanize import format_timestamp, SecondHumanizeUtils
 from .base import BaseParse
-from .utils import get_client
 from .exceptions import StatusCodeError, NoSuchTypeError
+from .utils import get_client
 
 headers = {'Accept': 'application/vnd.github.v3+json'}
 
@@ -35,7 +35,6 @@ class UserModel(BaseModel):
 
 
 class RepoModel(BaseModel):
-
     class License(BaseModel):
         key: str
         name: str
@@ -64,7 +63,6 @@ class RepoModel(BaseModel):
 
 
 class IssuesModel(BaseModel):
-
     class User(BaseModel):
         login: str
         type: str
@@ -84,9 +82,7 @@ class IssuesModel(BaseModel):
 
 
 class CommitModel(BaseModel):
-
     class Commit(BaseModel):
-
         class Committer(BaseModel):
             name: str
             email: Optional[str]
@@ -248,7 +244,12 @@ async def repo_details(suburl: str) -> Message:
         f'标签：{tags}'
     )
 
-    return MessageSegment.image(file=await get_og_image_url(repo.html_url)) + text
+    try:
+        msg = MessageSegment.image(file=await get_og_image_url(repo.html_url)) + text
+    except AttributeError:  # https://github.com/dessant/buster 无法获取 opengraph
+        msg = text
+
+    return msg
 
 
 async def issues_details(suburl: str) -> Message:
