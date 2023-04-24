@@ -478,4 +478,4 @@ class DynamicDesc(BaseModel):
 
 
 class DynamicCardOrigin(BaseModel):
-    short_link: str
+    short_link: Optional[str]
