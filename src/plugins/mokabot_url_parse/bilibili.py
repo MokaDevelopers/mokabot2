@@ -169,10 +169,10 @@ async def bangumi_detail(url: str) -> Message:
 async def live_detail(url: str) -> Message:
     async with get_client() as client:
         resp = await client.get(url)
-        live_json_response = await resp.json()
+        live_json_response = resp.json()
     if live_json_response['code'] in [-400, 19002000]:
         raise RuntimeError('直播间不存在')
-    live = LiveResponse(**(await resp.json())['data'])
+    live = LiveResponse(**(resp.json()['data']))
 
     live_status = {
         1: '直播中',
