@@ -11,10 +11,13 @@ def init():
 
 
 def logger_filter(record: dict) -> bool:
-    """用于去除 loguru 日志中显示插件名的 ``nonebot.plugin.manager._internal.XXXXX`` 前缀"""
+    """用于去除 loguru 日志中显示插件名的 ``nonebot.plugin.manager._internal.XXXXX`` 前缀，并消除 ActionFailed `消息不存在` 的警告"""
     record_name = record['name']
+    record_level = record['level'].name
     if record_name.startswith('nonebot.plugin.manager._internal.'):
         record['name'] = '.'.join(record_name.split('.')[5:])
+    if record_level == 'WARNING' and '消息不存在' in record['message']:
+        return False
     return True
 
 
