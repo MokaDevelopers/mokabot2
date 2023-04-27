@@ -2,9 +2,7 @@
 
 受 Estertion 的 [查分站](https://redive.estertion.win/arcaea/probe/) 启发，我做了一个爬取查分站的 bot，具体原理是直接与查分站的后端进行 WebSocket 通信。代码参考了 Estertion 的 [后端代码](https://gist.github.com/esterTion/fe184d4e51c2421310bdeba26046f139) 制成。
 
-最初的查询结果极其简陋，因为我不会做图查，所以模仿查分站做了个文字版的：
-
-![](asset/2020-2.jpg)
+最初的查询结果极其简陋，因为我不会做图查，所以模仿查分站做了个 [文字版的](asset/2020-2.jpg)。
 
 （有趣的是，这个风格一直持续到了 AUA 终止服务）
 
@@ -46,15 +44,12 @@ mokabot 早期即 mokabot 一代，因为种种原因（水平太菜，代码难
 
 加入 `单曲查询` 功能，样式：
 
-![](asset/2020-12-guin.png)
-
-![](asset/2020-12-moe.png)
+ - [Guin 样式](asset/2020-12-guin.png)
+ - [moe 样式](asset/2020-12-moe.png)
 
 #### 2020-12-29
 
-为 `单曲查询` 功能添加 `bandori` 模式：
-
-![](asset/2020-12-bandori.jpg)
+为 `单曲查询` 功能添加 [`bandori` 样式](asset/2020-12-bandori.jpg)：
 
 #### 2021-01-04
 
@@ -66,9 +61,7 @@ mokabot 早期即 mokabot 一代，因为种种原因（水平太菜，代码难
 
 #### 2021-03-18
 
-加入 `arc导航` 功能：
-
-![](asset/arc_map.png)
+加入 [`arc导航` 功能](asset/arc_map.png)，以此实现在 Arcaea 活动期间用户能合理预估自己活动进度。
 
 #### 2021-05-16
 
