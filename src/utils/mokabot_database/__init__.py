@@ -54,6 +54,8 @@ class QQ:
             return None
 
     def set_config(self, table: str, colomn: str, value: SQLite3Type) -> bool:
+        if colomn == 'user_id':
+            raise ValueError('colomn 不能为 user_id')
         # 如果表不存在，建立表，接下来如果 colomn 不存在，alter add 新的 colomn，并插入数据，否则更新数据
         with Connect(self.db_path) as c:
             try:
