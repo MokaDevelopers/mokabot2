@@ -37,7 +37,7 @@
     { position: 'left', msg: '这是mokabot可能予以的答复' },
     { position: 'center', msg: '你与mokabot已点亮 聊得燚燚83🔥 超过10天，聊得燚燚83🔥 标识已升级为 聊得燚燚84🔥' },
     { position: 'right', msg: '这又是一条指令示例' },
-    { position: 'left', msg: '【这表示mokabot发送了一张图片.jpg】' },
+    { position: 'left', msg: 'image:https://blog.arisa.moe/blog/2023/images/230309-pycharm-git-submodule/git_init.png' },
   ]"></Messenger>
 </ClientOnly>
 

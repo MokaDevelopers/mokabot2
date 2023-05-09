@@ -39,8 +39,6 @@ module.exports = {
 			{ text: '主页', link: '/',},
 			{ text: '插件', link: '/plugins/' },
 			{ text: '设置', link: '/settings/' },
-			{ text: '深入', link: '/advanced/' },
-			{ text: '常见问题', link: '/questions/' },
             {
                 text: '外部链接',
                 ariaLabel: '外部链接',
@@ -83,31 +81,6 @@ module.exports = {
                         'plugin_switches',
                         'alias',
                         'positive_msg',
-                    ]
-                }
-            ],
-			'/advanced/': [
-                {
-                    title: '深入',
-                    collapsable: false,
-                    sidebar: "auto",
-                    children: [
-                        '',
-						'whats_webapi',
-                        'prediction'
-                    ]
-                }
-            ],
-			'/questions/': [
-                {
-                    title: '常见问题',
-                    collapsable: false,
-                    sidebar: "auto",
-                    children: [
-                        '',
-                        'why_not_found',
-                        'how_add',
-                        'how_close'
                     ]
                 }
             ]
