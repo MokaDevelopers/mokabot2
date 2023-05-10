@@ -58,15 +58,18 @@ class SimpleUserProfileStyle(BaseUserProfileStyle):
     def _locate_band_stat(band_id: int, line: int) -> tuple[float, float]:
         offset = 122.5
         first_left = 143
-        column = {
-            1: 0,  # Poppin'Party
-            2: 1,  # Afterglow
-            3: 4,  # Pastel*Palettes
-            4: 2,  # Roselia
-            5: 3,  # Hello, Happy World!
-            18: 6,  # RAISE A SUILEN
-            21: 5,  # Morfonica
-        }[band_id]
+        if line == 1:
+            column = band_id - 1
+        else:
+            column = {
+                1: 0,  # Poppin'Party
+                2: 1,  # Afterglow
+                3: 4,  # Pastel*Palettes
+                4: 2,  # Roselia
+                5: 3,  # Hello, Happy World!
+                18: 6,  # RAISE A SUILEN
+                21: 5,  # Morfonica
+            }[band_id]
         baseline = {
             0: 756,  # 最高分
             1: 865,  # 挑战任务进度
@@ -276,7 +279,7 @@ class SimpleUserProfileStyle(BaseUserProfileStyle):
 
     def _write_challenge_mission(self):
         challenge_stat = {
-            **dict.fromkeys((1, 2, 3, 4, 5, 18, 21), 0),
+            **dict.fromkeys((1, 2, 3, 4, 5, 6, 7), 0),
             **self.user_profile.stage_challenge_achievement_conditions_map.entries
         }
         for band_id, star_count in challenge_stat.items():
