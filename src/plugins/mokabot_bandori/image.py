@@ -321,10 +321,11 @@ class SimpleUserProfileStyle(BaseUserProfileStyle):
 
     async def _draw_profile_character(self):
         card_id = self.user_profile.user_profile_situation.situation_id
+        is_after_training = self.user_profile.user_profile_situation.illust == 'after_training'
         if not card_id:
-            return
-        is_is_after_training = self.user_profile.user_profile_situation.illust == 'after_training'
-        character_image = Image.open(await get_profile_card_image(card_id, is_is_after_training)).convert('RGBA').resize((439, 439))
+            card_id = self.user_profile.main_deck_user_situations.entries[0].situation_id
+            is_after_training = self.user_profile.main_deck_user_situations.entries[0].illust == 'after_training'
+        character_image = Image.open(await get_profile_card_image(card_id, is_after_training)).convert('RGBA').resize((439, 439))
         self.im.alpha_composite(character_image, (81, 70))
 
     async def generate(self) -> BytesIO:
