@@ -33,9 +33,10 @@ def resize_as_height(image: Image.Image, target_height: int) -> Image.Image:
 
 class BaseUserProfileStyle(object):
 
-    def __init__(self, user_profile: UserProfile, user_id: Optional[int] = None):
+    def __init__(self, user_profile: UserProfile, user_id: Optional[int] = None, region: Language = Language.Japanese):
         self.user_profile = user_profile
         self.user_id = user_id
+        self.region = region
 
     async def generate(self) -> BytesIO:
         raise NotImplementedError
@@ -43,8 +44,8 @@ class BaseUserProfileStyle(object):
 
 class SimpleUserProfileStyle(BaseUserProfileStyle):
 
-    def __init__(self, user_profile: UserProfile, user_id: Optional[int] = None):
-        super().__init__(user_profile, user_id)
+    def __init__(self, user_profile: UserProfile, user_id: Optional[int] = None, region: Language = Language.Japanese):
+        super().__init__(user_profile, user_id, region)
 
         self.im = Image.open(design_v2_bg).convert('RGBA')
         self.draw = ImageDraw.Draw(self.im)
@@ -180,7 +181,7 @@ class SimpleUserProfileStyle(BaseUserProfileStyle):
         for index, card in enumerate(deck):  # 全新玩家可能存在主乐队部分 card 为空的情况
             card_id = card.situation_id
             is_after_training = card.illust == 'after_training'
-            card_illust = await get_card_thumb(card_id, is_after_training)
+            card_illust = await get_card_thumb(card_id, is_after_training, self.region)
             im = Image.open(card_illust).convert('RGBA').resize((131, 131))
             self.im.alpha_composite(im, self._locate_card(index))
 
@@ -249,17 +250,16 @@ class SimpleUserProfileStyle(BaseUserProfileStyle):
         self._draw_deck_power(deck, cards_all)
         await self._draw_deck_box(deck, cards_all)
 
-    @staticmethod
-    async def _generate_degree_image(degree_info: Degree) -> Image.Image:
+    async def _generate_degree_image(self, degree_info: Degree) -> Image.Image:
         degree_base_filename = degree_info.baseImageName[Language.Japanese]
-        im = resize_as_height(Image.open(await get_degree_file(degree_base_filename)).convert('RGBA'), 40)
+        im = resize_as_height(Image.open(await get_degree_file(degree_base_filename, self.region)).convert('RGBA'), 40)
         if degree_info.rank[Language.Japanese] != 'none':
             degree_rank_filename = f'{degree_info.degreeType[Language.Japanese]}_{degree_info.rank[Language.Japanese]}'
-            degree_rank = Image.open(await get_degree_file(degree_rank_filename)).convert('RGBA')
+            degree_rank = Image.open(await get_degree_file(degree_rank_filename, self.region)).convert('RGBA')
             im.alpha_composite(resize_as_height(degree_rank, 40), (0, 0))
         if degree_info.iconImageName[Language.Japanese] != 'none':
             degree_icon_filename = f'{degree_info.iconImageName[Language.Japanese]}_{degree_info.rank[Language.Japanese]}'
-            degree_icon = Image.open(await get_degree_file(degree_icon_filename)).convert('RGBA')
+            degree_icon = Image.open(await get_degree_file(degree_icon_filename, self.region)).convert('RGBA')
             im.alpha_composite(resize_as_height(degree_icon, 40), (0, 0))
         return im
 
@@ -278,7 +278,7 @@ class SimpleUserProfileStyle(BaseUserProfileStyle):
                 self.im.alpha_composite(degree_image, (1307, 224))
 
     def _write_challenge_mission(self):
-        challenge_stat = {
+        challenge_stat: dict[int, int] = {
             **dict.fromkeys((1, 2, 3, 4, 5, 6, 7), 0),
             **self.user_profile.stage_challenge_achievement_conditions_map.entries
         }
@@ -309,6 +309,7 @@ class SimpleUserProfileStyle(BaseUserProfileStyle):
             self.draw.text((left, top - 26), '未公开', font=self.font_text, fill=self.color_gray, anchor='ms')
             return
         for band_id, rating in self.user_profile.user_deck_total_rating_map.entries.items():
+            band_id = int(band_id)  # 国服特供
             # 画字母
             rank_img = Image.open(get_rank_image(rating.rank)).convert('RGBA').resize((50, 50))
             self.im.alpha_composite(rank_img, self._locate_band_rank(band_id))
@@ -325,7 +326,7 @@ class SimpleUserProfileStyle(BaseUserProfileStyle):
         if not card_id:
             card_id = self.user_profile.main_deck_user_situations.entries[0].situation_id
             is_after_training = self.user_profile.main_deck_user_situations.entries[0].illust == 'after_training'
-        character_image = Image.open(await get_profile_card_image(card_id, is_after_training)).convert('RGBA').resize((439, 439))
+        character_image = Image.open(await get_profile_card_image(card_id, is_after_training, self.region)).convert('RGBA').resize((439, 439))
         self.im.alpha_composite(character_image, (81, 70))
 
     async def generate(self) -> BytesIO:
