@@ -251,14 +251,14 @@ class SimpleUserProfileStyle(BaseUserProfileStyle):
         await self._draw_deck_box(deck, cards_all)
 
     async def _generate_degree_image(self, degree_info: Degree) -> Image.Image:
-        degree_base_filename = degree_info.baseImageName[Language.Japanese]
+        degree_base_filename = degree_info.baseImageName[self.region]
         im = resize_as_height(Image.open(await get_degree_file(degree_base_filename, self.region)).convert('RGBA'), 40)
-        if degree_info.rank[Language.Japanese] != 'none':
-            degree_rank_filename = f'{degree_info.degreeType[Language.Japanese]}_{degree_info.rank[Language.Japanese]}'
+        if degree_info.rank[self.region] != 'none':
+            degree_rank_filename = f'{degree_info.degreeType[self.region]}_{degree_info.rank[self.region]}'
             degree_rank = Image.open(await get_degree_file(degree_rank_filename, self.region)).convert('RGBA')
             im.alpha_composite(resize_as_height(degree_rank, 40), (0, 0))
-        if degree_info.iconImageName[Language.Japanese] != 'none':
-            degree_icon_filename = f'{degree_info.iconImageName[Language.Japanese]}_{degree_info.rank[Language.Japanese]}'
+        if degree_info.iconImageName[self.region] != 'none':
+            degree_icon_filename = f'{degree_info.iconImageName[self.region]}_{degree_info.rank[self.region]}'
             degree_icon = Image.open(await get_degree_file(degree_icon_filename, self.region)).convert('RGBA')
             im.alpha_composite(resize_as_height(degree_icon, 40), (0, 0))
         return im
