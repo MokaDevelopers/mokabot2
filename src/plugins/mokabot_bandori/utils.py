@@ -44,11 +44,12 @@ async def _get_user_profile_cn(user_id: int) -> Optional[UserProfile]:
             profile.user_music_clear_info_map.entries[difficulty].all_perfect_music_count = count
 
     # StageChallengeAchievementConditionsMap 表，即挑战任务进度表，key 从 str 转为 int 格式
-    profile.stage_challenge_achievement_conditions_map.entries = {
-        int(k): v
-        for k, v in resp_json['data']['profile']['stageChallengeAchievementConditionsMap']['entries'].items()
-        if int(k) in range(8)  # 国服有个 102 不知道是干嘛的
-    }
+    if 'entries' in resp_json['data']['profile']['stageChallengeAchievementConditionsMap']:
+        profile.stage_challenge_achievement_conditions_map.entries = {
+            int(k): v
+            for k, v in resp_json['data']['profile']['stageChallengeAchievementConditionsMap']['entries'].items()
+            if int(k) in range(8)  # 国服有个 102 不知道是干嘛的
+        }
 
     return profile
 
