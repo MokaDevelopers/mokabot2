@@ -37,7 +37,7 @@ def split_long_line(s: str, max_width: int, indent: int = 0) -> str:
     将过长的字符串分割成多行
 
     :param s: 需要分割的字符串
-    :param max_width: 每行允许的最大宽度
+    :param max_width: 每行允许的最大宽度（单位：ascii 字符）
     :param indent: 换行时每行的缩进宽度
     """
 
@@ -49,6 +49,33 @@ def split_long_line(s: str, max_width: int, indent: int = 0) -> str:
             temp = ''
             for c in line:
                 if get_str_width(temp + c) <= max_width - indent:
+                    temp += c
+                else:
+                    result += temp + '\n' + ' ' * indent
+                    temp = c
+            result += temp + '\n'
+
+    return result
+
+
+def split_long_line_pixel(s: str, max_width: int, font_: ImageFont, indent: int = 0) -> str:
+    """
+    以像素级精确方式将过长的字符串分割成多行
+
+    :param s: 需要分割的字符串
+    :param max_width: 每行允许的最大宽度（单位：像素）
+    :param font_: 字体
+    :param indent: 换行时每行的缩进宽度
+    """
+
+    result = ''
+    for line in s.splitlines():
+        if font_.getsize(line)[0] <= max_width:
+            result += line + '\n'
+        else:
+            temp = ''
+            for c in line:
+                if font_.getsize(temp + c)[0] <= max_width - indent:
                     temp += c
                 else:
                     result += temp + '\n' + ' ' * indent
