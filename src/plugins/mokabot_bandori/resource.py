@@ -1,12 +1,13 @@
 from pathlib import Path
 
-from .bestdori.model import Attribute
+from .bestdori.model import Attribute, Language
 
 assets = Path(__file__).parent / 'assets'
 profile_dir = assets / 'profile'
 design_v2_bg = profile_dir / 'design_v2_bg.png'
 root_rank = profile_dir / 'rank'
 root_font = profile_dir / 'fonts'
+root_region = profile_dir / 'region'
 
 font_hanyi_zhengyuan_65w = root_font / 'HYZhengYuan-65W.ttf'
 font_hanyi_zhengyuan_75w = root_font / 'HYZhengYuan-75W.ttf'
@@ -16,6 +17,11 @@ attribute_icon = {
     Attribute.Cool: profile_dir / 'attr' / 'cool.png',
     Attribute.Happy: profile_dir / 'attr' / 'happy.png',
     Attribute.Pure: profile_dir / 'attr' / 'pure.png',
+}
+
+region_icon = {
+    Language.Japanese: root_region / 'jp.png',
+    Language.ChineseSimplified: root_region / 'cn.png',
 }
 
 

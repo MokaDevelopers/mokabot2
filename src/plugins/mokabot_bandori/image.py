@@ -13,7 +13,7 @@ from .bestdori import (
 from .bestdori.model import CardsAll, Attribute, Degree, Language
 from .bestdori.utils import get_band_id
 from .resource import (
-    design_v2_bg, attribute_icon,
+    design_v2_bg, attribute_icon, region_icon,
     get_band_icon, get_rank_image, get_level_image,
     font_hanyi_zhengyuan_65w, font_hanyi_zhengyuan_75w
 )
@@ -329,10 +329,15 @@ class SimpleUserProfileStyle(BaseUserProfileStyle):
         character_image = Image.open(await get_profile_card_image(card_id, is_after_training, self.region)).convert('RGBA').resize((439, 439))
         self.im.alpha_composite(character_image, (81, 70))
 
+    def _draw_region(self):
+        icon = Image.open(region_icon[self.region]).convert('RGBA').resize((36, 36))
+        self.im.alpha_composite(icon, (1103, 176))
+
     async def generate(self) -> BytesIO:
         # 玩家信息面板
         self._write_rank_and_username()
         self._write_introduction()
+        self._draw_region()
         self._write_user_id()
         await self._draw_degree()
         await self._draw_profile_character()
