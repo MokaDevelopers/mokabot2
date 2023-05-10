@@ -55,14 +55,14 @@ async def _(event: MessageEvent, args_: Message = CommandArg()):
 async def _(event: MessageEvent, args_: Message = CommandArg()):
     args = args_.extract_plain_text().strip()
 
+    region = get_user_region(event.user_id)
     if args:
-        msg = await generate_user_profile_image(int(args))
+        msg = await generate_user_profile_image(int(args), region)
     else:
-        region = get_user_region(event.user_id)
         if user_id := get_user_id(event.user_id, region):
             msg = await generate_user_profile_image(int(user_id), region)
         else:
-            msg = '请先绑定邦邦账号'
+            msg = '请先绑定邦邦账号，即\n邦邦绑定 <邦邦数字好友码>'
 
     await bandori_user.finish(msg, reply_message=True)
 
