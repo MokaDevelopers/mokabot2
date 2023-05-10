@@ -1,9 +1,11 @@
 from io import BytesIO
 from typing import Optional
+from time import time
 
 from PIL import Image, ImageDraw, ImageFont
 
 from src.utils.mokabot_text2image import split_long_line_pixel
+from src.utils.mokabot_humanize import now_datetime
 from .BandoriClient.protobuf.UserProfile import UserProfile, UserSituation
 from .bestdori import (
     get_card_thumb, get_cards_all, get_card_box,
@@ -333,6 +335,9 @@ class SimpleUserProfileStyle(BaseUserProfileStyle):
         icon = Image.open(region_icon[self.region]).convert('RGBA').resize((36, 36))
         self.im.alpha_composite(icon, (1103, 176))
 
+    def _write_generate_time(self):
+        self.draw.text((60, 1140), f'生成时间 {now_datetime()}', font=self.font_text, fill=self.color_gray, anchor='lt')
+
     async def generate(self) -> BytesIO:
         # 玩家信息面板
         self._write_rank_and_username()
@@ -353,6 +358,9 @@ class SimpleUserProfileStyle(BaseUserProfileStyle):
 
         # CR/FC/AP 面板
         self._write_clear_info()
+
+        # 生成时间
+        self._write_generate_time()
 
         bio = BytesIO()
         self.im.save(bio, format='PNG')
