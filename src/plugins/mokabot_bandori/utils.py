@@ -23,7 +23,7 @@ async def _get_user_profile_cn(user_id: int) -> Optional[UserProfile]:
         resp_json = resp.json()
     if not resp_json['result'] or not resp_json['data']['profile']:
         return
-    profile = UserProfile().from_dict(resp_json['data']['profile'])
+    profile = UserProfile().from_dict(json_profile := resp_json['data']['profile'])
 
     # XxxMusicCountMap 表转换为日服格式
     profile.user_music_clear_info_map.entries.update({
@@ -33,21 +33,21 @@ async def _get_user_profile_cn(user_id: int) -> Optional[UserProfile]:
         'expert': UserMusicClearInfo(),
         'special': UserMusicClearInfo(),
     })
-    if profile.publish_music_cleared_flg:
-        for difficulty, count in resp_json['data']['profile']['clearedMusicCountMap']['entries'].items():
+    if profile.publish_music_cleared_flg and 'entries' in json_profile['clearedMusicCountMap']:
+        for difficulty, count in json_profile['clearedMusicCountMap']['entries'].items():
             profile.user_music_clear_info_map.entries[difficulty].cleared_music_count = count
-    if profile.publish_music_full_combo_flg:
-        for difficulty, count in resp_json['data']['profile']['fullComboMusicCountMap']['entries'].items():
+    if profile.publish_music_full_combo_flg and 'entries' in json_profile['fullComboMusicCountMap']:
+        for difficulty, count in json_profile['fullComboMusicCountMap']['entries'].items():
             profile.user_music_clear_info_map.entries[difficulty].full_combo_music_count = count
-    if profile.publish_music_all_perfect_flg:
-        for difficulty, count in resp_json['data']['profile']['allPerfectMusicCountMap']['entries'].items():
+    if profile.publish_music_all_perfect_flg and 'entries' in json_profile['allPerfectMusicCountMap']:
+        for difficulty, count in json_profile['allPerfectMusicCountMap']['entries'].items():
             profile.user_music_clear_info_map.entries[difficulty].all_perfect_music_count = count
 
     # StageChallengeAchievementConditionsMap 表，即挑战任务进度表，key 从 str 转为 int 格式
-    if 'entries' in resp_json['data']['profile']['stageChallengeAchievementConditionsMap']:
+    if 'entries' in json_profile['stageChallengeAchievementConditionsMap']:
         profile.stage_challenge_achievement_conditions_map.entries = {
             int(k): v
-            for k, v in resp_json['data']['profile']['stageChallengeAchievementConditionsMap']['entries'].items()
+            for k, v in json_profile['stageChallengeAchievementConditionsMap']['entries'].items()
             if int(k) in range(8)  # 国服有个 102 不知道是干嘛的
         }
 
