@@ -1,11 +1,10 @@
 from io import BytesIO
 from typing import Optional
-from time import time
 
 from PIL import Image, ImageDraw, ImageFont
 
-from src.utils.mokabot_text2image import split_long_line_pixel
 from src.utils.mokabot_humanize import now_datetime
+from src.utils.mokabot_text2image import split_long_line_pixel
 from .BandoriClient.protobuf.UserProfile import UserProfile, UserSituation
 from .bestdori import (
     get_card_thumb, get_cards_all, get_card_box,
@@ -52,7 +51,7 @@ class SimpleUserProfileStyle(BaseUserProfileStyle):
         self.im = Image.open(design_v2_bg).convert('RGBA')
         self.draw = ImageDraw.Draw(self.im)
 
-        self.color_gray = (67, 67, 67, 255)
+        self.color_grey = (67, 67, 67, 255)
         self.color_pink = (255, 58, 113, 255)
         self.color_white = (237, 237, 237, 255)
         self.font_title = ImageFont.truetype(str(font_hanyi_zhengyuan_75w), 48)
@@ -144,22 +143,22 @@ class SimpleUserProfileStyle(BaseUserProfileStyle):
     def _write_rank_and_username(self):
         rank = self.user_profile.rank
         username = self.user_profile.user_name
-        self.draw.text((549, 102), f'Rank {rank}  {username}', font=self.font_title, fill=self.color_gray, anchor='lt')
+        self.draw.text((549, 102), f'Rank {rank}  {username}', font=self.font_title, fill=self.color_grey, anchor='lt')
 
     def _write_introduction(self):
         introduction = split_long_line_pixel(self.user_profile.introduction, 470, self.font_text)
-        self.draw.text((569, 190), introduction, font=self.font_text, fill=self.color_gray)
+        self.draw.text((569, 190), introduction, font=self.font_text, fill=self.color_grey)
 
     def _write_user_id(self):
         user_id = self.user_id or self.user_profile.user_profile_situation.user_id
         if not user_id:
             user_id = '未公开'
-        self.draw.text((1150, 196), str(user_id), font=self.font_text, fill=self.color_gray, anchor='lm')
+        self.draw.text((1150, 196), str(user_id), font=self.font_text, fill=self.color_grey, anchor='lm')
 
     def _write_high_score_rating(self):
         user_hsr = self.user_profile.user_high_score_rating
         if not user_hsr.user_poppin_party_high_score_music_list.entries:
-            self.draw.text(self._locate_band_stat(5, 0), '未公开', font=self.font_text, fill=self.color_gray, anchor='ms')
+            self.draw.text(self._locate_band_stat(5, 0), '未公开', font=self.font_text, fill=self.color_grey, anchor='ms')
             return
         hsr_total = 0
         for band_id, band_hsr_song_list in (
@@ -178,12 +177,12 @@ class SimpleUserProfileStyle(BaseUserProfileStyle):
                 hsr_total += chart.rating
             if not band_id:
                 continue
-            self.draw.text(self._locate_band_stat(band_id, 0), str(hsr_band), font=self.font_text, fill=self.color_gray, anchor='ms')
-        self.draw.text((1321, 196), f'最高分  {hsr_total}', font=self.font_text, fill=self.color_gray, anchor='lm')
+            self.draw.text(self._locate_band_stat(band_id, 0), str(hsr_band), font=self.font_text, fill=self.color_grey, anchor='ms')
+        self.draw.text((1321, 196), f'最高分  {hsr_total}', font=self.font_text, fill=self.color_grey, anchor='lm')
 
     def _write_band_name(self):
         band_name = self.user_profile.main_user_deck.deck_name
-        self.draw.text((570, 305), band_name, font=self.font_text, fill=self.color_gray, anchor='lt')
+        self.draw.text((570, 305), band_name, font=self.font_text, fill=self.color_grey, anchor='lt')
 
     async def _draw_deck_card(self, deck: list[UserSituation]):
         for index, card in enumerate(deck):  # 全新玩家可能存在主乐队部分 card 为空的情况
@@ -223,9 +222,9 @@ class SimpleUserProfileStyle(BaseUserProfileStyle):
         totol_power = total_performance + total_technique + total_visual
 
         self.draw.text((1499, 349), str(totol_power), font=self.font_text, fill=self.color_pink, anchor='rt')
-        self.draw.text((1499, 390), str(total_performance), font=self.font_text, fill=self.color_gray, anchor='rt')
-        self.draw.text((1499, 423), str(total_technique), font=self.font_text, fill=self.color_gray, anchor='rt')
-        self.draw.text((1499, 455), str(total_visual), font=self.font_text, fill=self.color_gray, anchor='rt')
+        self.draw.text((1499, 390), str(total_performance), font=self.font_text, fill=self.color_grey, anchor='rt')
+        self.draw.text((1499, 423), str(total_technique), font=self.font_text, fill=self.color_grey, anchor='rt')
+        self.draw.text((1499, 455), str(total_visual), font=self.font_text, fill=self.color_grey, anchor='rt')
 
     async def _draw_deck_box(self, deck: list[UserSituation], cards_all: CardsAll):
         for index, card in enumerate(deck):
@@ -299,30 +298,30 @@ class SimpleUserProfileStyle(BaseUserProfileStyle):
             **self.user_profile.stage_challenge_achievement_conditions_map.entries
         }
         for band_id, star_count in challenge_stat.items():
-            self.draw.text(self._locate_band_stat(band_id, 1), str(star_count), font=self.font_text, fill=self.color_gray, anchor='ms')
+            self.draw.text(self._locate_band_stat(band_id, 1), str(star_count), font=self.font_text, fill=self.color_grey, anchor='ms')
 
     def _write_clear_info(self):
         for difficulty, info in self.user_profile.user_music_clear_info_map.entries.items():
             if self.user_profile.publish_music_cleared_flg:
                 self.draw.text(self._locate_clear_stat(difficulty, 0), str(info.cleared_music_count),
-                               font=self.font_text, fill=self.color_gray, anchor='ms')
+                               font=self.font_text, fill=self.color_grey, anchor='ms')
             if self.user_profile.publish_music_full_combo_flg:
                 self.draw.text(self._locate_clear_stat(difficulty, 1), str(info.full_combo_music_count),
-                               font=self.font_text, fill=self.color_gray, anchor='ms')
+                               font=self.font_text, fill=self.color_grey, anchor='ms')
             if self.user_profile.publish_music_all_perfect_flg:
                 self.draw.text(self._locate_clear_stat(difficulty, 2), str(info.all_perfect_music_count),
-                               font=self.font_text, fill=self.color_gray, anchor='ms')
+                               font=self.font_text, fill=self.color_grey, anchor='ms')
         if not self.user_profile.publish_music_cleared_flg:
-            self.draw.text(self._locate_clear_stat('hard', 0), '未公开', font=self.font_text, fill=self.color_gray, anchor='ms')
+            self.draw.text(self._locate_clear_stat('hard', 0), '未公开', font=self.font_text, fill=self.color_grey, anchor='ms')
         if not self.user_profile.publish_music_full_combo_flg:
-            self.draw.text(self._locate_clear_stat('hard', 1), '未公开', font=self.font_text, fill=self.color_gray, anchor='ms')
+            self.draw.text(self._locate_clear_stat('hard', 1), '未公开', font=self.font_text, fill=self.color_grey, anchor='ms')
         if not self.user_profile.publish_music_all_perfect_flg:
-            self.draw.text(self._locate_clear_stat('hard', 2), '未公开', font=self.font_text, fill=self.color_gray, anchor='ms')
+            self.draw.text(self._locate_clear_stat('hard', 2), '未公开', font=self.font_text, fill=self.color_grey, anchor='ms')
 
     def _write_band_rating(self):
         if not self.user_profile.user_deck_total_rating_map.entries:
             left, top = self._locate_band_stat(5, 2)
-            self.draw.text((left, top - 26), '未公开', font=self.font_text, fill=self.color_gray, anchor='ms')
+            self.draw.text((left, top - 26), '未公开', font=self.font_text, fill=self.color_grey, anchor='ms')
             return
         for band_id, rating in self.user_profile.user_deck_total_rating_map.entries.items():
             band_id = int(band_id)  # 国服特供
@@ -334,7 +333,7 @@ class SimpleUserProfileStyle(BaseUserProfileStyle):
                 level_img = Image.open(get_level_image(rating.rank, rating.level)).convert('RGBA').resize((30, 30))
                 self.im.alpha_composite(level_img, self._locate_band_level(band_id))
             # 写分数
-            self.draw.text(self._locate_band_stat(band_id, 2), str(rating.score), font=self.font_text, fill=self.color_gray, anchor='ms')
+            self.draw.text(self._locate_band_stat(band_id, 2), str(rating.score), font=self.font_text, fill=self.color_grey, anchor='ms')
 
     async def _draw_profile_character(self):
         card_id = self.user_profile.user_profile_situation.situation_id
@@ -350,7 +349,7 @@ class SimpleUserProfileStyle(BaseUserProfileStyle):
         self.im.alpha_composite(icon, (1103, 176))
 
     def _write_generate_time(self):
-        self.draw.text((60, 1140), f'生成时间 {now_datetime()}', font=self.font_text, fill=self.color_gray, anchor='lt')
+        self.draw.text((60, 1140), f'生成时间 {now_datetime()}', font=self.font_text, fill=self.color_grey, anchor='lt')
 
     async def generate(self) -> BytesIO:
         # 玩家信息面板
