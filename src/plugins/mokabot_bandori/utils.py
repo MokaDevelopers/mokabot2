@@ -10,7 +10,11 @@ client = BandoriClient(user_id=static_user_id, hash1=hash1, signature=signature)
 
 
 async def _get_user_profile_jp(user_id: int) -> Optional[UserProfile]:
-    profile = await client.get_user_profile(user_id=user_id)
+    try:
+        profile = await client.get_user_profile(user_id=user_id)
+    except RuntimeError:
+        await client.init_token()
+        profile = await client.get_user_profile(user_id=user_id)
     if not profile.rank or not isinstance(profile.rank, int):
         return
     return profile
