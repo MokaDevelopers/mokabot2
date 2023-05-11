@@ -54,8 +54,10 @@ class SimpleUserProfileStyle(BaseUserProfileStyle):
 
         self.color_gray = (67, 67, 67, 255)
         self.color_pink = (255, 58, 113, 255)
+        self.color_white = (237, 237, 237, 255)
         self.font_title = ImageFont.truetype(str(font_hanyi_zhengyuan_75w), 48)
         self.font_text = ImageFont.truetype(str(font_hanyi_zhengyuan_65w), 27)
+        self.font_level = ImageFont.truetype(str(font_hanyi_zhengyuan_75w), 20)
 
     @staticmethod
     def _locate_band_stat(band_id: int, line: int) -> tuple[float, float]:
@@ -134,6 +136,10 @@ class SimpleUserProfileStyle(BaseUserProfileStyle):
         }[line]
 
         return first_left + column * offset, baseline  # 采用 ms 锚点
+
+    def _locate_card_level(self, index: int) -> tuple[int, int]:
+        card_left, card_top = self._locate_card(index)
+        return card_left + 65, card_top + 106
 
     def _write_rank_and_username(self):
         rank = self.user_profile.rank
@@ -240,6 +246,13 @@ class SimpleUserProfileStyle(BaseUserProfileStyle):
             for storey in range(rarity - 1, -1, -1):  # 3, 2, 1, 0
                 self.im.alpha_composite(im, self._locate_card_star(index, storey))
 
+    def _draw_deck_level(self, deck: list[UserSituation]):
+        for index, card in enumerate(deck):
+            level_im = Image.new('RGBA', (63, 23), (0, 0, 0, 180))
+            level_draw = ImageDraw.Draw(level_im)
+            level_draw.text((1, 2), f'Lv. {card.level}', font=self.font_level, fill=self.color_white, anchor='lt')
+            self.im.alpha_composite(level_im, self._locate_card_level(index))
+
     async def _draw_deck(self):
         deck = self.user_profile.main_deck_user_situations.entries
         cards_all = await get_cards_all(is_cache=True)
@@ -250,6 +263,7 @@ class SimpleUserProfileStyle(BaseUserProfileStyle):
 
         await self._draw_deck_card(deck)
         self._draw_deck_power(deck, cards_all)
+        self._draw_deck_level(deck)
         await self._draw_deck_box(deck, cards_all)
 
     async def _generate_degree_image(self, degree_info: Degree) -> Image.Image:
