@@ -30,7 +30,7 @@ def get_difficulty_int(difficulty: Optional[str] = None) -> Optional[int]:
 
 async def get_random_song(message: str) -> tuple[BytesIO, str]:
     start, end = song_difficulty_parser(message)
-    chart = (await client.get_song_random(start, end, withsonginfo=True)).content
+    chart = (await client.get_song_random(start, end, with_song_info=True)).content
     cover = Image.open(IGRMngr.get_song_cover(chart.id, chart.songinfo.remote_download, chart.songinfo.jacket_override))
     return (
         save_to_bytesio(cover),

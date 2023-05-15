@@ -10,15 +10,16 @@ from .utils import split_song_and_difficulty, client
 
 async def generate_arcaea_best35_image(user_id: int, specific_user: Optional[str] = None) -> BytesIO:
     """绘制该 QQ 对应好友码或指定好友码或指定用户名的 Best35 成绩"""
-    data = await client.get_user_best30(
-        user=specific_user or get_user_friend_code(user_id),  # specific_user 为 9 位好友码或用户名
-        overflow=5,
-        withrecent=True,
-        withsonginfo=True
-    )
-
-    image_maker = get_image_generator_best35(get_user_result_type(user_id))
-    return image_maker(data).generate()
+    # data = await client.get_user_best30(
+    #     user=specific_user or get_user_friend_code(user_id),  # specific_user 为 9 位好友码或用户名
+    #     overflow=5,
+    #     withrecent=True,
+    #     withsonginfo=True
+    # )
+    #
+    # image_maker = get_image_generator_best35(get_user_result_type(user_id))
+    # return image_maker(data).generate()
+    raise NotImplementedError('当前暂不支持绘制 Bests 成绩图像，请等待 UAA 后续更新')
 
 
 async def generate_arcaea_single_image(user_id: int, chart: str = '', is_recent: bool = False, specific_user: Optional[str] = None) -> BytesIO:
@@ -38,22 +39,22 @@ async def generate_arcaea_single_image(user_id: int, chart: str = '', is_recent:
 async def get_arcaea_recent_data(user: str, result_type: str) -> UserBest:
     """获取用户最近一次成绩，以便制作单曲成绩图"""
     if result_type == 'bandori':
-        recent = await client.get_user_info(user=user, recent=1, withsonginfo=True)
+        recent = await client.get_user_info(user_name=user, recent=1, withsonginfo=True)
         return await client.get_user_best(
-            user=user,
+            user_name=user,
             difficulty=recent.content.recent_score[0].difficulty,
-            withsonginfo=True,
-            withrecent=True,
+            with_song_info=True,
+            with_recent=True,
             songid=recent.content.recent_score[0].song_id,
         )
     else:
-        return user_recent_best_transfer(await client.get_user_info(user=user, recent=1, withsonginfo=True))
+        return user_recent_best_transfer(await client.get_user_info(user_name=user, recent=1, withsonginfo=True))
 
 
 async def get_arcaea_best_data(user: str, chart: str, result_type: str) -> UserBest:
     """获取用户指定曲目的最佳成绩，以便制作单曲成绩图"""
     song, difficulty = split_song_and_difficulty(chart)
-    data = await client.get_user_best(user=user, difficulty=difficulty, withsonginfo=True, withrecent=True, songname=song)
+    data = await client.get_user_best(user_name=user, difficulty=difficulty, with_song_info=True, with_recent=True, song_name=song)
     if result_type == 'bandori':
         # 将 record 复制到 recent 区域，因为 bandori 样式永远使用 recent 的数据
         data.content.recent_score = data.content.record

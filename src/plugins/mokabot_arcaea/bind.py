@@ -42,7 +42,7 @@ def generate_bind_result(qq: int, user_id: int, username: str, friend_code: str,
 
 
 async def bind(qq: int, user: str) -> str:
-    data = (await client.get_user_info(user=user)).content.account_info
+    data = (await client.get_user_info(user_name=user)).content.account_info
     rating = data.rating
     friend_code = data.code
     username = data.name

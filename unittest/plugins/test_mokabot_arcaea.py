@@ -98,10 +98,10 @@ class TestImage:
         temp = Path(get_driver().config.temp)
 
         best = await client.get_user_best(
-            usercode='895532511',
+            user_code='895532511',
             difficulty=2,
-            withsonginfo=True,
-            withrecent=True,
+            with_song_info=True,
+            with_recent=True,
             songid='ifi'
         )
 
@@ -109,7 +109,7 @@ class TestImage:
         warnings.warn(f'请手动检查图片是否正确：{path}')
 
         recent = user_recent_best_transfer(await client.get_user_info(
-            usercode='895532511',
+            user_code='895532511',
             recent=1,
             withsonginfo=True,
         ))
@@ -127,10 +127,10 @@ class TestImage:
         temp = Path(get_driver().config.temp)
 
         best = await client.get_user_best(
-            usercode='895532511',
+            user_code='895532511',
             difficulty=2,
-            withsonginfo=True,
-            withrecent=True,
+            with_song_info=True,
+            with_recent=True,
             songid='ifi'
         )
 
@@ -138,7 +138,7 @@ class TestImage:
         warnings.warn(f'请手动检查图片是否正确：{path}')
 
         recent = user_recent_best_transfer(await client.get_user_info(
-            usercode='895532511',
+            user_code='895532511',
             recent=1,
             withsonginfo=True,
         ))
@@ -158,10 +158,10 @@ class TestImage:
 
         # 查询历史最佳成绩
         best = await client.get_user_best(
-            usercode='895532511',
+            user_code='895532511',
             difficulty=2,
-            withsonginfo=True,
-            withrecent=True,
+            with_song_info=True,
+            with_recent=True,
             songid='ifi'
         )
         # 将 record 复制到 recent 区域，因为该样式永远使用 recent 的数据
@@ -173,15 +173,15 @@ class TestImage:
 
         # 查询最近成绩
         recent = await client.get_user_info(
-            usercode='895532511',
+            user_code='895532511',
             recent=1,
             withsonginfo=True,
         )
         best = await client.get_user_best(
-            usercode='895532511',
+            user_code='895532511',
             difficulty=recent.content.recent_score[0].difficulty,
-            withsonginfo=True,
-            withrecent=True,
+            with_song_info=True,
+            with_recent=True,
             songid=recent.content.recent_score[0].song_id,
         )
 
