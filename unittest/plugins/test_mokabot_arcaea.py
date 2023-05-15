@@ -102,7 +102,7 @@ class TestImage:
             difficulty=2,
             with_song_info=True,
             with_recent=True,
-            songid='ifi'
+            song_id='ifi'
         )
 
         Image.open(SingleStyleMoe(best).generate()).save(path := temp / 'test_single_moe_as_best.png')
@@ -111,7 +111,7 @@ class TestImage:
         recent = user_recent_best_transfer(await client.get_user_info(
             user_code='895532511',
             recent=1,
-            withsonginfo=True,
+            with_song_info=True,
         ))
 
         Image.open(SingleStyleMoe(recent, is_recent=True).generate()).save(path := temp / 'test_single_moe_as_recent.png')
@@ -131,7 +131,7 @@ class TestImage:
             difficulty=2,
             with_song_info=True,
             with_recent=True,
-            songid='ifi'
+            song_id='ifi'
         )
 
         Image.open(SingleStyleGuin(best).generate()).save(path := temp / 'test_single_guin_as_best.png')
@@ -140,7 +140,7 @@ class TestImage:
         recent = user_recent_best_transfer(await client.get_user_info(
             user_code='895532511',
             recent=1,
-            withsonginfo=True,
+            with_song_info=True,
         ))
 
         Image.open(SingleStyleGuin(recent, is_recent=True).generate()).save(path := temp / 'test_single_guin_as_recent.png')
@@ -162,11 +162,11 @@ class TestImage:
             difficulty=2,
             with_song_info=True,
             with_recent=True,
-            songid='ifi'
+            song_id='ifi'
         )
         # 将 record 复制到 recent 区域，因为该样式永远使用 recent 的数据
         best.content.recent_score = best.content.record
-        best.content.recent_songinfo = best.content.songinfo[0]
+        best.content.recent_song_info = best.content.song_info[0]
 
         Image.open(SingleStyleBandori(best).generate()).save(path := temp / 'test_single_bandori_as_best.png')
         warnings.warn(f'请手动检查图片是否正确：{path}')
@@ -175,14 +175,14 @@ class TestImage:
         recent = await client.get_user_info(
             user_code='895532511',
             recent=1,
-            withsonginfo=True,
+            with_song_info=True,
         )
         best = await client.get_user_best(
             user_code='895532511',
             difficulty=recent.content.recent_score[0].difficulty,
             with_song_info=True,
             with_recent=True,
-            songid=recent.content.recent_score[0].song_id,
+            song_id=recent.content.recent_score[0].song_id,
         )
 
         Image.open(SingleStyleBandori(best, is_recent=True).generate()).save(path := temp / 'test_single_bandori_as_recent.png')
@@ -379,9 +379,9 @@ class TestProbe:
         assert user_best.status == 0
         assert user_best.content.account_info.code == '062596721'
         assert user_best.content.record.score == 9992128
-        assert user_best.content.songinfo[0].name_en == 'MacrocosmicModulation'
+        assert user_best.content.song_info[0].name_en == 'MacrocosmicModulation'
         assert user_best.content.recent_score.time_played == 1651198101733
-        assert user_best.content.recent_songinfo.jacket_designer == '装甲枕'
+        assert user_best.content.recent_song_info.jacket_designer == '装甲枕'
 
     @pytest.mark.asyncio
     async def test_arc_probe_handle(self, app: App, load_plugin):

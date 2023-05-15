@@ -13,8 +13,8 @@ async def generate_arcaea_best35_image(user_id: int, specific_user: Optional[str
     # data = await client.get_user_best30(
     #     user=specific_user or get_user_friend_code(user_id),  # specific_user 为 9 位好友码或用户名
     #     overflow=5,
-    #     withrecent=True,
-    #     withsonginfo=True
+    #     with_recent=True,
+    #     with_song_info=True
     # )
     #
     # image_maker = get_image_generator_best35(get_user_result_type(user_id))
@@ -39,16 +39,16 @@ async def generate_arcaea_single_image(user_id: int, chart: str = '', is_recent:
 async def get_arcaea_recent_data(user: str, result_type: str) -> UserBest:
     """获取用户最近一次成绩，以便制作单曲成绩图"""
     if result_type == 'bandori':
-        recent = await client.get_user_info(user_name=user, recent=1, withsonginfo=True)
+        recent = await client.get_user_info(user_name=user, recent=1, with_song_info=True)
         return await client.get_user_best(
             user_name=user,
             difficulty=recent.content.recent_score[0].difficulty,
             with_song_info=True,
             with_recent=True,
-            songid=recent.content.recent_score[0].song_id,
+            song_id=recent.content.recent_score[0].song_id,
         )
     else:
-        return user_recent_best_transfer(await client.get_user_info(user_name=user, recent=1, withsonginfo=True))
+        return user_recent_best_transfer(await client.get_user_info(user_name=user, recent=1, with_song_info=True))
 
 
 async def get_arcaea_best_data(user: str, chart: str, result_type: str) -> UserBest:
@@ -58,7 +58,7 @@ async def get_arcaea_best_data(user: str, chart: str, result_type: str) -> UserB
     if result_type == 'bandori':
         # 将 record 复制到 recent 区域，因为 bandori 样式永远使用 recent 的数据
         data.content.recent_score = data.content.record
-        data.content.recent_songinfo = data.content.songinfo[0]
+        data.content.recent_song_info = data.content.song_info[0]
     return data
 
 
@@ -81,9 +81,9 @@ def user_recent_best_transfer(user_info: UserInfo) -> UserBest:
         content=dict(
             account_info=user_info.content.account_info,  # account_info 保持不变
             record=user_info.content.recent_score[0],  # record 从 recent_score 中复制
-            songinfo=[user_info.content.songinfo[0]],  # songinfo 从 recent_songinfo（属性名为 songinfo）中复制
+            song_info=[user_info.content.song_info[0]],  # song_info 从 recent_song_info（属性名为 song_info）中复制
             recent_score=user_info.content.recent_score[0],  # recent_score 保持不变
-            recent_songinfo=user_info.content.songinfo[0]  # recent_songinfo（属性名为 songinfo）保持不变
+            recent_song_info=user_info.content.song_info[0]  # recent_song_info（属性名为 song_info）保持不变
         )
     )
 

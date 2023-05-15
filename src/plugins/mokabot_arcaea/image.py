@@ -10,7 +10,7 @@ from PIL import ImageFont, Image, ImageDraw, ImageOps
 
 from src.utils.mokabot_humanize import now_datetime, SecondHumanizeUtils, format_timestamp
 from src.utils.mokabot_text2image import to_bytes_io, get_str_width
-from .auapy.model import UserBest30, Record, UserBest
+from .auapy.model import UserBestsResult, Record, UserBest
 from .resource import Fonts, ResourceMoe, ResourceGuin, ResourceBandori, InGameResourceManager as IGRMngr
 from .utils import (
     get_score_rank,
@@ -34,7 +34,7 @@ class BaseStyle(ABC):
 
 class BaseBest35Style(BaseStyle):
 
-    def __init__(self, data: UserBest30): self.data = data
+    def __init__(self, data: UserBestsResult): self.data = data
 
     def generate(self) -> BytesIO: raise NotImplementedError
 
@@ -46,9 +46,9 @@ class BaseSingleStyle(BaseStyle):
         # 若图查样式期望 recent_score 的成绩数大于等于 2 个，则不应当继承此基类
         self.account_info = data.content.account_info
         self.record = data.content.record
-        self.songinfo = data.content.songinfo
+        self.song_info = data.content.song_info
         self.recent_score = data.content.recent_score
-        self.recent_songinfo = data.content.recent_songinfo
+        self.recent_song_info = data.content.recent_song_info
         self.is_recent = is_recent
 
     def generate(self) -> BytesIO: raise NotImplementedError
@@ -127,24 +127,24 @@ class Best35StyleEstertion(BaseBest35Style):
     clear_type = ['Track Lost', 'Normal Clear', 'Full Recall', 'Pure Memory', 'Easy Clear', 'Hard Clear']
     difficulty = ['PST', 'PRS', 'FTR', 'BYD']
 
-    def __init__(self, data: UserBest30):
+    def __init__(self, data: UserBestsResult):
         super().__init__(data)
         self.best30_avg = data.content.best30_avg
         self.account_info = data.content.account_info
         self.best30_list = data.content.best30_list
-        self.best30_songinfo = data.content.best30_songinfo
+        self.best30_song_info = data.content.best30_song_info
         self.recent_score = data.content.recent_score
-        self.recent_songinfo = data.content.recent_songinfo
+        self.recent_song_info = data.content.recent_song_info
         self.best30_overflow = data.content.best30_overflow
-        self.best30_overflow_songinfo = data.content.best30_overflow_songinfo
+        self.best30_overflow_song_info = data.content.best30_overflow_song_info
 
     def _generate_record_text(self, record: Record, pos: Optional[int] = None) -> str:
         if not pos:  # recent
-            song_info = self.recent_songinfo
+            song_info = self.recent_song_info
         elif pos <= 30:  # best30
-            song_info = self.best30_songinfo[pos - 1]
+            song_info = self.best30_song_info[pos - 1]
         else:  # best30 overflow
-            song_info = self.best30_overflow_songinfo[pos - 31]
+            song_info = self.best30_overflow_song_info[pos - 31]
         score_per_far = round(1e7 / song_info.note / 2)
         datetime_played = datetime.fromtimestamp(record.time_played / 1000)
 
@@ -164,7 +164,7 @@ class Best35StyleEstertion(BaseBest35Style):
 
     def _get_highscore_distance(self, record_best: Record) -> tuple[int, int]:
         to_highscore = record_best.score - self.recent_score.score
-        score_per_far = round(1e7 / self.recent_songinfo.note / 2)
+        score_per_far = round(1e7 / self.recent_song_info.note / 2)
         to_far = int(to_highscore / int(score_per_far) + 0.5)
         return to_highscore, to_far
 
@@ -251,11 +251,11 @@ class SingleStyleMoe(BaseSingleStyle):
         super().__init__(data, is_recent)
         if self.is_recent:
             self.d_record = self.recent_score
-            self.d_songinfo = self.recent_songinfo
+            self.d_song_info = self.recent_song_info
         else:
             self.d_record = self.record
-            self.d_songinfo = self.songinfo[0]
-        self.R = ResourceMoe(self.d_songinfo.side)
+            self.d_song_info = self.song_info[0]
+        self.R = ResourceMoe(self.d_song_info.side)
         self.im = VancedImage.open(self.R.img_bg, (2388, 1668))
 
     def _get_spilt_usercode(self) -> str:
@@ -297,15 +297,15 @@ class SingleStyleMoe(BaseSingleStyle):
             self.im.alpha_composite(img, xy)
 
     def _draw_shadow_song_cover(self):  # 歌曲封面阴影
-        color = (163, 50, 163, 120) if self.d_songinfo.side == 1 else (50, 158, 193, 120)
+        color = (163, 50, 163, 120) if self.d_song_info.side == 1 else (50, 158, 193, 120)
         song_cover_shadow = Image.new('RGBA', (990, 990), color)
         self.im.alpha_composite(song_cover_shadow, (1394, 83))
 
     def _draw_song_cover(self):  # 歌曲封面
         song_cover_img = Image.open(IGRMngr.get_song_cover(
             self.d_record.song_id,
-            self.d_songinfo.remote_download,
-            self.d_record.difficulty == 3 and self.d_songinfo.jacket_override
+            self.d_song_info.remote_download,
+            self.d_record.difficulty == 3 and self.d_song_info.jacket_override
         )).convert('RGBA').resize((990, 990))
         self.im.alpha_composite(song_cover_img, (1354, 43))
 
@@ -349,12 +349,12 @@ class SingleStyleMoe(BaseSingleStyle):
                          WHITE, Fonts.font_geosans_light, 67, with_shadow=True, stroke_width=1)  # 游玩时间
 
     def _write_chart_constant(self):  # 谱面定数
-        self.im.add_text((2339, 49), self.d_songinfo.rating / 10, WHITE, Fonts.font_agencyb, 100,
+        self.im.add_text((2339, 49), self.d_song_info.rating / 10, WHITE, Fonts.font_agencyb, 100,
                          anchor='rt', with_shadow=True, shadow_offset=(4, 4), shadow_fill=(0, 0, 0, 120),
                          stroke_width=5, stroke_fill=(130, 186, 255, 100))
 
     def _write_song_name(self):  # 歌曲名称
-        self.im.add_text((2330, 1212), self.d_songinfo.name_en, WHITE, Fonts.font_a_otf_shingopro_medium_2, 120,
+        self.im.add_text((2330, 1212), self.d_song_info.name_en, WHITE, Fonts.font_a_otf_shingopro_medium_2, 120,
                          anchor='rs', with_shadow=True, shadow_offset=(10, 5), stroke_width=2)
 
     def _write_potential_and_rating(self):
@@ -402,17 +402,17 @@ class SingleStyleGuin(BaseSingleStyle):
         super().__init__(data, is_recent)
         if self.is_recent:
             self.d_record = self.recent_score
-            self.d_songinfo = self.recent_songinfo
+            self.d_song_info = self.recent_song_info
         else:
             self.d_record = self.record
-            self.d_songinfo = self.songinfo[0]
+            self.d_song_info = self.song_info[0]
         self.im = VancedImage.open(self.R.rank_images[get_score_rank_index(self.d_record.score)], (1967, 1220))
 
     def _draw_song_cover(self):  # 歌曲封面
         song_cover_img = Image.open(IGRMngr.get_song_cover(
             self.d_record.song_id,
-            self.d_songinfo.remote_download,
-            self.d_record.difficulty == 3 and self.d_songinfo.jacket_override
+            self.d_song_info.remote_download,
+            self.d_record.difficulty == 3 and self.d_song_info.jacket_override
         )).convert('RGBA').resize((853, 853))
         self.im.alpha_composite(song_cover_img, (1000, 43))
 
@@ -430,18 +430,18 @@ class SingleStyleGuin(BaseSingleStyle):
 
     def _write_chart_difficulty_and_constant(self):  # 难度和定数
         difficulty = ['PST', 'PRS', 'FTR', 'BYD'][self.d_record.difficulty]  # FTR
-        rating = get_difficulty_text(self.d_songinfo.difficulty)  # 9+
+        rating = get_difficulty_text(self.d_song_info.difficulty)  # 9+
         self.im.add_text((1932, 50), f'{difficulty} {rating}', WHITE, Fonts.font_exo_medium, 80,
                          anchor='rt', with_shadow=True, shadow_offset=(5, 6), stroke_width=2)  # 难度
-        self.im.add_text((1932, 180), self.d_songinfo.rating / 10, WHITE, Fonts.font_exo_medium, 100,
+        self.im.add_text((1932, 180), self.d_song_info.rating / 10, WHITE, Fonts.font_exo_medium, 100,
                          anchor='rt', with_shadow=True, shadow_offset=(5, 6), stroke_width=2)  # 定数
 
     def _write_song_name_and_artist(self):
-        title_width = get_str_width(self.d_songinfo.name_en)
-        self.im.add_text((1475, 1055), self.d_songinfo.name_en, WHITE, Fonts.font_kazesawa_regular,
+        title_width = get_str_width(self.d_song_info.name_en)
+        self.im.add_text((1475, 1055), self.d_song_info.name_en, WHITE, Fonts.font_kazesawa_regular,
                          int(1791.1 * title_width ** (-1.033)) if title_width > 14 else 120,
                          anchor='ms', with_shadow=True, shadow_offset=(5, 6), stroke_width=2)  # 歌曲名
-        self.im.add_text((1475, 1126), self.d_songinfo.artist, WHITE, Fonts.font_kazesawa_regular, 50,
+        self.im.add_text((1475, 1126), self.d_song_info.artist, WHITE, Fonts.font_kazesawa_regular, 50,
                          anchor='ms', with_shadow=True, shadow_offset=(2, 3), stroke_width=2)  # 曲师名
 
     def _draw_partner_mask(self):  # 搭档框
@@ -511,7 +511,7 @@ class SingleStyleBandori(BaseSingleStyle):
 
     def __init__(self, data: UserBest, is_recent: bool = False):
         super().__init__(data, is_recent)
-        if self.recent_songinfo.side == 1:  # tairitsu
+        if self.recent_song_info.side == 1:  # tairitsu
             self.im = VancedImage.open(self.R.img_bg_rhythm_tairitsu, (2388, 1668))
         else:
             self.im = VancedImage.open(self.R.img_bg_rhythm_hikari, (2388, 1668))
@@ -563,8 +563,8 @@ class SingleStyleBandori(BaseSingleStyle):
             self.im.alpha_composite(img_new_record, (1652, 488))
 
     def _write_song_info(self):
-        self.im.add_text((1800, 282), self.recent_songinfo.rating / 10, DARK, Fonts.font_a_otf_shingopro_medium_2, 46, anchor='ms')  # 定数
-        self.im.add_text((514, 282), self.recent_songinfo.name_en, DARK, Fonts.font_a_otf_shingopro_medium_2, 46, anchor='ls')  # 歌曲名
+        self.im.add_text((1800, 282), self.recent_song_info.rating / 10, DARK, Fonts.font_a_otf_shingopro_medium_2, 46, anchor='ms')  # 定数
+        self.im.add_text((514, 282), self.recent_song_info.name_en, DARK, Fonts.font_a_otf_shingopro_medium_2, 46, anchor='ls')  # 歌曲名
 
     def _write_pure_far_lost_count(self):
         for index, data in enumerate((
