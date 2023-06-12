@@ -35,9 +35,10 @@ def parse_song_difficulty(args: str) -> tuple[str, DifficultyInt]:
 
 
 def match_on_song_title_exact(song_desc: str, song: Song) -> bool:
-    # 歌曲描述必须精确等于（任意服务器的）歌曲标题
-    if song_desc in song.musicTitle:
-        return True
+    # 歌曲描述等于（任意服务器的）歌曲标题（无视大小写）
+    for title in song.musicTitle:
+        if song_desc == title or song_desc.lower() == title.lower():
+            return True
 
 
 def match_on_song_title_fuzzy(song_desc: str, song: Song) -> bool:
