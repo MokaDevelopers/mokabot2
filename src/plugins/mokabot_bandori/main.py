@@ -8,7 +8,8 @@ from pydantic import ValidationError
 from .BandoriChartRender import render_chart_official, render_chart_user_post
 from .bestdori.model import Language
 from .bind import bind, get_user_id, set_user_region, get_user_region
-from .song import parse_song_difficulty
+from .exception import TooManyRecordsError, NoRecordsError
+from .song import parse_song_difficulty, get_song_id
 from .user import generate_user_profile_image
 
 chart_render = on_command('邦邦谱面', aliases={'bandori谱面'}, priority=5)
@@ -21,12 +22,13 @@ mode_cn = on_command('国服模式', priority=5)
 
 @chart_render.handle()
 async def _(args: Message = CommandArg()):
-    if not args or not args.extract_plain_text()[0].isdigit():
-        await chart_render.finish('请使用如下格式：\n邦邦谱面 <歌曲数字ID> [难度]', reply_message=True)
+    if not args:
+        await chart_render.finish('请使用如下格式：\n邦邦谱面 <歌曲或别名> [难度]', reply_message=True)
 
-    song_id, difficulty = parse_song_difficulty(args.extract_plain_text())
+    song_desc, difficulty = parse_song_difficulty(args.extract_plain_text())
 
     try:
+        song_id = await get_song_id(song_desc)
         if song_id >= 10002:  # 社区谱
             msg = MessageSegment.image((await render_chart_user_post(song_id)).to_bytes_io())
         else:  # 官谱
@@ -35,6 +37,14 @@ async def _(args: Message = CommandArg()):
         msg = f'这首歌不存在或服务器异常，服务器返回{e.response.status_code}'
     except ValidationError:
         msg = '该Post不存在或者该Post不是谱面'
+    except TooManyRecordsError as e:
+        if (result_count := len(e.songs)) <= 10:
+            msg = f'找到{result_count}个结果，现在你可以使用它们的歌曲ID来精确查询：\n'
+            msg += '\n'.join(f'{song_id} {song_title}' for song_id, song_title in e.songs)
+        else:
+            msg = f'找到{result_count}个结果，请输入更详细的信息以精确查询'
+    except NoRecordsError:
+        msg = f'找不到所谓的 {song_desc}\n请注意，太短或太复杂的关键词均可能会导致排除一些结果'
 
     await chart_render.finish(msg, reply_message=True)
 

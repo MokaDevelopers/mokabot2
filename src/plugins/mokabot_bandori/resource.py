@@ -61,3 +61,7 @@ def get_level_image(rank: str, level: int) -> Path:
 
 def get_band_icon(band_id: int) -> str:
     return str(profile_dir / 'band_icon' / f'band_{band_id}.png')
+
+
+def get_alias_excel() -> Path:
+    return assets / 'nickname_song.xlsx'

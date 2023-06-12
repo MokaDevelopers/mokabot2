@@ -2,11 +2,13 @@ from typing import Optional
 
 from .BandoriClient import BandoriClient
 from .BandoriClient.protobuf.UserProfile import UserProfile, UserMusicClearInfo
+from .alias import AliasManager
 from .bestdori.model import Language
 from .bestdori.utils import get_client
 from .config import hash1, signature, user_id as static_user_id
 
 client = BandoriClient(user_id=static_user_id, hash1=hash1, signature=signature)
+alias_mgr = AliasManager()
 
 
 async def _get_user_profile_jp(user_id: int) -> Optional[UserProfile]:
