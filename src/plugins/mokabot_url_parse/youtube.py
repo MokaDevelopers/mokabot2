@@ -35,6 +35,8 @@ class YouTubeParse(BaseParse):
                 return 'video', parse_watchv(url)
             if 'youtube.com/channel/' in url:
                 return 'channel', parse_channel_id(url)
+            if 'youtube.com/live/' in url:
+                return 'video', parse_live(url)
             # 无法直接从 youtube.com/c/xxxx 中获取channelId
             # 例如：https://www.youtube.com/c/%E8%87%AA%E8%AF%B4%E8%87%AA%E8%AF%9D%E7%9A%84%E6%80%BB%E8%A3%81
             # 见 https://stackoverflow.com/questions/63046669/obtaining-a-channel-id-from-a-youtube-com-c-xxxx-link
@@ -95,6 +97,11 @@ def parse_watchv(url: str) -> str:
 def parse_channel_id(url: str) -> str:
     """解析 youtube.com/channel 系列频道"""
     return re.search(r'youtube\.com/channel/([^/]+)', url).groups()[0]
+
+
+def parse_live(url: str) -> str:
+    """解析 youtube.com/live 系列直播"""
+    return re.search(r'youtube\.com/live/([^?]+)', url).groups()[0]
 
 
 def utc_trans(utc_time: datetime) -> tuple[str, str]:
