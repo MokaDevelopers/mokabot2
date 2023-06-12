@@ -45,6 +45,8 @@ class Client:
         # url: https://www.techpowerup.com/gpu-specs/?ajaxsrch=4090&_=1678518679419 -> href: /gpu-specs/?ajaxsrch=4090&_=1678518679419
         async with self._get_client() as client:
             response = await client.get(self.base_url + href, headers=self._headers)
+            if response.is_redirect:
+                response = await client.get(response.headers['Location'], headers=self._headers)
             response.raise_for_status()
             return BeautifulSoup(response.text, 'html.parser')
 
