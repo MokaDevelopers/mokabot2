@@ -206,6 +206,14 @@ def get_local_vndb_timestamp() -> str:
         return f.read().strip()
 
 
+def update_all() -> None:
+    vn_title_table.update()
+    vn_rating_table.update()
+    char_name_table.update()
+    staff_alias_table.update()
+    char_role_table.update()
+
+
 vn_title_table = VisualNovelTitleManager()
 vn_rating_table = VisualNovelRatingManager()
 char_name_table = CharacterNameManager()
