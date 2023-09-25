@@ -54,7 +54,7 @@ async def _get_user_profile_cn(user_id: int) -> Optional[UserProfile]:
         profile.stage_challenge_achievement_conditions_map.entries = {
             int(k): v
             for k, v in json_profile['stageChallengeAchievementConditionsMap']['entries'].items()
-            if int(k) in range(8)  # 国服有个 102 不知道是干嘛的
+            if int(k) in range(9)  # 国服有个 102 不知道是干嘛的
         }
 
     return profile

@@ -73,6 +73,7 @@ class SimpleUserProfileStyle(BaseUserProfileStyle):
                 5: 3,  # Hello, Happy World!
                 18: 6,  # RAISE A SUILEN
                 21: 5,  # Morfonica
+                45: 7,  # MyGO!!!!!
             }[band_id]
         baseline = {
             0: 756,  # 最高分
@@ -92,7 +93,7 @@ class SimpleUserProfileStyle(BaseUserProfileStyle):
 
     @staticmethod
     def _locate_card(index: int) -> tuple[int, int]:
-        first_left, first_top = 571, 347
+        first_left, first_top = 689, 347
         offset = 150
         real_index = {
             0: 2,
@@ -111,7 +112,7 @@ class SimpleUserProfileStyle(BaseUserProfileStyle):
     _locate_card_band = _locate_card
 
     def _locate_card_star(self, index: int, storey: int) -> tuple[int, int]:
-        card_left, card_top = self._locate_card(index)
+        card_left, _ = self._locate_card(index)
         first_star_top = 452
         offset = 16
 
@@ -120,7 +121,7 @@ class SimpleUserProfileStyle(BaseUserProfileStyle):
     @staticmethod
     def _locate_clear_stat(difficulty: str, line: int) -> tuple[int, int]:
         offset = 96
-        first_left = 1079
+        first_left = 1197
         column = {
             'easy': 0,
             'normal': 1,
@@ -143,17 +144,17 @@ class SimpleUserProfileStyle(BaseUserProfileStyle):
     def _write_rank_and_username(self):
         rank = self.user_profile.rank
         username = self.user_profile.user_name
-        self.draw.text((549, 102), f'Rank {rank}  {username}', font=self.font_title, fill=self.color_grey, anchor='lt')
+        self.draw.text((667, 102), f'Rank {rank}  {username}', font=self.font_title, fill=self.color_grey, anchor='lt')
 
     def _write_introduction(self):
         introduction = split_long_line_pixel(self.user_profile.introduction, 470, self.font_text)
-        self.draw.text((569, 190), introduction, font=self.font_text, fill=self.color_grey)
+        self.draw.text((687, 190), introduction, font=self.font_text, fill=self.color_grey)
 
     def _write_user_id(self):
         user_id = self.user_id or self.user_profile.user_profile_situation.user_id
         if not user_id:
             user_id = '未公开'
-        self.draw.text((1150, 196), str(user_id), font=self.font_text, fill=self.color_grey, anchor='lm')
+        self.draw.text((1268, 196), str(user_id), font=self.font_text, fill=self.color_grey, anchor='lm')
 
     def _write_high_score_rating(self):
         user_hsr = self.user_profile.user_high_score_rating
@@ -170,6 +171,7 @@ class SimpleUserProfileStyle(BaseUserProfileStyle):
                 (3, user_hsr.user_hello_happy_world_high_score_music_list.entries),
                 (21, user_hsr.user_morfonica_high_score_music_list.entries),
                 (18, user_hsr.user_raise_a_suilen_high_score_music_list.entries),
+                (45, user_hsr.user_my_g_o_score_music_list.entries)
         ):
             hsr_band = 0
             for chart in band_hsr_song_list:
@@ -178,11 +180,11 @@ class SimpleUserProfileStyle(BaseUserProfileStyle):
             if not band_id:
                 continue
             self.draw.text(self._locate_band_stat(band_id, 0), str(hsr_band), font=self.font_text, fill=self.color_grey, anchor='ms')
-        self.draw.text((1321, 196), f'最高分  {hsr_total}', font=self.font_text, fill=self.color_grey, anchor='lm')
+        self.draw.text((1439, 196), f'最高分  {hsr_total}', font=self.font_text, fill=self.color_grey, anchor='lm')
 
     def _write_band_name(self):
         band_name = self.user_profile.main_user_deck.deck_name
-        self.draw.text((570, 305), band_name, font=self.font_text, fill=self.color_grey, anchor='lt')
+        self.draw.text((688, 305), band_name, font=self.font_text, fill=self.color_grey, anchor='lt')
 
     async def _draw_deck_card(self, deck: list[UserSituation]):
         for index, card in enumerate(deck):  # 全新玩家可能存在主乐队部分 card 为空的情况
@@ -221,10 +223,10 @@ class SimpleUserProfileStyle(BaseUserProfileStyle):
 
         totol_power = total_performance + total_technique + total_visual
 
-        self.draw.text((1499, 349), str(totol_power), font=self.font_text, fill=self.color_pink, anchor='rt')
-        self.draw.text((1499, 390), str(total_performance), font=self.font_text, fill=self.color_grey, anchor='rt')
-        self.draw.text((1499, 423), str(total_technique), font=self.font_text, fill=self.color_grey, anchor='rt')
-        self.draw.text((1499, 455), str(total_visual), font=self.font_text, fill=self.color_grey, anchor='rt')
+        self.draw.text((1617, 349), str(totol_power), font=self.font_text, fill=self.color_pink, anchor='rt')
+        self.draw.text((1617, 390), str(total_performance), font=self.font_text, fill=self.color_grey, anchor='rt')
+        self.draw.text((1617, 423), str(total_technique), font=self.font_text, fill=self.color_grey, anchor='rt')
+        self.draw.text((1617, 455), str(total_visual), font=self.font_text, fill=self.color_grey, anchor='rt')
 
     async def _draw_deck_box(self, deck: list[UserSituation], cards_all: CardsAll):
         for index, card in enumerate(deck):
@@ -287,14 +289,14 @@ class SimpleUserProfileStyle(BaseUserProfileStyle):
             degree_info = degrees_all.__root__[user_degree.degree_id]
             if degree_pos == 'first':
                 degree_image = await self._generate_degree_image(degree_info)
-                self.im.alpha_composite(degree_image, (1103, 224))
+                self.im.alpha_composite(degree_image, (1221, 224))
             if degree_pos == 'second':
                 degree_image = await self._generate_degree_image(degree_info)
-                self.im.alpha_composite(degree_image, (1307, 224))
+                self.im.alpha_composite(degree_image, (1425, 224))
 
     def _write_challenge_mission(self):
         challenge_stat: dict[int, int] = {
-            **dict.fromkeys((1, 2, 3, 4, 5, 6, 7), 0),
+            **dict.fromkeys((1, 2, 3, 4, 5, 6, 7, 8), 0),
             **self.user_profile.stage_challenge_achievement_conditions_map.entries
         }
         for band_id, star_count in challenge_stat.items():
@@ -341,12 +343,12 @@ class SimpleUserProfileStyle(BaseUserProfileStyle):
         if not card_id:
             card_id = self.user_profile.main_deck_user_situations.entries[0].situation_id
             is_after_training = self.user_profile.main_deck_user_situations.entries[0].illust == 'after_training'
-        character_image = Image.open(await get_profile_card_image(card_id, is_after_training, self.region)).convert('RGBA').resize((439, 439))
-        self.im.alpha_composite(character_image, (81, 70))
+        character_image = Image.open(await get_profile_card_image(card_id, is_after_training, self.region)).convert('RGBA').resize((447, 447))
+        self.im.alpha_composite(character_image, (130, 70))
 
     def _draw_region(self):
         icon = Image.open(region_icon[self.region]).convert('RGBA').resize((36, 36))
-        self.im.alpha_composite(icon, (1103, 176))
+        self.im.alpha_composite(icon, (1221, 176))
 
     def _write_generate_time(self):
         self.draw.text((60, 1140), f'生成时间 {now_datetime()}', font=self.font_text, fill=self.color_grey, anchor='lt')
