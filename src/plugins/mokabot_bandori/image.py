@@ -62,7 +62,11 @@ class SimpleUserProfileStyle(BaseUserProfileStyle):
     def _locate_band_stat(band_id: int, line: int) -> tuple[float, float]:
         offset = 122.5
         first_left = 143
-        if line == 1:
+        if band_id == 0:
+            # 中间位置，用于绘制 未公开 字样
+            column = 3.5
+        elif line == 1:
+            # 当绘制挑战任务进度时，API 返回的 stage_challenge_achievement_conditions_map.entries 以 1~8 为 key，而不是 band_id
             column = band_id - 1
         else:
             column = {
@@ -159,7 +163,7 @@ class SimpleUserProfileStyle(BaseUserProfileStyle):
     def _write_high_score_rating(self):
         user_hsr = self.user_profile.user_high_score_rating
         if not user_hsr.user_poppin_party_high_score_music_list.entries:
-            self.draw.text(self._locate_band_stat(5, 0), '未公开', font=self.font_text, fill=self.color_grey, anchor='ms')
+            self.draw.text(self._locate_band_stat(0, 0), '未公开', font=self.font_text, fill=self.color_grey, anchor='ms')
             return
         hsr_total = 0
         for band_id, band_hsr_song_list in (
@@ -295,6 +299,9 @@ class SimpleUserProfileStyle(BaseUserProfileStyle):
                 self.im.alpha_composite(degree_image, (1425, 224))
 
     def _write_challenge_mission(self):
+        if not self.user_profile.publish_stage_challenge_achievement_conditions_flg:
+            self.draw.text(self._locate_band_stat(0, 1), '未公开', font=self.font_text, fill=self.color_grey, anchor='ms')
+            return
         challenge_stat: dict[int, int] = {
             **dict.fromkeys((1, 2, 3, 4, 5, 6, 7, 8), 0),
             **self.user_profile.stage_challenge_achievement_conditions_map.entries
@@ -322,7 +329,7 @@ class SimpleUserProfileStyle(BaseUserProfileStyle):
 
     def _write_band_rating(self):
         if not self.user_profile.user_deck_total_rating_map.entries:
-            left, top = self._locate_band_stat(5, 2)
+            left, top = self._locate_band_stat(0, 2)
             self.draw.text((left, top - 26), '未公开', font=self.font_text, fill=self.color_grey, anchor='ms')
             return
         for band_id, rating in self.user_profile.user_deck_total_rating_map.entries.items():
