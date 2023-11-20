@@ -28,6 +28,7 @@ class VisualNovelTitleManager:
         self.update()
 
     def update(self):
+        self.table.clear()
         with open(PathManager.vn_titles_csv, 'r', encoding='utf-8') as f:
             """
             作者注：
@@ -90,6 +91,7 @@ class VisualNovelRatingManager:
         self.update()
 
     def update(self):
+        self.table.clear()
         with open(PathManager.vn_csv, 'r', encoding='utf-8') as f:
             lines = csv.reader(f, dialect='vndb')
             for line in lines:
@@ -116,6 +118,7 @@ class CharacterNameManager:
         self.update()
 
     def update(self):
+        self.table.clear()
         with open(PathManager.chars_csv, 'r', encoding='utf-8') as f:
             lines = csv.reader(f, dialect='vndb')
             for line in lines:
@@ -142,6 +145,7 @@ class StaffAliasManager:
         self.update()
 
     def update(self):
+        self.table.clear()
         with open(PathManager.staff_alias_csv, 'r', encoding='utf-8') as f:
             lines = csv.reader(f, dialect='vndb')
             for line in lines:
@@ -174,6 +178,7 @@ class CharacterRoleManager:
         self.update()
 
     def update(self):
+        self.table.clear()
         with open(PathManager.chars_vns_csv, 'r', encoding='utf-8') as f:
             lines = csv.reader(f, dialect='vndb')
             for line in lines:
